@@ -7,10 +7,10 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from agent.integrations.email_client import send_alert_email
-from agent.integrations.supabase_client import get_supabase
-from agent.integrations import x402_client
-from agent.routers.users import get_current_user
+from integrations.email_client import send_alert_email
+from integrations.supabase_client import get_supabase
+from integrations import x402_client
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 logger = logging.getLogger("breso.payments")

@@ -6,11 +6,11 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from agent.integrations.email_client import send_alert_email
-from agent.integrations.supabase_client import get_supabase
-from agent.models.types import CheckInResponse, CheckInResult, CheckInSubmit, ConversationMode
-from agent.routers.users import get_current_user
-from agent.services import llm_client, pattern_analyzer
+from integrations.email_client import send_alert_email
+from integrations.supabase_client import get_supabase
+from models.types import CheckInResponse, CheckInResult, CheckInSubmit, ConversationMode
+from routers.users import get_current_user
+from services import llm_client, pattern_analyzer
 
 router = APIRouter(prefix="/checkins", tags=["checkins"])
 logger = logging.getLogger("breso.checkins")

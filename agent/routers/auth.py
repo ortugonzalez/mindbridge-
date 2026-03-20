@@ -5,9 +5,9 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
-from agent.integrations.email_client import send_welcome_email
-from agent.integrations.supabase_client import get_supabase
-from agent.models.types import UserCreate
+from integrations.email_client import send_welcome_email
+from integrations.supabase_client import get_supabase
+from models.types import UserCreate
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger("breso.auth")

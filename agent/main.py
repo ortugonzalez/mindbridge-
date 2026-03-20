@@ -16,10 +16,10 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from agent.integrations.agentscan import register_on_agentscan
-from agent.integrations.supabase_client import get_supabase
-from agent.routers import alerts, auth, bookings, checkins, contacts, payments, subscriptions, user_types, users
-from agent.services import scheduler
+from integrations.agentscan import register_on_agentscan
+from integrations.supabase_client import get_supabase
+from routers import alerts, auth, bookings, checkins, contacts, payments, subscriptions, user_types, users
+from services import scheduler
 
 # ---------------------------------------------------------------------------
 # Structured JSON logging

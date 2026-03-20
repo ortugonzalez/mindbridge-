@@ -6,7 +6,7 @@ import statistics
 from datetime import datetime, timezone
 from typing import Any
 
-from agent.integrations.supabase_client import get_supabase
+from integrations.supabase_client import get_supabase
 
 logger = logging.getLogger("breso.pattern_analyzer")
 

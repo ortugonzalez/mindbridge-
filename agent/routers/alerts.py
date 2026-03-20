@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from agent.routers.users import get_current_user
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 

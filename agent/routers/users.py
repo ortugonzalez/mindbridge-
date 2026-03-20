@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-from agent.integrations.supabase_client import get_supabase
+from integrations.supabase_client import get_supabase
 
 router = APIRouter(prefix="/users", tags=["users"])
 logger = logging.getLogger("breso.users")
