@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { signIn, registerUser, sendMagicLink, getUserProfile } from '../services/api'
+import { supabase } from '../lib/supabase'
 
 const USER_NAME_KEY = 'breso_user_name'
 const RESEND_COOLDOWN = 60 // seconds
@@ -37,20 +37,9 @@ export default function SignIn() {
 
   useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current) }, [])
 
-  // FIX 3 — redirect based on onboarding status
-  const afterLogin = async () => {
-    try {
-      const res = await getUserProfile()
-      const profile = res.data || res || {}
-      const userType = profile.user_type || 'patient'
-      const name = profile.name || ''
-      if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
-
-      if (userType === 'family') return navigate('/family-dashboard', { replace: true })
-      if (userType === 'professional') return navigate('/professional-dashboard', { replace: true })
-    } catch {}
-
-    // Check onboarding: name in localStorage = returning user → chat
+  const afterLogin = (user) => {
+    const name = user?.user_metadata?.display_name || user?.user_metadata?.name || ''
+    if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
     const hasName = (() => { try { return !!localStorage.getItem(USER_NAME_KEY) } catch { return false } })()
     navigate(hasName ? '/chat' : '/landing', { replace: true })
   }
@@ -61,10 +50,16 @@ export default function SignIn() {
     setLoading(true)
     setError('')
     try {
-      await signIn({ email: email.trim(), password })
-      await afterLogin()
-    } catch {
-      setError(t('errors.auth'))
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (err) throw err
+      const token = data.session?.access_token
+      if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+      afterLogin(data.user)
+    } catch (err) {
+      setError(err?.message || t('errors.auth'))
     } finally {
       setLoading(false)
     }
@@ -76,10 +71,26 @@ export default function SignIn() {
     setLoading(true)
     setError('')
     try {
-      await registerUser({ name: '', email: email.trim(), password, language: 'es', timezone: 'America/Buenos_Aires' })
-      navigate('/landing', { replace: true })
-    } catch {
-      setError(t('errors.auth'))
+      const { data, error: err } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: window.location.origin + '/landing',
+        },
+      })
+      if (err) throw err
+      // If session is returned immediately (email confirmation disabled), log in
+      if (data.session) {
+        const token = data.session.access_token
+        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        navigate('/landing', { replace: true })
+      } else {
+        // Email confirmation required — show magic-style sent screen
+        setMagicSent(true)
+        startCountdown()
+      }
+    } catch (err) {
+      setError(err?.message || t('errors.auth'))
     } finally {
       setLoading(false)
     }
@@ -91,11 +102,17 @@ export default function SignIn() {
     setLoading(true)
     setError('')
     try {
-      await sendMagicLink({ email: email.trim() })
+      const { error: err } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: window.location.origin + '/landing',
+        },
+      })
+      if (err) throw err
       setMagicSent(true)
       startCountdown()
-    } catch {
-      setError(t('errors.auth'))
+    } catch (err) {
+      setError(err?.message || t('errors.auth'))
     } finally {
       setLoading(false)
     }
@@ -106,10 +123,16 @@ export default function SignIn() {
     setLoading(true)
     setError('')
     try {
-      await sendMagicLink({ email: email.trim() })
+      const { error: err } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          emailRedirectTo: window.location.origin + '/landing',
+        },
+      })
+      if (err) throw err
       startCountdown()
-    } catch {
-      setError(t('errors.auth'))
+    } catch (err) {
+      setError(err?.message || t('errors.auth'))
     } finally {
       setLoading(false)
     }
@@ -256,7 +279,7 @@ export default function SignIn() {
           </form>
         )}
 
-        {/* ── Magic link sent confirmation ── */}
+        {/* ── Magic link / confirmation sent ── */}
         {magicSent && (
           <div className="space-y-5">
             <div className="text-center space-y-2 py-2">
@@ -272,22 +295,24 @@ export default function SignIn() {
 
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-            {/* Resend button */}
-            <button
-              type="button"
-              onClick={handleResend}
-              disabled={resendCountdown > 0 || loading}
-              className={[
-                'w-full rounded-full border px-6 py-3 text-sm font-semibold transition',
-                resendCountdown > 0 || loading
-                  ? 'border-softgray dark:border-dm-border text-textdark/35 dark:text-dm-muted cursor-not-allowed'
-                  : 'border-sage text-sage hover:bg-sage hover:text-white',
-              ].join(' ')}
-            >
-              {resendCountdown > 0
-                ? `Reenviar en ${resendCountdown}s...`
-                : 'Volver a enviar'}
-            </button>
+            {/* Resend button — only for magic link, not registration confirmation */}
+            {tab === 'magic' && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendCountdown > 0 || loading}
+                className={[
+                  'w-full rounded-full border px-6 py-3 text-sm font-semibold transition',
+                  resendCountdown > 0 || loading
+                    ? 'border-softgray dark:border-dm-border text-textdark/35 dark:text-dm-muted cursor-not-allowed'
+                    : 'border-sage text-sage hover:bg-sage hover:text-white',
+                ].join(' ')}
+              >
+                {resendCountdown > 0
+                  ? `Reenviar en ${resendCountdown}s...`
+                  : 'Volver a enviar'}
+              </button>
+            )}
 
             {/* Change email link */}
             <button
