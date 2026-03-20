@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { getUserProfile } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 const RESEND_COOLDOWN = 60 // seconds
@@ -37,11 +38,21 @@ export default function SignIn() {
 
   useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current) }, [])
 
-  const afterLogin = (user) => {
+  // FIX 9: fetch user_type from backend and route accordingly
+  const afterLogin = async (user) => {
     const name = user?.user_metadata?.display_name || user?.user_metadata?.name || ''
     if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
+    try {
+      const res = await getUserProfile()
+      const userType = res.data?.user_type || res.data?.userType
+      if (userType) { try { localStorage.setItem('breso_user_type', userType) } catch {} }
+    } catch {}
+    const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
     const hasName = (() => { try { return !!localStorage.getItem(USER_NAME_KEY) } catch { return false } })()
-    navigate(hasName ? '/chat' : '/landing', { replace: true })
+    if (!hasName) navigate('/landing', { replace: true })
+    else if (userType === 'family') navigate('/family-dashboard', { replace: true })
+    else if (userType === 'professional') navigate('/professional-dashboard', { replace: true })
+    else navigate('/chat', { replace: true })
   }
 
   const handleSignIn = async (e) => {

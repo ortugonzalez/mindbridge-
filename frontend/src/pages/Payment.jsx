@@ -44,6 +44,7 @@ export default function Payment() {
   const [confirmed, setConfirmed] = useState(false)
   const [renewalDate, setRenewalDate] = useState('')
   const [error, setError] = useState('')
+  const [emailFallback, setEmailFallback] = useState(false)
 
   useEffect(() => {
     // Check if returning from successful payment
@@ -63,14 +64,14 @@ export default function Payment() {
     setLoading(false)
     if (result?.payment_url) {
       setPaymentUrl(result.payment_url)
-      window.location.href = result.payment_url
-    } else {
-      // Mock/demo mode — simulate success
-      setConfirmed(true)
+      window.open(result.payment_url, '_blank')
       const d = new Date()
       d.setMonth(d.getMonth() + 1)
       setRenewalDate(d.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' }))
       try { localStorage.setItem('breso_selected_plan', plan) } catch {}
+    } else {
+      // FIX 8: backend unavailable → show email fallback instead of simulating success
+      setEmailFallback(true)
     }
   }
 
@@ -141,6 +142,17 @@ export default function Payment() {
 
       {error && (
         <p className="text-sm text-red-500 text-center">{error}</p>
+      )}
+
+      {/* FIX 8: email fallback when backend unavailable */}
+      {emailFallback && (
+        <div className="rounded-xl border border-sage/40 bg-sage/5 p-4 text-sm text-textdark/80 dark:text-dm-text leading-relaxed">
+          Para activar tu plan, envianos un email a{' '}
+          <a href={`mailto:pagos@breso.app?subject=Plan ${planInfo.name}`} className="font-semibold text-sage underline">
+            pagos@breso.app
+          </a>{' '}
+          con el asunto <span className="font-semibold">&#34;Plan {planInfo.name}&#34;</span>.
+        </div>
       )}
 
       {/* Pay button */}

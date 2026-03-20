@@ -240,6 +240,20 @@ export async function addContact({ name, email, relation }) {
   )
 }
 
+export async function inviteContact({ email, name, relationship }) {
+  return requestWithMock(
+    () => axiosClient.post('/relationships/invite', { email, name, relationship }).then((res) => res.data),
+    () => ({ ok: true, fromMock: true })
+  )
+}
+
+export async function getSupportNetwork() {
+  return requestWithMock(
+    () => axiosClient.get('/relationships/my-support-network').then((res) => res.data),
+    () => []
+  )
+}
+
 export async function getDashboard() {
   return requestWithMock(
     () => axiosClient.get('/dashboard').then((res) => normalizeDashboard(res.data)),

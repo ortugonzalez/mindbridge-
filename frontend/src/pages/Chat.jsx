@@ -32,6 +32,15 @@ export default function Chat() {
     { from: 'breso', textKey: 'chat.openingQuestion' },
   ]
 
+  // FIX 3: save messages to localStorage whenever they change (only after user interaction)
+  useEffect(() => {
+    if (!hasUserReplied.current || messages.length === 0) return
+    try {
+      const toStore = messages.map(m => ({ from: m.from, text: m.text, textKey: m.textKey }))
+      localStorage.setItem('breso_conversation_history', JSON.stringify(toStore.slice(-50)))
+    } catch {}
+  }, [messages])
+
   // Load conversation history on mount
   useEffect(() => {
     let mounted = true
@@ -55,7 +64,22 @@ export default function Chat() {
           return
         }
       } catch {}
-      // No history or error → show opening messages
+      // FIX 3: fallback to localStorage if backend returned nothing
+      if (mounted && !historyLoaded.current) {
+        try {
+          const stored = localStorage.getItem('breso_conversation_history')
+          if (stored) {
+            const parsed = JSON.parse(stored)
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              historyLoaded.current = true
+              hasUserReplied.current = true
+              setMessages(parsed.slice(-20))
+              return
+            }
+          }
+        } catch {}
+      }
+      // No history anywhere → show opening messages
       if (mounted && !hasUserReplied.current) setMessages(buildOpening())
     })()
     return () => { mounted = false }

@@ -84,13 +84,16 @@ export default function Help() {
 
       {/* Support & About */}
       <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">
-        <a 
-          href="mailto:hello@breso.app"
-          className="w-full flex justify-between items-center py-2 text-textdark dark:text-dm-text hover:text-sage dark:hover:text-sage transition-colors font-medium"
-        >
-          {t('help.contact_support')}
-          <span>✉️</span>
-        </a>
+        <div className="py-2 space-y-1">
+          <a
+            href="mailto:hola@breso.app"
+            className="flex justify-between items-center text-textdark dark:text-dm-text hover:text-sage dark:hover:text-sage transition-colors font-medium"
+          >
+            {t('help.contact_support')} — hola@breso.app
+            <span>✉️</span>
+          </a>
+          <p className="text-xs text-textdark/50 dark:text-dm-muted">Respondemos en menos de 48 horas.</p>
+        </div>
         <hr className="border-softgray dark:border-dm-border" />
         <div className="py-2 space-y-1">
           <p className="font-medium text-textdark dark:text-dm-text">{t('help.about')}</p>

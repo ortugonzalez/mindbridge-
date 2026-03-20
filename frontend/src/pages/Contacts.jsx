@@ -1,26 +1,79 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { inviteContact, getSupportNetwork } from '../services/api'
+
+const STORAGE_KEY = 'breso_trusted_contacts'
+
+function safeGetContacts() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch { return [] }
+}
+
+function safeSaveContacts(contacts) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(contacts)) } catch { }
+}
 
 export default function Contacts() {
   const { t } = useTranslation()
-  const [contacts, setContacts] = useState([
-    {
-      id: 1,
-      name: 'María García',
-      relationship: 'Hermana',
-      phone: '+54 11 9876 5432',
-      email: 'maria@example.com',
-      status: 'active' // 'active' | 'pending'
-    }
-  ])
+  const [contacts, setContacts] = useState([])
   const [showAddModal, setShowAddModal] = useState(false)
+  const [form, setForm] = useState({ name: '', email: '', relationship: '' })
+  const [saving, setSaving] = useState(false)
 
-  // Assuming user is patient. For family type, we would show a different view.
-  // Mapped based on generic user schema plan.
+  // FIX 2: load from backend, fallback to localStorage
+  useEffect(() => {
+    let mounted = true
+      ; (async () => {
+        try {
+          const res = await getSupportNetwork()
+          if (!mounted) return
+          const items = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : [])
+          if (items.length > 0) {
+            setContacts(items.map((c, i) => ({
+              id: c.id || i,
+              name: c.name || c.contact_name || '',
+              relationship: c.relationship || c.relation || '',
+              email: c.email || '',
+              phone: c.phone || '',
+              status: c.status || 'active',
+            })))
+            return
+          }
+        } catch { }
+        if (mounted) setContacts(safeGetContacts())
+      })()
+    return () => { mounted = false }
+  }, [])
+
+  const handleAdd = async () => {
+    if (!form.name.trim()) return
+    setSaving(true)
+    const newContact = {
+      id: Date.now(),
+      name: form.name.trim(),
+      email: form.email.trim(),
+      relationship: form.relationship.trim(),
+      phone: '',
+      status: 'pending',
+    }
+    try {
+      await inviteContact({ email: form.email, name: form.name, relationship: form.relationship })
+    } catch { }
+    const updated = [...contacts, newContact]
+    setContacts(updated)
+    safeSaveContacts(updated)
+    setSaving(false)
+    setShowAddModal(false)
+    setForm({ name: '', email: '', relationship: '' })
+  }
 
   const removeContact = (id) => {
     if (window.confirm(t('contacts.confirm_remove'))) {
-      setContacts(contacts.filter(c => c.id !== id))
+      const updated = contacts.filter(c => c.id !== id)
+      setContacts(updated)
+      safeSaveContacts(updated)
     }
   }
 
@@ -30,8 +83,8 @@ export default function Contacts() {
         <h1 className="text-2xl font-bold text-textdark dark:text-dm-text">
           {t('contacts.title')}
         </h1>
-        <button 
-          type="button" 
+        <button
+          type="button"
           onClick={() => setShowAddModal(true)}
           className="flex h-8 w-8 items-center justify-center rounded-full bg-sage text-white shadow-soft transition-transform hover:scale-105"
         >
@@ -41,17 +94,22 @@ export default function Contacts() {
 
       <div className="space-y-4">
         {contacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center bg-white dark:bg-dm-surface rounded-2xl border border-dashed border-softgray dark:border-dm-border">
-            <div className="h-16 w-16 mb-4 flex items-center justify-center text-3xl">🤝</div>
-            <p className="text-textdark/60 dark:text-dm-muted font-medium mb-4">
-              {t('contacts.empty')}
+          <div className="flex flex-col items-center justify-center py-16 px-6 text-center bg-white dark:bg-dm-surface rounded-2xl border border-dashed border-softgray dark:border-dm-border">
+            <svg className="w-20 h-20 mb-5 text-[#8BA989] opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+            <p className="text-textdark/70 dark:text-dm-text/80 font-medium text-lg mb-2">
+              Todavía no agregaste contactos de confianza
             </p>
-            <button 
+            <p className="text-textdark/50 dark:text-dm-muted text-sm mb-6 max-w-xs">
+              Tu red de apoyo es fundamental. Sumá personas que puedan acompañarte.
+            </p>
+            <button
               type="button"
               onClick={() => setShowAddModal(true)}
-              className="px-4 py-2 bg-sage text-white rounded-xl text-sm font-medium hover:bg-sage/90 transition-colors"
+              className="px-6 py-2.5 bg-sage text-white rounded-xl text-sm font-semibold hover:bg-sage/90 shadow-soft transition-transform hover:-translate-y-0.5"
             >
-              {t('contacts.add_new')}
+              + Agregar contacto
             </button>
           </div>
         ) : (
@@ -62,29 +120,30 @@ export default function Contacts() {
                   <h3 className="font-bold text-textdark dark:text-dm-text">{contact.name}</h3>
                   <p className="text-sm text-textdark/60 dark:text-dm-muted capitalize">{contact.relationship}</p>
                 </div>
-                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  contact.status === 'active' 
-                    ? 'bg-sage/10 text-sage dark:bg-sage/20' 
+                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${contact.status === 'active'
+                    ? 'bg-sage/10 text-sage dark:bg-sage/20'
                     : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500'
-                }`}>
+                  }`}>
                   {t(`contacts.status_${contact.status}`)}
                 </div>
               </div>
-              
+
               <div className="space-y-1.5 text-sm">
-                <div className="flex items-center gap-2 text-textdark/80 dark:text-dm-text/80">
-                  <span>📱</span> {contact.phone}
-                </div>
                 {contact.email && (
                   <div className="flex items-center gap-2 text-textdark/80 dark:text-dm-text/80">
                     <span>✉️</span> {contact.email}
                   </div>
                 )}
+                {contact.phone && (
+                  <div className="flex items-center gap-2 text-textdark/80 dark:text-dm-text/80">
+                    <span>📱</span> {contact.phone}
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 border-t border-softgray dark:border-dm-border flex justify-end">
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => removeContact(contact.id)}
                   className="text-sm font-medium text-red-500 hover:text-red-600 transition-colors"
                 >
@@ -96,12 +155,12 @@ export default function Contacts() {
         )}
       </div>
 
-      {/* Add Modal Placeholder */}
+      {/* Add Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-fade-in-page">
           <div className="w-full max-w-sm bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-2xl relative">
-            <button 
-              onClick={() => setShowAddModal(false)}
+            <button
+              onClick={() => { setShowAddModal(false); setForm({ name: '', email: '', relationship: '' }) }}
               className="absolute top-4 right-4 h-8 w-8 flex items-center justify-center rounded-full hover:bg-softgray dark:hover:bg-dm-border text-textdark/40 dark:text-dm-muted"
             >
               ✕
@@ -110,14 +169,34 @@ export default function Contacts() {
               {t('contacts.modal_title')}
             </h2>
             <div className="space-y-4">
-              <input type="text" placeholder={t('dashboard.contactFormName')} className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border" />
-              <input type="text" placeholder={t('dashboard.contactFormRelation')} className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border" />
-              <input type="tel" placeholder={t('onboarding.contactPhone')} className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border" />
-              <button 
-                onClick={() => setShowAddModal(false)} 
-                className="w-full rounded-xl bg-sage py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02] active:scale-95 mt-2"
+              <input
+                type="text"
+                value={form.name}
+                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                placeholder={t('dashboard.contactFormName')}
+                className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border"
+              />
+              <input
+                type="email"
+                value={form.email}
+                onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                placeholder={t('dashboard.contactFormEmail')}
+                className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border"
+              />
+              <input
+                type="text"
+                value={form.relationship}
+                onChange={e => setForm(f => ({ ...f, relationship: e.target.value }))}
+                placeholder={t('dashboard.contactFormRelation')}
+                className="w-full rounded-xl border-softgray dark:border-dm-border bg-softgray/50 dark:bg-dm-bg px-4 py-3 text-sm text-textdark dark:text-dm-text outline-none transition-all placeholder:text-textdark/40 dark:placeholder:text-dm-muted border"
+              />
+              <button
+                type="button"
+                onClick={handleAdd}
+                disabled={saving || !form.name.trim()}
+                className="w-full rounded-xl bg-sage py-3.5 text-sm font-semibold text-white shadow-soft transition-transform hover:scale-[1.02] active:scale-95 mt-2 disabled:opacity-50"
               >
-                {t('dashboard.contactSave')}
+                {saving ? t('dashboard.contactSaving') : t('dashboard.contactSave')}
               </button>
             </div>
           </div>
