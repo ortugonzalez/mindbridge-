@@ -4,61 +4,151 @@
     "loading": "Loading...",
     "error": "Something went wrong. Please try again.",
     "required": "This field is required.",
-    "send": "Send"
+    "send": "Send",
+    "comingSoon": "Coming soon."
   },
-  "nav": { "dashboard": "Home", "checkin": "Today's check-in", "signout": "Sign out" },
+  "language": { "es": "Español", "en": "English" },
+  "nav": {
+    "home": "Home",
+    "chat": "Conversation",
+    "progress": "My progress",
+    "profile": "My profile",
+    "notifications": "Notifications",
+    "contacts": "Trusted contacts",
+    "settings": "Settings",
+    "darkMode": "Dark / light mode",
+    "darkModeLabel": "Dark",
+    "lightModeLabel": "Light",
+    "language": "Language",
+    "help": "Help",
+    "signout": "Sign out",
+    "back": "Back",
+    "close": "Close",
+    "dashboard": "Home",
+    "checkin": "Today's check-in"
+  },
   "auth": {
-    "signin": "Sign in", "register": "Create account",
-    "email": "Email", "password": "Password",
-    "magic_link": "Magic link", "send_magic_link": "Send magic link",
+    "signin": "Sign in",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "magic_link": "Magic link",
+    "send_magic_link": "Send magic link",
     "magic_link_sent": "Link sent! Check your email.",
-    "signing_in": "Signing in...", "no_account": "Don't have an account?",
-    "have_account": "Already have an account?", "or": "or"
+    "signing_in": "Signing in...",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "or": "or"
+  },
+  "welcome": {
+    "greetingMorning": "Good morning.",
+    "greetingAfternoon": "Good afternoon.",
+    "greetingNight": "Good evening.",
+    "intro1": "My name is Soledad. I'm a space created to support your emotional wellbeing.",
+    "intro2": "Often the day-to-day doesn't leave us time to ask ourselves how we're really doing. Here there is time for that.",
+    "intro3": "I won't evaluate you or give you diagnoses. I'll just listen, ask you some questions, and be present.",
+    "question": "Whenever you're ready, tell me: what brought you here today?",
+    "questionPlaceholder": "Tell me whatever you'd like...",
+    "continue": "Continue"
   },
   "landing": {
-    "guide": "Your wellness space",
     "hero": "Your mental wellness companion 🌱",
-    "heroSub": "BRESO accompanies you every day with personalized check-ins, detects when you need support and connects you with people who care.",
-    "cta": "Get started free",
-    "plans": {
-      "essential": {
-        "title": "Essential",
-        "price": "$5/month",
-        "features": ["1 daily check-in", "30-day history", "1 trusted contact", "Proposals 3x/week"]
-      },
-      "premium": {
-        "title": "Premium",
-        "price": "$12/month",
-        "features": ["Unlimited check-ins", "2 contacts", "Professional coordination", "Monthly report"]
-      }
+    "heroSub": "Soledad accompanies you every day, detects how you're feeling, and alerts someone you trust when you need it.",
+    "free": {
+      "title": "Free Trial",
+      "badge": "15 days free, no card needed",
+      "price": "Free",
+      "cta": "Get started free",
+      "note": "After 15 days, automatically converts to Essential at $5/month.",
+      "features": [
+        "✓ Full access for 15 days",
+        "✓ Daily conversations with Soledad",
+        "✓ 1 trusted contact",
+        "✓ 30-day history"
+      ]
+    },
+    "essential": {
+      "title": "Essential",
+      "price": "$5/mo USDT",
+      "cta": "Select",
+      "note": "Charged in USDT on Celo blockchain.",
+      "features": [
+        "✓ Daily conversations with Soledad",
+        "✓ Soledad detects how you feel and adapts",
+        "✓ 1 trusted contact who receives alerts",
+        "✓ 30-day history",
+        "✗ No professional coordination",
+        "✗ No monthly reports"
+      ]
+    },
+    "premium": {
+      "title": "Premium",
+      "price": "$12/mo USDT",
+      "cta": "Select",
+      "note": "Charged in USDT on Celo blockchain.",
+      "features": [
+        "✓ Everything in Essential",
+        "✓ Unlimited conversations",
+        "✓ 2 trusted contacts",
+        "✓ Coordination with mental health professional",
+        "✓ First consultation payment included",
+        "✓ Monthly wellness report",
+        "✓ 'Difficult week' mode activated automatically"
+      ]
+    },
+    "premiumModal": {
+      "title": "Activate Premium",
+      "message": "To activate Premium, contact us at hello@breso.app. We'll activate it in less than 24 hours.",
+      "close": "Got it"
     }
   },
   "onboarding": {
-    "guide": "Let us get to know you better",
-    "title": "Welcome to BRESO!",
-    "subtitle": "A few questions to personalize your experience.",
-    "step1Prompt": "Hi! I'm Soledad, your wellness companion 🌱 What's your name?",
-    "step1Placeholder": "Your name...",
-    "step2Prompt": "Which language do you prefer?",
-    "step3Prompt": "Is there someone you trust you'd like to add?",
-    "step3Skip": "Skip for now",
-    "step3ContactName": "Name",
-    "step3ContactEmail": "Email",
-    "step4Message": "All set! Let's begin 🌱",
-    "step4Done": "All set, {{name}}! Let's begin 🌱",
-    "language": "Preferred language",
-    "timezone": "Your timezone",
-    "checkin_time": "Preferred check-in time",
-    "save": "Get started",
-    "saving": "Saving...",
-    "name": "Name",
+    "step1Prompt": "To start, I'd love to know your name.",
+    "namePlaceholder": "Your name",
+    "step2Prompt": "Now I'd like to ask you something important.",
+    "step2Title": "Your personal phone number",
+    "step2Subtitle": "This is so Soledad can send you a message if she notices you're going through a difficult time. Only you will receive these messages.",
+    "phonePlaceholder": "Phone number",
+    "step3Prompt": "There are moments when it's important for someone you trust to know how you're doing. Is there someone like that in your life?",
+    "step3ContactNote": "This is a person you want to know if you ever need support. It's not your number — it's theirs.",
+    "step4Done": "All set, {{name}}. Thank you for being here. Let's begin whenever you're ready.",
     "continue": "Continue",
-    "contactName": "Contact name",
-    "contactEmail": "Contact email",
-    "addContact": "Add contact",
-    "skipContact": "Skip for now"
+    "skip": "Not now, thanks",
+    "addContact": "Add",
+    "start": "Begin",
+    "contactName": "Their name",
+    "contactRelationPlaceholder": "Relationship",
+    "contactPhone": "Their phone",
+    "contactEmail": "Their email",
+    "relationOptions": [
+      { "value": "mom", "label": "Mom" },
+      { "value": "dad", "label": "Dad" },
+      { "value": "partner", "label": "Partner" },
+      { "value": "brother", "label": "Brother" },
+      { "value": "sister", "label": "Sister" },
+      { "value": "friend_m", "label": "Friend (he/him)" },
+      { "value": "friend_f", "label": "Friend (she/her)" },
+      { "value": "professional", "label": "Health professional" },
+      { "value": "other", "label": "Other" }
+    ]
   },
-  "language": { "es": "Español", "en": "English" },
+  "chat": {
+    "greetingMorning": "Good morning.",
+    "greetingAfternoon": "Good afternoon.",
+    "greetingEvening": "Good evening.",
+    "openingQuestion": "To start, tell me: how was your day today?",
+    "online": "online",
+    "inputPlaceholder": "Type here...",
+    "typing": "Soledad is typing...",
+    "loadingReply": "...",
+    "errorReply": "Could not send. Please try again.",
+    "mockReplies": {
+      "listening": "I understand. It's not always easy to put feelings into words. Is there something specific that's been on your mind lately?",
+      "motivation": "Choose one small step for today. What feels most within reach?",
+      "proposal": "Perfect. Take a 15-minute walk today and note how you felt.",
+      "celebration": "That's wonderful to hear. What was the best part of that moment?"
+    }
+  },
   "dashboard": {
     "guide": "Here you can see your progress",
     "greeting": "Hi, {{name}}",
@@ -68,21 +158,21 @@
     "greeting_evening": "Good evening",
     "checkin_pending": "Today's check-in is waiting for you",
     "checkin_done": "Check-in completed today ✓",
-    "go_to_checkin": "Start today's check-in (5 minutes)",
+    "go_to_checkin": "Start today's check-in",
     "view_history": "See how your week went",
     "config_contact": "Add a trusted contact",
     "baseline_building": "Building your profile... {{count}} of 7 check-ins",
     "baseline_ready": "Your wellness profile is active",
     "tone_trend": "Your emotional state this week",
     "no_data": "Complete your first check-in to see your progress",
-    "loading": "Loading your dashboard...",
+    "loading": "Loading...",
     "error": "Could not load the dashboard. Please try again.",
     "streakLabel": "Streak:",
     "streak": "{{days}} days in a row 🔥",
     "weeklyTitle": "Weekly history",
-    "nextProposalTitle": "Next proposal",
+    "nextProposalTitle": "Today's proposal",
     "trustContactTitle": "Trusted contact",
-    "startToday": "Start today's check-in (5 minutes)",
+    "startToday": "Start today's check-in",
     "startLoading": "Starting...",
     "viewHistory": "View history",
     "viewHistoryHelp": "See how your week went",
@@ -99,49 +189,13 @@
     "contactSaving": "Saving...",
     "contactCancel": "Cancel",
     "mock": {
-      "userName": "Ana García",
-      "contactName": "María",
+      "userName": "Friend",
+      "contactName": "Maria",
       "contactRelation": "sister",
-      "nextProposal": "Take a 15-minute walk today",
+      "nextProposal": "Take a 15-minute walk today 🌿",
       "streakDays": 4,
       "weeklyCompleted": [true, true, true, true, false, false, false],
       "mode": "listening"
-    }
-  },
-  "chat": {
-    "guide": "This is your safe space. Tell me how you are today.",
-    "title": "Chat with Soledad",
-    "typing": "Soledad is typing...",
-    "placeholder": "Write your response...",
-    "inputPlaceholder": "Type something...",
-    "send": "Send",
-    "modeLabel": "Current mode",
-    "loadingReply": "Soledad is replying...",
-    "errorReply": "Could not send your response. Please try again.",
-    "yourName": "Your name",
-    "header": { "mode": "Mode" },
-    "welcome": "Hi! I'm Soledad, your wellness companion 🌱",
-    "firstQuestion": {
-      "listening": "How are you feeling today? Tell me anything.",
-      "motivation": "What's one small thing you could do today to feel better?",
-      "proposal": "I have a proposal for you. Want to hear it?",
-      "celebration": "Hi! What good thing happened today, even something small?"
-    },
-    "modeListening": "Listening",
-    "modeMotivation": "Motivation",
-    "modeProposal": "Proposal",
-    "modeCelebration": "Celebration",
-    "modeDescriptions": {
-      "listening": "I'm here to listen without judgment",
-      "motivation": "Small steps towards wellbeing",
-      "proposal": "A practical proposal for today",
-      "celebration": "Let's celebrate the positive together"
-    },
-    "mockReplies": {
-      "listening": "Let's breathe together: inhale 4 seconds, exhale 6. How does your body feel right now?",
-      "motivation": "Choose a small step for today. What's the next action that feels doable?",
-      "proposal": "Perfect. Go for a 15-minute walk today and note how you felt.",
-      "celebration": "That's great to hear! 🌱 Tell me more."
     }
   },
   "checkin": {

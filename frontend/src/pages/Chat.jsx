@@ -1,89 +1,58 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useLocation } from 'react-router-dom'
-import ModeIndicator from '../components/ModeIndicator'
 import BresoChat from '../components/BresoChat'
 import { getDashboard, postCheckin } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 
-function safeGetLocalStorage(key) {
-  try {
-    return localStorage.getItem(key) || ''
-  } catch {
-    return ''
-  }
+function safeGet(key) {
+  try { return localStorage.getItem(key) || '' } catch { return '' }
+}
+
+function getGreetingKey() {
+  const h = new Date().getHours()
+  if (h >= 6 && h < 12) return 'chat.greetingMorning'
+  if (h >= 12 && h < 20) return 'chat.greetingAfternoon'
+  return 'chat.greetingEvening'
 }
 
 export default function Chat() {
   const { t, i18n } = useTranslation()
-  const location = useLocation()
-
-  const startMode = location.state?.mode
-  const MODE_EMOJI_MAP = useMemo(
-    () => ({
-      listening: '🎧',
-      motivation: '⚡',
-      proposal: '🌱',
-      celebration: '🎉',
-    }),
-    []
-  )
-
-  const storedUserName = safeGetLocalStorage(USER_NAME_KEY)
-
   const hasUserReplied = useRef(false)
 
-  const [userName] = useState(storedUserName)
-  const [mode, setMode] = useState(startMode || 'listening')
+  const [userName] = useState(safeGet(USER_NAME_KEY))
+  const [mode, setMode] = useState('listening')
+  // Messages: { from, text?, textKey? }
+  // textKey = i18n key — always re-renders in current language
+  // text = fixed string (user messages, API responses)
   const [messages, setMessages] = useState([])
-
-  const [dashLoading, setDashLoading] = useState(true)
-  const [dashError, setDashError] = useState('')
-
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
-  const buildThread = (threadMode) => {
-    const name = userName?.trim() ? userName : '—'
-    return [
-      { from: 'breso', text: t('chat.welcome', { name }) },
-      { from: 'breso', text: t(`chat.firstQuestion.${threadMode}`) },
-    ]
-  }
+  const buildOpening = () => [
+    { from: 'breso', textKey: getGreetingKey() },
+    { from: 'breso', textKey: 'chat.openingQuestion' },
+  ]
 
-  // Keep welcome + first question updated with language changes until the user replies.
+  // Rebuild opening messages on language change (while user hasn't replied)
   useEffect(() => {
     if (hasUserReplied.current) return
-    setMessages(buildThread(mode))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, t, i18n.language, userName])
+    setMessages(buildOpening())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   useEffect(() => {
-    let isMounted = true
+    let mounted = true
     ;(async () => {
-      setDashLoading(true)
-      setDashError('')
       try {
         const res = await getDashboard()
-        if (!isMounted) return
-
-        // If onboarding saved a name, always prefer it (prevents showing email).
+        if (!mounted) return
         const apiMode = res.data?.mode
-        // Nunca mostramos el email/username de Supabase: el nombre viene solo de localStorage.
         if (apiMode) setMode(apiMode)
-      } catch {
-        if (!isMounted) return
-        setDashError(t('dashboard.error'))
-      } finally {
-        if (isMounted) setDashLoading(false)
-      }
+      } catch {}
     })()
-
-    return () => {
-      isMounted = false
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { mounted = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleSend = async (text) => {
@@ -92,14 +61,13 @@ export default function Chat() {
 
     hasUserReplied.current = true
     setSendError('')
-
     setMessages((prev) => [...prev, { from: 'user', text: trimmed }])
     setSending(true)
+
     try {
       const res = await postCheckin({ message: trimmed, mode })
       const replyText = res.data?.replyText || t('chat.mockReplies.listening')
       const nextMode = res.data?.nextMode || mode
-
       setMode(nextMode)
       setMessages((prev) => [...prev, { from: 'breso', text: replyText }])
     } catch {
@@ -109,41 +77,28 @@ export default function Chat() {
     }
   }
 
-  const modeDesc = t(`chat.modeDescriptions.${mode}`)
-
   return (
-    <div className="space-y-4">
-      <section className="rounded-2xl border border-softgray bg-whiteish p-5 shadow-soft">
-        <div className="text-sm font-semibold text-textdark/70">{t('chat.guide')}</div>
-
-        <div className="mt-3 flex items-start justify-between gap-3">
-          <div>
-            <div className="text-xs font-semibold text-textdark/60">{t('chat.yourName')}</div>
-            <div className="mt-1 text-xl font-bold text-textdark">{userName || '—'}</div>
-          </div>
-
-          <div className="text-right">
-            <div className="text-xs font-semibold text-textdark/60">{t('chat.header.mode')}</div>
-            <div className="mt-1 text-sm font-semibold text-textdark">
-              {MODE_EMOJI_MAP[mode] || '🎧'} {t(`chat.mode${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
-            </div>
-            <div className="mt-1 text-xs font-semibold text-textdark/70">{modeDesc}</div>
+    <div className="flex flex-col" style={{ height: 'calc(100dvh - 5.5rem)' }}>
+      {/* Header */}
+      <div className="flex items-center gap-3 py-3 px-1 mb-2 flex-shrink-0">
+        <div className="h-10 w-10 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white font-bold text-sm">
+          S
+        </div>
+        <div>
+          <div className="text-base font-semibold text-textdark dark:text-dm-text">Soledad</div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+            <span className="text-xs text-textdark/55 dark:text-dm-muted">{t('chat.online')}</span>
           </div>
         </div>
+      </div>
 
-        <div className="mt-4">
-          <ModeIndicator mode={mode} onChange={(next) => setMode(next)} />
-        </div>
-      </section>
-
-      {dashLoading ? (
-        <div className="rounded-2xl border border-softgray bg-whiteish p-5 shadow-soft">{t('common.loading')}</div>
-      ) : null}
-      {dashError ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{dashError}</div>
-      ) : null}
-
-      <BresoChat messages={messages} onSend={handleSend} isSending={sending} error={sendError} />
+      <BresoChat
+        messages={messages}
+        onSend={handleSend}
+        isSending={sending}
+        error={sendError}
+      />
     </div>
   )
 }

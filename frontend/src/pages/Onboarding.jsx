@@ -1,71 +1,37 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import i18n, { STORAGE_KEY } from '../i18n'
 import { addContact, registerUser } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
+const USER_PHONE_KEY = 'breso_user_phone'
 const CONTACT_NAME_KEY = 'breso_trust_contact_name'
 const CONTACT_REL_KEY = 'breso_trust_contact_relation'
+const CONTACT_PHONE_KEY = 'breso_trust_contact_phone'
 
-function safeSetLocalStorage(key, value) {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // ignore
-  }
+function safeSet(key, value) {
+  try { localStorage.setItem(key, value) } catch {}
 }
 
 function slugifyName(s) {
-  return String(s || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-}
-
-function LanguageChoice({ value, onChange }) {
-  const { t } = useTranslation()
-  return (
-    <div className="flex gap-2">
-      <button
-        type="button"
-        onClick={() => onChange('es')}
-        className={[
-          'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition',
-          value === 'es'
-            ? 'border-sage bg-sage text-whiteish'
-            : 'border-softgray bg-whiteish text-textdark hover:bg-softgray',
-        ].join(' ')}
-      >
-        🇦🇷 {t('language.es')}
-      </button>
-      <button
-        type="button"
-        onClick={() => onChange('en')}
-        className={[
-          'flex flex-1 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition',
-          value === 'en'
-            ? 'border-sage bg-sage text-whiteish'
-            : 'border-softgray bg-whiteish text-textdark hover:bg-softgray',
-        ].join(' ')}
-      >
-        🇺🇸 {t('language.en')}
-      </button>
-    </div>
-  )
+  return String(s || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
 function Bubble({ from, text }) {
-  const isBreso = from === 'breso'
+  const fromSoledad = from === 'breso'
   return (
-    <div className={isBreso ? 'flex justify-start' : 'flex justify-end'}>
+    <div className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}>
+      {fromSoledad && (
+        <div className="h-7 w-7 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white text-xs font-bold">
+          S
+        </div>
+      )}
       <div
         className={[
-          'max-w-[82%] rounded-2xl px-4 py-2 text-sm shadow-soft',
-          isBreso
-            ? 'bg-sage text-whiteish rounded-bl-lg'
-            : 'bg-whiteish text-textdark border border-softgray rounded-br-lg',
+          'max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
+          fromSoledad
+            ? 'bg-sage text-white rounded-bl-sm'
+            : 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text border border-softgray dark:border-dm-border rounded-br-sm',
         ].join(' ')}
       >
         {text}
@@ -78,187 +44,209 @@ export default function Onboarding() {
   const { t } = useTranslation()
   const navigate = useNavigate()
 
-  const initialLang = i18n.language || 'en'
-
-  const [step, setStep] = useState(1) // 1..4
-  const [preferredLanguage, setPreferredLanguage] = useState(initialLang)
-
+  const [step, setStep] = useState(1)
   const [userName, setUserName] = useState('')
+  const [phoneCountry, setPhoneCountry] = useState('+54')
+  const [userPhone, setUserPhone] = useState('')
   const [contactName, setContactName] = useState('')
+  const [contactRelation, setContactRelation] = useState('')
+  const [contactPhone, setContactPhone] = useState('')
   const [contactEmail, setContactEmail] = useState('')
-
   const [finalizing, setFinalizing] = useState(false)
   const [error, setError] = useState('')
 
-  const contactCanAdd = useMemo(() => contactName.trim().length > 0 && contactEmail.trim().length > 0, [contactName, contactEmail])
-
-  const setLanguageAndPersist = (lng) => {
-    setPreferredLanguage(lng)
-    safeSetLocalStorage(STORAGE_KEY, lng)
-    i18n.changeLanguage(lng)
-  }
-
-  const persistEverything = ({ relation, skipContact }) => {
-    safeSetLocalStorage(USER_NAME_KEY, userName.trim())
-    if (skipContact) {
-      safeSetLocalStorage(CONTACT_NAME_KEY, '')
-      safeSetLocalStorage(CONTACT_REL_KEY, '')
-      return
-    }
-    if (contactName.trim()) safeSetLocalStorage(CONTACT_NAME_KEY, contactName.trim())
-    safeSetLocalStorage(CONTACT_REL_KEY, relation)
-  }
+  const relationOptions = t('onboarding.relationOptions', { returnObjects: true }) || []
 
   const finalize = async ({ skipContact }) => {
     setFinalizing(true)
     setError('')
     try {
-      const relation = preferredLanguage.startsWith('es') ? 'confianza' : 'friend'
-
-      // 1) Save locally (so UI always has the right name even if backend fails).
-      persistEverything({ relation, skipContact })
-
-      // 2) Register user.
+      safeSet(USER_NAME_KEY, userName.trim())
+      if (userPhone.trim()) safeSet(USER_PHONE_KEY, phoneCountry + userPhone.trim())
+      if (!skipContact && contactName.trim()) {
+        safeSet(CONTACT_NAME_KEY, contactName.trim())
+        safeSet(CONTACT_REL_KEY, contactRelation)
+        if (contactPhone.trim()) safeSet(CONTACT_PHONE_KEY, contactPhone.trim())
+      }
       const demoEmail = `${slugifyName(userName)}@breso.dev`
-      const demoPassword = 'breso-demo'
-      await registerUser({ name: userName.trim(), email: demoEmail, password: demoPassword })
-
-      // 3) Add trusted contact (optional).
-      if (!skipContact) {
-        await addContact({ name: contactName.trim(), email: contactEmail.trim(), relation })
+      await registerUser({ name: userName.trim(), email: demoEmail, password: 'breso-demo' })
+      if (!skipContact && contactName.trim()) {
+        await addContact({ name: contactName.trim(), email: contactEmail.trim(), relation: contactRelation })
       }
     } catch {
-      // We rely on mock fallback inside api.js; still guard the UI.
       setError(t('common.error'))
     } finally {
       setStep(4)
-      setTimeout(() => navigate('/chat'), 500)
       setFinalizing(false)
     }
   }
 
-  return (
-    <div className="space-y-4">
-      <p className="text-sm font-medium text-textdark/70">{t('onboarding.guide')}</p>
+  const inputCls = 'w-full rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-4 py-3 text-base outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50'
+  const inputSmCls = 'w-full rounded-xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface text-textdark dark:text-dm-text px-4 py-2.5 text-sm outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50'
+  const btnPrimary = 'flex-1 rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40'
+  const btnSecondary = 'flex-1 rounded-full border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface px-5 py-3 text-sm font-semibold text-textdark dark:text-dm-text transition hover:bg-softgray dark:hover:bg-dm-border'
 
-      <section className="rounded-2xl border border-softgray bg-whiteish p-5 shadow-soft">
-        <div className="space-y-4">
-          {step >= 1 ? (
+  return (
+    <div className="space-y-4 animate-fade-up">
+      <section className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-5 shadow-soft">
+        <div className="space-y-5">
+
+          {/* STEP 1 — Name */}
+          {step >= 1 && (
             <>
               <Bubble from="breso" text={t('onboarding.step1Prompt')} />
               {step === 1 ? (
-                <div>
-                  <label className="block text-sm font-semibold text-textdark/90">
-                    {t('onboarding.name')}
-                  </label>
+                <div className="space-y-3">
                   <input
                     value={userName}
                     onChange={(e) => setUserName(e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
+                    className={inputCls}
                     type="text"
-                    placeholder={t('onboarding.name')}
-                    autoComplete="name"
+                    placeholder={t('onboarding.namePlaceholder')}
+                    autoComplete="given-name"
+                    autoFocus
                     disabled={finalizing}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && userName.trim()) setStep(2) }}
                   />
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      disabled={finalizing || userName.trim().length === 0}
-                      onClick={() => setStep(2)}
-                      className="w-full rounded-full bg-sage px-6 py-3 text-sm font-semibold text-whiteish shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                    >
-                      {t('onboarding.continue')}
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    disabled={!userName.trim()}
+                    onClick={() => setStep(2)}
+                    className="w-full rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40"
+                  >
+                    {t('onboarding.continue')}
+                  </button>
                 </div>
               ) : (
                 <Bubble from="user" text={userName} />
               )}
             </>
-          ) : null}
+          )}
 
-          {step === 2 ? (
+          {/* STEP 2 — User's own phone number */}
+          {step >= 2 && (
             <>
-              <Bubble from="breso" text={t('onboarding.step2Prompt', { name: userName.trim() })} />
-              <LanguageChoice
-                value={preferredLanguage}
-                onChange={(lng) => {
-                  setLanguageAndPersist(lng)
-                  setStep(3)
-                }}
-              />
+              <Bubble from="breso" text={t('onboarding.step2Prompt')} />
+              {step === 2 ? (
+                <div className="space-y-3">
+                  {/* Title */}
+                  <div className="rounded-xl bg-softgray/60 dark:bg-dm-bg px-4 py-3">
+                    <p className="text-sm font-semibold text-textdark dark:text-dm-text">{t('onboarding.step2Title')}</p>
+                    <p className="mt-1 text-xs text-textdark/55 dark:text-dm-muted leading-relaxed">{t('onboarding.step2Subtitle')}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <select
+                      value={phoneCountry}
+                      onChange={(e) => setPhoneCountry(e.target.value)}
+                      className="rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-3 py-3 text-sm outline-none focus:border-sage transition flex-shrink-0"
+                    >
+                      <option value="+54">🇦🇷 +54</option>
+                      <option value="+52">🇲🇽 +52</option>
+                      <option value="+57">🇨🇴 +57</option>
+                      <option value="+56">🇨🇱 +56</option>
+                      <option value="+51">🇵🇪 +51</option>
+                      <option value="+598">🇺🇾 +598</option>
+                      <option value="+595">🇵🇾 +595</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+34">🇪🇸 +34</option>
+                    </select>
+                    <input
+                      value={userPhone}
+                      onChange={(e) => setUserPhone(e.target.value)}
+                      className="flex-1 rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-4 py-3 text-base outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50"
+                      type="tel"
+                      placeholder={t('onboarding.phonePlaceholder')}
+                      disabled={finalizing}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <button type="button" disabled={!userPhone.trim()} onClick={() => setStep(3)} className={btnPrimary}>
+                      {t('onboarding.continue')}
+                    </button>
+                    <button type="button" onClick={() => setStep(3)} className={btnSecondary}>
+                      {t('onboarding.skip')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                step > 2 && userPhone.trim() && <Bubble from="user" text={`${phoneCountry} ${userPhone}`} />
+              )}
             </>
-          ) : null}
+          )}
 
-          {step === 3 ? (
+          {/* STEP 3 — Trusted contact */}
+          {step >= 3 && (
             <>
               <Bubble from="breso" text={t('onboarding.step3Prompt')} />
-
-              <div className="rounded-xl border border-softgray bg-softgray/40 p-4">
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-semibold text-textdark/90">
-                      {t('onboarding.contactName')}
-                    </label>
-                    <input
-                      value={contactName}
-                      onChange={(e) => setContactName(e.target.value)}
-                      className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
-                      type="text"
-                      placeholder={t('onboarding.contactName')}
-                      autoComplete="off"
-                      disabled={finalizing}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-textdark/90">
-                      {t('onboarding.contactEmail')}
-                    </label>
-                    <input
-                      value={contactEmail}
-                      onChange={(e) => setContactEmail(e.target.value)}
-                      className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
-                      type="email"
-                      placeholder={t('onboarding.contactEmail')}
-                      autoComplete="off"
-                      disabled={finalizing}
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4 flex gap-2">
-                  <button
-                    type="button"
-                    disabled={finalizing || !contactCanAdd}
-                    onClick={() => finalize({ skipContact: false })}
-                    className="flex-1 rounded-full bg-sage px-6 py-3 text-sm font-semibold text-whiteish shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-                  >
-                    {t('onboarding.addContact')}
-                  </button>
-                  <button
-                    type="button"
+              {step === 3 ? (
+                <div className="space-y-3 rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg p-4">
+                  {/* Contact note */}
+                  <p className="text-xs text-textdark/55 dark:text-dm-muted leading-relaxed">{t('onboarding.step3ContactNote')}</p>
+                  <input
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                    className={inputSmCls}
+                    type="text"
+                    placeholder={t('onboarding.contactName')}
                     disabled={finalizing}
-                    onClick={() => finalize({ skipContact: true })}
-                    className="flex-1 rounded-full border border-softgray bg-whiteish px-6 py-3 text-sm font-semibold text-textdark shadow-soft transition hover:bg-softgray disabled:cursor-not-allowed disabled:opacity-70"
+                  />
+                  <select
+                    value={contactRelation}
+                    onChange={(e) => setContactRelation(e.target.value)}
+                    className={inputSmCls}
+                    disabled={finalizing}
                   >
-                    {t('onboarding.skipContact')}
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : null}
-
-          {step === 4 ? (
-            <>
-              <Bubble from="breso" text={t('onboarding.step4Done', { name: userName.trim() })} />
-              {error ? (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                  {error}
+                    <option value="">{t('onboarding.contactRelationPlaceholder')}</option>
+                    {Array.isArray(relationOptions) && relationOptions.map((r) => (
+                      <option key={r.value} value={r.value}>{r.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                    className={inputSmCls}
+                    type="tel"
+                    placeholder={t('onboarding.contactPhone')}
+                    disabled={finalizing}
+                  />
+                  <input
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    className={inputSmCls}
+                    type="email"
+                    placeholder={t('onboarding.contactEmail')}
+                    disabled={finalizing}
+                  />
+                  <div className="flex gap-2 pt-1">
+                    <button type="button" disabled={finalizing || !contactName.trim()} onClick={() => finalize({ skipContact: false })} className={btnPrimary}>
+                      {t('onboarding.addContact')}
+                    </button>
+                    <button type="button" disabled={finalizing} onClick={() => finalize({ skipContact: true })} className={btnSecondary}>
+                      {t('onboarding.skip')}
+                    </button>
+                  </div>
                 </div>
               ) : null}
-              <div className="text-sm font-semibold text-textdark/70">{finalizing ? t('common.loading') : t('common.loading')}</div>
             </>
-          ) : null}
+          )}
+
+          {/* STEP 4 — Done */}
+          {step === 4 && (
+            <>
+              <Bubble from="breso" text={t('onboarding.step4Done', { name: userName.trim() })} />
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+              )}
+              <button
+                type="button"
+                disabled={finalizing}
+                onClick={() => navigate('/chat')}
+                className="w-full rounded-full bg-sage px-6 py-4 text-base font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40"
+              >
+                {t('onboarding.start')}
+              </button>
+            </>
+          )}
         </div>
       </section>
     </div>

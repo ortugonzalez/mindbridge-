@@ -64,14 +64,24 @@ function mockTodaysCheckin() {
 }
 
 const ES_REPLIES = [
-  'Gracias por compartir eso conmigo 🌱 ¿Querés contarme más?',
-  'Te escucho. ¿Qué es lo que más te pesa hoy?',
-  'Entiendo cómo te sentís. ¿Hay algo pequeño que podría alegrarte hoy?',
+  'Entiendo. No siempre es fácil poner en palabras cómo uno se siente. ¿Hay algo en particular que esté ocupando tu cabeza últimamente?',
+  'Gracias por contarme. Cuando decís eso, ¿a qué te referís exactamente? Me gustaría entender mejor.',
+  'Lo que describís suena agotador. ¿Hace cuánto venís sintiendo esto?',
+  'Me alegra que lo puedas decir. A veces nombrar lo que sentimos ya es un primer paso. ¿Querés contarme más?',
+  'Tiene sentido que te sientas así. ¿Cómo venís durmiendo últimamente?',
+  'Lo escucho. ¿Y cómo impacta eso en tu día a día?',
+  '¿Hay alguien con quien puedas hablar de esto además de acá?',
+  'No tenés que tener todo claro para hablar. Podemos ir de a poco.',
 ]
 const EN_REPLIES = [
-  'Thank you for sharing that with me 🌱 Want to tell me more?',
-  "I'm listening. What's weighing on you most today?",
-  'I understand how you feel. Is there something small that could brighten your day?',
+  "I understand. It's not always easy to put feelings into words. Is there something specific that's been on your mind lately?",
+  "Thank you for sharing that. When you say that, what do you mean exactly? I'd like to understand better.",
+  "What you're describing sounds exhausting. How long have you been feeling this way?",
+  "I'm glad you can say that. Sometimes naming what we feel is already a first step. Do you want to tell me more?",
+  'It makes sense that you feel that way. How have you been sleeping lately?',
+  'I hear you. And how does that affect your daily life?',
+  'Is there someone you can talk to about this besides here?',
+  "You don't have to have everything figured out to talk. We can go slowly.",
 ]
 
 function mockCheckinReply(mode) {
