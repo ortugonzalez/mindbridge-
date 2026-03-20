@@ -18,7 +18,7 @@ from fastapi.responses import JSONResponse
 
 from agent.integrations.agentscan import register_on_agentscan
 from agent.integrations.supabase_client import get_supabase
-from agent.routers import alerts, auth, bookings, checkins, contacts, payments, subscriptions, users
+from agent.routers import alerts, auth, bookings, checkins, contacts, payments, subscriptions, user_types, users
 from agent.services import scheduler
 
 # ---------------------------------------------------------------------------
@@ -136,6 +136,7 @@ app.include_router(contacts.router)
 app.include_router(bookings.router)
 app.include_router(subscriptions.router)
 app.include_router(payments.router)
+app.include_router(user_types.router)
 
 
 # ---------------------------------------------------------------------------

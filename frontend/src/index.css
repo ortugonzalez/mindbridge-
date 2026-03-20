@@ -120,6 +120,21 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 0 0 0 3px rgba(124, 154, 126, 0.2) !important;
 }
 
+/* Placeholder styling — clearly lighter and italic */
+input::placeholder,
+textarea::placeholder {
+  color: #9CA3AF;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #6B7280;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
 /* Loading spinner color override */
 .spinner, .loading-indicator {
   border-color: #7C9A7E;

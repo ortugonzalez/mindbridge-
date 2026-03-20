@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { ThemeProvider } from './contexts/ThemeContext'
+import AuthGuard from './components/AuthGuard'
 import LanguageToggle from './components/LanguageToggle'
 import Navigation from './components/Navigation'
 import Splash from './pages/Splash'
@@ -16,6 +17,9 @@ import Notifications from './pages/Notifications'
 import Contacts from './pages/Contacts'
 import Settings from './pages/Settings'
 import Help from './pages/Help'
+import Payment from './pages/Payment'
+import FamilyDashboard from './pages/FamilyDashboard'
+import ProfessionalDashboard from './pages/ProfessionalDashboard'
 
 function App() {
   const [splashDone, setSplashDone] = useState(false)
@@ -39,15 +43,18 @@ function App() {
               <Route path="/" element={<Landing />} />
               <Route path="/welcome" element={<Welcome />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/chat" element={<Chat />} />
-              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
+              <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
               <Route path="/signin" element={<SignIn />} />
-              <Route path="/checkin" element={<CheckIn />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/notifications" element={<Notifications />} />
-              <Route path="/contacts" element={<Contacts />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/help" element={<Help />} />
+              <Route path="/checkin" element={<AuthGuard><CheckIn /></AuthGuard>} />
+              <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+              <Route path="/notifications" element={<AuthGuard><Notifications /></AuthGuard>} />
+              <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
+              <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
+              <Route path="/help" element={<AuthGuard><Help /></AuthGuard>} />
+              <Route path="/payment" element={<Payment />} />
+              <Route path="/family-dashboard" element={<AuthGuard><FamilyDashboard /></AuthGuard>} />
+              <Route path="/professional-dashboard" element={<AuthGuard><ProfessionalDashboard /></AuthGuard>} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>

@@ -11,6 +11,15 @@ const axiosClient = axios.create({
   withCredentials: true,
 })
 
+// Attach stored auth token to every request
+axiosClient.interceptors.request.use((config) => {
+  try {
+    const token = localStorage.getItem('breso_token')
+    if (token) config.headers.Authorization = `Bearer ${token}`
+  } catch {}
+  return config
+})
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -171,6 +180,45 @@ function normalizeHistory(raw) {
 // ---------------------------------------------------------------------------
 // Exports
 // ---------------------------------------------------------------------------
+
+export async function signIn({ email, password }) {
+  return requestWithMock(
+    () =>
+      axiosClient.post('/auth/signin', { email, password }).then((res) => {
+        const token = res.data?.access_token || res.data?.token || null
+        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        return res.data
+      }),
+    () => ({ access_token: 'mock-token', user_id: 'mock-user', fromMock: true })
+  )
+}
+
+export async function sendMagicLink({ email }) {
+  return requestWithMock(
+    () => axiosClient.post('/auth/magic-link', { email }).then((res) => res.data),
+    () => ({ message: 'Magic link sent', fromMock: true })
+  )
+}
+
+export async function getUserProfile() {
+  return requestWithMock(
+    () => axiosClient.get('/users/me/profile').then((res) => res.data),
+    () => ({
+      name: safeLocalStorage('breso_user_name') || null,
+      plan: 'free_trial',
+      user_type: 'patient',
+      language: i18n.language || 'es',
+      trial_days_left: 15,
+    })
+  )
+}
+
+export async function getConversationHistory(limit = 20) {
+  return requestWithMock(
+    () => axiosClient.get('/checkins/conversation-history', { params: { limit } }).then((res) => res.data),
+    () => []
+  )
+}
 
 export async function registerUser({ name, email, password }) {
   const lang = i18n.language || 'es'

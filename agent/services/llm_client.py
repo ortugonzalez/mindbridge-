@@ -21,6 +21,9 @@ load_dotenv()
 ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL: str = os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-6")
 ANTHROPIC_MAX_TOKENS: int = int(os.getenv("ANTHROPIC_MAX_TOKENS", "1024"))
+CHECKIN_MAX_TOKENS: int = 600
+CHECKIN_TEMPERATURE: float = 0.9
+CHECKIN_TOP_P: float = 0.95
 
 _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
@@ -139,9 +142,16 @@ def generate_checkin_message(mode: str, language: str, profile: dict) -> str:
     )
 
     try:
+        # Combine base system prompt with mode-specific instructions
+        base_system: str = _CHECKIN_PROMPTS.get("system", "")
         modes_cfg = _CHECKIN_PROMPTS.get("modes", {})
         mode_cfg = modes_cfg.get(mode, modes_cfg.get("listen", {}))
-        system_prompt: str = mode_cfg.get(language) or mode_cfg.get("en", "")
+        mode_instructions: str = mode_cfg.get(language) or mode_cfg.get("en", "")
+        system_prompt: str = (
+            f"{base_system}\n\n{mode_instructions}".strip()
+            if mode_instructions
+            else base_system
+        )
 
         # Build user message context from profile
         user_parts: list[str] = ["Please send me a check-in message now."]
@@ -157,7 +167,9 @@ def generate_checkin_message(mode: str, language: str, profile: dict) -> str:
         t0 = time.monotonic()
         response = client.messages.create(
             model=ANTHROPIC_MODEL,
-            max_tokens=ANTHROPIC_MAX_TOKENS,
+            max_tokens=CHECKIN_MAX_TOKENS,
+            temperature=CHECKIN_TEMPERATURE,
+            top_p=CHECKIN_TOP_P,
             system=system_prompt,
             messages=[{"role": "user", "content": user_message}],
         )
@@ -183,6 +195,83 @@ def generate_checkin_message(mode: str, language: str, profile: dict) -> str:
             {
                 "event": "llm.fallback_triggered",
                 "reason": "generate_checkin_message",
+                "error": str(exc),
+                "model_id": ANTHROPIC_MODEL,
+                "prompt_tokens": 0,
+                "completion_tokens": 0,
+                "latency_ms": 0,
+                "outcome": "fallback",
+            }
+        )
+        return fallback_text
+
+
+def generate_response(
+    user_message: str,
+    mode: str,
+    language: str,
+    profile: dict,
+    conversation_history: list[dict] | None = None,
+) -> str:
+    """
+    Generate Soledad's conversational reply to a user message.
+    Uses the full system prompt + mode instructions + optional prior turns.
+    """
+    fallback_lang = language if language in ("es", "en") else "es"
+    fallback_text: str = (
+        _CHECKIN_PROMPTS.get("fallback", {}).get(fallback_lang)
+        or "Hola, estoy acá. ¿Cómo estás hoy?"
+    )
+
+    try:
+        base_system: str = _CHECKIN_PROMPTS.get("system", "")
+        modes_cfg = _CHECKIN_PROMPTS.get("modes", {})
+        mode_cfg = modes_cfg.get(mode, modes_cfg.get("listen", {}))
+        mode_instructions: str = mode_cfg.get(language) or mode_cfg.get("es", "")
+        system_prompt: str = (
+            f"{base_system}\n\n{mode_instructions}".strip()
+            if mode_instructions
+            else base_system
+        )
+
+        # Build message list (prior turns + current message)
+        messages: list[dict] = []
+        for turn in (conversation_history or []):
+            if turn.get("user"):
+                messages.append({"role": "user", "content": turn["user"]})
+            if turn.get("soledad"):
+                messages.append({"role": "assistant", "content": turn["soledad"]})
+        messages.append({"role": "user", "content": user_message})
+
+        client = _get_client()
+        t0 = time.monotonic()
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=CHECKIN_MAX_TOKENS,
+            temperature=CHECKIN_TEMPERATURE,
+            top_p=CHECKIN_TOP_P,
+            system=system_prompt,
+            messages=messages,
+        )
+        latency_ms = int((time.monotonic() - t0) * 1000)
+        text: str = response.content[0].text.strip()
+
+        _log_llm_call(
+            event="llm.response.success",
+            model_id=ANTHROPIC_MODEL,
+            prompt_tokens=response.usage.input_tokens,
+            completion_tokens=response.usage.output_tokens,
+            latency_ms=latency_ms,
+            outcome="success",
+            extra={"mode": mode, "language": language},
+        )
+        return text
+
+    except Exception as exc:  # noqa: BLE001
+        logger.warning(
+            {
+                "event": "llm.fallback_triggered",
+                "reason": "generate_response",
                 "error": str(exc),
                 "model_id": ANTHROPIC_MODEL,
                 "prompt_tokens": 0,

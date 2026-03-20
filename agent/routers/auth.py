@@ -5,6 +5,7 @@ import logging
 
 from fastapi import APIRouter, HTTPException
 
+from agent.integrations.email_client import send_welcome_email
 from agent.integrations.supabase_client import get_supabase
 from agent.models.types import UserCreate
 
@@ -47,6 +48,14 @@ async def register(body: UserCreate) -> dict:
         raise HTTPException(status_code=500, detail="Failed to create user profile") from exc
 
     logger.info({"event": "auth.register.success", "user_id": auth_user.id})
+
+    # Send welcome email (non-blocking — failure doesn't affect registration)
+    name = body.display_name or body.email.split("@")[0]
+    try:
+        send_welcome_email(to_email=body.email, user_name=name)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "auth.register.welcome_email_failed", "error": str(exc)})
+
     return {
         "user_id": auth_user.id,
         "message": "Check your email to confirm your account",

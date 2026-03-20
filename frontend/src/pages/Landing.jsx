@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
@@ -21,16 +21,35 @@ function PlanFeatures({ features = [], accentClass = 'text-sage' }) {
   )
 }
 
+function getTrialDaysLeft() {
+  try {
+    const start = localStorage.getItem('breso_trial_start')
+    if (!start) return null
+    const elapsed = Math.floor((Date.now() - new Date(start).getTime()) / (1000 * 60 * 60 * 24))
+    return Math.max(0, 15 - elapsed)
+  } catch { return null }
+}
+
 export default function Landing() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const [showPremiumModal, setShowPremiumModal] = useState(false)
+  const [trialDaysLeft, setTrialDaysLeft] = useState(null)
+  const [trialActive, setTrialActive] = useState(false)
+
+  useEffect(() => {
+    const days = getTrialDaysLeft()
+    if (days !== null) {
+      setTrialActive(true)
+      setTrialDaysLeft(days)
+    }
+  }, [])
 
   const freeFeatures = t('landing.free.features', { returnObjects: true }) || []
   const essentialFeatures = t('landing.essential.features', { returnObjects: true }) || []
   const premiumFeatures = t('landing.premium.features', { returnObjects: true }) || []
 
   const handleFree = () => {
+    if (trialActive) return
     try {
       localStorage.setItem('breso_selected_plan', 'free')
       localStorage.setItem('breso_trial_start', new Date().toISOString())
@@ -40,10 +59,10 @@ export default function Landing() {
 
   const handleEssential = () => {
     try { localStorage.setItem('breso_selected_plan', 'essential') } catch {}
-    navigate('/welcome')
+    navigate('/payment?plan=essential')
   }
 
-  const handlePremium = () => setShowPremiumModal(true)
+  const handlePremium = () => navigate('/payment?plan=premium')
 
   return (
     <div className="space-y-6 animate-fade-up">
@@ -62,9 +81,15 @@ export default function Landing() {
         {/* ── FREE TRIAL ── */}
         <div className="relative rounded-2xl border-2 border-sage bg-sage/5 dark:bg-sage/10 p-5">
           <div className="absolute -top-3 right-4">
-            <span className="rounded-full bg-sage px-3 py-1 text-xs font-bold text-white shadow-sm">
-              {t('landing.free.badge')}
-            </span>
+            {trialActive ? (
+              <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white shadow-sm">
+                {trialDaysLeft > 0 ? `${trialDaysLeft} días restantes` : 'Prueba finalizada'}
+              </span>
+            ) : (
+              <span className="rounded-full bg-sage px-3 py-1 text-xs font-bold text-white shadow-sm">
+                {t('landing.free.badge')}
+              </span>
+            )}
           </div>
           <div className="flex items-baseline justify-between">
             <span className="text-lg font-bold text-textdark dark:text-dm-text">{t('landing.free.title')}</span>
@@ -72,13 +97,19 @@ export default function Landing() {
           </div>
           <PlanFeatures features={freeFeatures} accentClass="text-sage" />
           <p className="mt-3 text-xs text-textdark/45 dark:text-dm-muted">{t('landing.free.note')}</p>
-          <button
-            type="button"
-            onClick={handleFree}
-            className="mt-4 w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90"
-          >
-            {t('landing.free.cta')}
-          </button>
+          {trialActive ? (
+            <div className="mt-4 w-full rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-5 py-3 text-sm font-semibold text-green-700 dark:text-green-400 text-center">
+              Ya reclamado ✓ — Período de prueba activo
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={handleFree}
+              className="mt-4 w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90"
+            >
+              {t('landing.free.cta')}
+            </button>
+          )}
         </div>
 
         {/* ── ESSENTIAL ── */}
@@ -118,23 +149,6 @@ export default function Landing() {
           </button>
         </div>
       </div>
-
-      {/* Premium modal */}
-      {showPremiumModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="w-full max-w-sm rounded-2xl bg-white dark:bg-dm-surface p-6 shadow-2xl space-y-4">
-            <h2 className="text-lg font-bold text-textdark dark:text-dm-text">{t('landing.premiumModal.title')}</h2>
-            <p className="text-sm leading-relaxed text-textdark/70 dark:text-dm-text">{t('landing.premiumModal.message')}</p>
-            <button
-              type="button"
-              onClick={() => setShowPremiumModal(false)}
-              className="w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90"
-            >
-              {t('landing.premiumModal.close')}
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

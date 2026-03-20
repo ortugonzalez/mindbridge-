@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from agent.integrations.email_client import send_alert_email
 from agent.integrations.supabase_client import get_supabase
 from agent.models.types import CheckInResponse, CheckInResult, CheckInSubmit, ConversationMode
 from agent.routers.users import get_current_user
@@ -85,11 +86,42 @@ def _check_trial_expired(user_id: str) -> bool:
         return False
 
 
+def _get_trusted_contacts(user_id: str) -> list[dict]:
+    """Return active trusted contacts for a user with their emails and names."""
+    try:
+        supabase = get_supabase()
+        resp = (
+            supabase.table("trusted_contacts")
+            .select("contact_email, relationship_label")
+            .eq("user_id", user_id)
+            .eq("active", True)
+            .execute()
+        )
+        return resp.data or []
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _get_patient_name(user_id: str) -> str:
+    try:
+        supabase = get_supabase()
+        resp = (
+            supabase.table("users")
+            .select("display_name")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+        return (resp.data or {}).get("display_name") or "tu ser querido"
+    except Exception:  # noqa: BLE001
+        return "tu ser querido"
+
+
 def _log_missed_checkin(user_id: str) -> None:
     """
     Check if the user missed their last scheduled check-in.
-    - 24h with no response → log a warning
-    - 48h with no response → log alert (contact notification handled separately)
+    - 24h with no response → log warning + send yellow alert email
+    - 48h with no response → log alert + send orange alert email
     """
     try:
         supabase = get_supabase()
@@ -110,6 +142,7 @@ def _log_missed_checkin(user_id: str) -> None:
         missed = rows[0]
         scheduled_dt = datetime.fromisoformat(missed["scheduled_at"].replace("Z", "+00:00"))
         hours_missed = (datetime.now(timezone.utc) - scheduled_dt).total_seconds() / 3600
+
         if hours_missed >= 48:
             logger.warning(
                 {
@@ -119,6 +152,7 @@ def _log_missed_checkin(user_id: str) -> None:
                     "hours_since_scheduled": round(hours_missed, 1),
                 }
             )
+            _send_missed_checkin_emails(user_id, level="orange")
         elif hours_missed >= 24:
             logger.warning(
                 {
@@ -128,8 +162,30 @@ def _log_missed_checkin(user_id: str) -> None:
                     "hours_since_scheduled": round(hours_missed, 1),
                 }
             )
+            _send_missed_checkin_emails(user_id, level="yellow")
     except Exception:  # noqa: BLE001
         pass
+
+
+def _send_missed_checkin_emails(user_id: str, level: str) -> None:
+    """Send alert emails to all trusted contacts for a missed check-in."""
+    contacts = _get_trusted_contacts(user_id)
+    if not contacts:
+        return
+    patient_name = _get_patient_name(user_id)
+    messages = {
+        "yellow": f"Soledad notó que {patient_name} no completó su check-in de hoy. Puede que esté pasando un momento difícil.",
+        "orange": f"{patient_name} lleva dos días sin hablar con Soledad. Puede ser un buen momento para contactarle.",
+    }
+    message = messages.get(level, messages["yellow"])
+    for contact in contacts:
+        send_alert_email(
+            to_email=contact["contact_email"],
+            to_name=contact.get("relationship_label", ""),
+            patient_name=patient_name,
+            alert_level=level,
+            message=message,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -276,7 +332,7 @@ async def respond_to_checkin(
 
     word_count = len(body.response_text.split())
 
-    # Tone analysis (never stores response_text)
+    # Tone analysis
     tone_result = llm_client.analyze_tone(body.response_text)
     tone_score: float = tone_result.get("tone_score", 0.0)
     contains_crisis: bool = tone_result.get("contains_crisis_keywords", False)
@@ -285,9 +341,17 @@ async def respond_to_checkin(
     current_profile = _get_user_profile(user_id)
     profile_update = llm_client.extract_profile_update(body.response_text, current_profile)
 
-    # ---- response_text is discarded here — never written to DB ----
+    # Generate Soledad's reply using full conversational LLM
+    language = _get_user_language(user_id)
+    mode = checkin_row.get("conversation_mode", "listen")
+    breso_response: str = llm_client.generate_response(
+        user_message=body.response_text,
+        mode=mode,
+        language=language,
+        profile=current_profile,
+    )
 
-    # Update the check-in row (no raw text stored)
+    # Update the check-in row — save both messages
     try:
         supabase.table("check_ins").update(
             {
@@ -297,6 +361,8 @@ async def respond_to_checkin(
                 "tone_score": tone_score,
                 "engagement_flag": True,
                 "llm_model_id": llm_client.ANTHROPIC_MODEL,
+                "user_response": body.response_text,
+                "breso_response": breso_response,
             }
         ).eq("id", body.checkin_id).execute()
     except Exception as exc:  # noqa: BLE001
@@ -343,7 +409,7 @@ async def respond_to_checkin(
     # Update behavioral baseline
     baseline_updated = pattern_analyzer.update_baseline(user_id)
 
-    # Evaluate alert level (log if any, dispatch in Phase 7)
+    # Evaluate alert level — dispatch red email immediately on Level 3
     alert_level = pattern_analyzer.evaluate_alert_level(user_id)
     if alert_level:
         logger.warning(
@@ -354,6 +420,20 @@ async def respond_to_checkin(
                 "contains_crisis_keywords": contains_crisis,
             }
         )
+        if alert_level == "high" or contains_crisis:
+            patient_name = _get_patient_name(user_id)
+            contacts = _get_trusted_contacts(user_id)
+            for contact in contacts:
+                send_alert_email(
+                    to_email=contact["contact_email"],
+                    to_name=contact.get("relationship_label", ""),
+                    patient_name=patient_name,
+                    alert_level="red",
+                    message=(
+                        f"Soledad detectó señales de que {patient_name} puede estar "
+                        "pasando un momento muy difícil hoy. Por favor, intentá comunicarte."
+                    ),
+                )
 
     logger.info(
         {
@@ -370,7 +450,7 @@ async def respond_to_checkin(
         checkin_id=body.checkin_id,
         processed=True,
         tone_score=tone_score,
-        follow_up_message=None,
+        follow_up_message=breso_response,
         baseline_updated=baseline_updated,
     )
 
@@ -378,6 +458,45 @@ async def respond_to_checkin(
 # ---------------------------------------------------------------------------
 # GET /checkins/history
 # ---------------------------------------------------------------------------
+
+
+@router.get("/conversation-history")
+async def get_conversation_history(
+    limit: int = Query(default=20, ge=1, le=100),
+    current_user=Depends(get_current_user),
+) -> list[dict]:
+    """
+    Return full conversation history (user messages + Soledad responses).
+    Returns up to `limit` most recent exchanges, newest first.
+    """
+    user_id: str = current_user.id
+    supabase = get_supabase()
+    try:
+        resp = (
+            supabase.table("check_ins")
+            .select("id, scheduled_at, responded_at, user_response, breso_response, tone_score, conversation_mode")
+            .eq("user_id", user_id)
+            .not_.is_("responded_at", "null")
+            .order("responded_at", desc=True)
+            .limit(limit)
+            .execute()
+        )
+        rows = resp.data or []
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "checkins.conversation_history.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to fetch conversation history") from exc
+
+    return [
+        {
+            "id": r["id"],
+            "date": r.get("responded_at") or r.get("scheduled_at"),
+            "user_message": r.get("user_response"),
+            "soledad_response": r.get("breso_response"),
+            "tone_score": r.get("tone_score"),
+            "created_at": r.get("scheduled_at"),
+        }
+        for r in rows
+    ]
 
 
 @router.get("/history")

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
-import { getDashboard, postCheckin } from '../services/api'
+import { getDashboard, postCheckin, getConversationHistory } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 
@@ -19,12 +19,10 @@ function getGreetingKey() {
 export default function Chat() {
   const { t, i18n } = useTranslation()
   const hasUserReplied = useRef(false)
+  const historyLoaded = useRef(false)
 
   const [userName] = useState(safeGet(USER_NAME_KEY))
   const [mode, setMode] = useState('listening')
-  // Messages: { from, text?, textKey? }
-  // textKey = i18n key — always re-renders in current language
-  // text = fixed string (user messages, API responses)
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
@@ -34,13 +32,37 @@ export default function Chat() {
     { from: 'breso', textKey: 'chat.openingQuestion' },
   ]
 
-  // Rebuild opening messages on language change (while user hasn't replied)
+  // Load conversation history on mount
   useEffect(() => {
-    if (hasUserReplied.current) return
-    setMessages(buildOpening())
+    let mounted = true
+    ;(async () => {
+      try {
+        const history = await getConversationHistory(20)
+        if (!mounted) return
+        // History returns newest-first; reverse to get chronological order
+        const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
+        if (items.length > 0) {
+          historyLoaded.current = true
+          hasUserReplied.current = true
+          // Build message pairs oldest-first
+          const historicMessages = [...items].reverse().flatMap((item) => {
+            const msgs = []
+            if (item.user_message) msgs.push({ from: 'user', text: item.user_message })
+            if (item.soledad_response) msgs.push({ from: 'breso', text: item.soledad_response })
+            return msgs
+          })
+          setMessages(historicMessages)
+          return
+        }
+      } catch {}
+      // No history or error → show opening messages
+      if (mounted && !hasUserReplied.current) setMessages(buildOpening())
+    })()
+    return () => { mounted = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i18n.language])
+  }, [])
 
+  // Fetch current mode from dashboard
   useEffect(() => {
     let mounted = true
     ;(async () => {
@@ -54,6 +76,13 @@ export default function Chat() {
     return () => { mounted = false }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Rebuild opening messages on language change (only if user hasn't replied and no history)
+  useEffect(() => {
+    if (hasUserReplied.current || historyLoaded.current) return
+    setMessages(buildOpening())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i18n.language])
 
   const handleSend = async (text) => {
     const trimmed = String(text || '').trim()

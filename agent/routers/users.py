@@ -107,7 +107,7 @@ async def get_profile(current_user=Depends(get_current_user)) -> dict:
     try:
         resp = (
             supabase.table("users")
-            .select("display_name, phone_number, plan, trial_start, language")
+            .select("display_name, phone_number, plan, trial_start, language, user_type")
             .eq("id", current_user.id)
             .single()
             .execute()
@@ -128,6 +128,7 @@ async def get_profile(current_user=Depends(get_current_user)) -> dict:
             "phone": row.get("phone_number"),
             "plan": row.get("plan", "free_trial"),
             "language": row.get("language", "es"),
+            "user_type": row.get("user_type", "patient"),
             "trial_start": row.get("trial_start"),
             "trial_days_left": trial_days_left,
         }
