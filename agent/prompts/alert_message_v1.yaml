@@ -1,0 +1,8 @@
+version: "1.0"
+templates:
+  level2:
+    es: "Hola,\n\nTu {relationship_label} puede estar necesitando un poco de apoyo esta semana. Un mensaje tuyo podría hacer una gran diferencia. No es necesario que menciones que te contacté — simplemente hazle saber que piensas en ella/él.\n\nCon cariño,\nBRESO"
+    en: "Hi,\n\nYour {relationship_label} might benefit from a little extra support this week. Reaching out to let them know you're thinking of them could make a real difference. There's no need to mention that I contacted you.\n\nWarmly,\nBRESO"
+  level3:
+    es: "Hola,\n\nTu {relationship_label} puede necesitar apoyo urgente en este momento. Te pedimos que te comuniques con ella/él lo antes posible con calma y sin alarmar.\n\nSi es necesario, aquí tienes el número de crisis de tu país:\n{crisis_number}\n\nCon cariño,\nBRESO"
+    en: "Hi,\n\nYour {relationship_label} may need urgent support right now. We ask that you reach out to them as soon as possible, calmly and without alarming them.\n\nIf needed, here is your country's crisis line:\n{crisis_number}\n\nWarmly,\nBRESO"

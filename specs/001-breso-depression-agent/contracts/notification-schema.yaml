@@ -1,0 +1,151 @@
+# Notification Schema Contract
+# Defines the structure of all outbound notifications from BRESO.
+# These are NOT API endpoints — they are message schemas for email/push delivery.
+# Alert messages MUST NOT contain health data per FR-009.
+
+notifications:
+
+  # ─────────────────────────────────────────────────────────────────
+  # Level 2 (Orange) — Trusted Contact Alert
+  # ─────────────────────────────────────────────────────────────────
+  contact_alert_level2:
+    trigger: Alert severity = moderate, 5-7 days sustained signals
+    recipient: TrustedContact (email)
+    languages: [es, en]
+    privacy_constraint: "MUST NOT include diagnostic language, behavioral metrics, or raw data"
+
+    schema:
+      type: object
+      required: [recipient_email, relationship_label, language, message_body, sent_at, breso_signature]
+      properties:
+        recipient_email:
+          type: string
+          format: email
+        relationship_label:
+          type: string
+          description: "User-defined label, e.g. 'madre', 'amigo'"
+        language:
+          type: string
+          enum: [es, en]
+        message_body:
+          type: string
+          description: >
+            LLM-generated, non-alarmist message. Falls back to hardcoded template if LLM unavailable.
+            Must not exceed 200 words. No health data.
+        sent_at:
+          type: string
+          format: date-time
+        breso_signature:
+          type: string
+          description: HMAC signature of message_body for tamper detection (not personal data)
+        on_chain_ref:
+          type: string
+          description: Celo tx hash of the corresponding on-chain ConsentUpdated event (for audit trail)
+
+    template_es: >
+      Hola,
+
+      Tu {relationship_label} puede estar necesitando un poco de apoyo esta semana.
+      Un mensaje tuyo podría hacer una gran diferencia. No es necesario que menciones
+      que te contacté — simplemente hazle saber que piensas en ella/él.
+
+      Con cariño,
+      BRESO
+
+    template_en: >
+      Hi,
+
+      Your {relationship_label} might benefit from a little extra support this week.
+      Reaching out to let them know you're thinking of them could make a real difference.
+      There's no need to mention that I contacted you.
+
+      Warmly,
+      BRESO
+
+  # ─────────────────────────────────────────────────────────────────
+  # Level 3 (Red) — Crisis Protocol
+  # ─────────────────────────────────────────────────────────────────
+  contact_alert_level3:
+    trigger: High-risk keywords detected OR 48h no-response OR >3σ deviation
+    recipient: TrustedContact (email, urgent)
+    languages: [es, en]
+
+    schema:
+      type: object
+      required: [recipient_email, relationship_label, language, message_body, crisis_numbers, sent_at]
+      properties:
+        recipient_email: { type: string, format: email }
+        relationship_label: { type: string }
+        language: { type: string, enum: [es, en] }
+        message_body:
+          type: string
+          description: "Urgent but calm message — still no health data"
+        crisis_numbers:
+          type: array
+          items:
+            type: object
+            properties:
+              country: { type: string }
+              label: { type: string }
+              number: { type: string }
+          description: "Country-specific crisis lines — always included in Level 3"
+        sent_at: { type: string, format: date-time }
+        professional_notified:
+          type: boolean
+          description: "True if registered professional was also notified"
+
+    crisis_number_registry:
+      AR: { label: "Centro de Asistencia al Suicida", number: "135" }
+      MX: { label: "SAPTEL", number: "800-290-0024" }
+      CO: { label: "Línea 106", number: "106" }
+      CL: { label: "Salud Responde", number: "600-360-7577" }
+      ES: { label: "Teléfono de la Esperanza", number: "024" }
+      US: { label: "988 Suicide & Crisis Lifeline", number: "988" }
+      DEFAULT: { label: "International Association for Suicide Prevention", number: "https://www.iasp.info/resources/Crisis_Centres/" }
+
+  # ─────────────────────────────────────────────────────────────────
+  # Booking Confirmation
+  # ─────────────────────────────────────────────────────────────────
+  booking_confirmation:
+    trigger: Consultation booking confirmed + payment successful
+    recipients: [User, TrustedContact]
+    languages: [es, en]
+
+    schema:
+      type: object
+      required: [recipient_type, professional_name, consultation_datetime, language]
+      properties:
+        recipient_type:
+          type: string
+          enum: [user, contact]
+        professional_name: { type: string }
+        consultation_datetime: { type: string, format: date-time }
+        language: { type: string, enum: [es, en] }
+        payment_confirmed:
+          type: boolean
+          description: "True if x402 payment is confirmed on-chain"
+        payment_tx_hash:
+          type: string
+          description: "Celo transaction hash for payment receipt"
+
+  # ─────────────────────────────────────────────────────────────────
+  # Booking Failure
+  # ─────────────────────────────────────────────────────────────────
+  booking_failure:
+    trigger: Autonomous booking failed (no professional available or payment failure)
+    recipient: TrustedContact
+    languages: [es, en]
+
+    schema:
+      type: object
+      required: [recipient_email, language, message_body, manual_action_url]
+      properties:
+        recipient_email: { type: string, format: email }
+        language: { type: string, enum: [es, en] }
+        message_body:
+          type: string
+          description: "Informs contact that automated booking was unsuccessful and manual help may be needed"
+        manual_action_url:
+          type: string
+          description: "Link to professional directory or emergency contact resources"
+        sent_at: { type: string, format: date-time }

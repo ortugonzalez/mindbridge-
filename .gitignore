@@ -1,0 +1,54 @@
+# Environment files — NEVER commit real credentials
+.env
+.env.local
+.env.*.local
+agent/.env
+frontend/.env
+contracts/.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+env/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+*.so
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.pnpm-store/
+*.log
+
+# Solidity / Hardhat
+contracts/artifacts/
+contracts/cache/
+contracts/typechain-types/
+contracts/deployed.json
+contracts/node_modules/
+
+# Supabase local
+agent/supabase/.branches/
+agent/supabase/.temp/
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.tmp
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# Database (legacy SQLite reference — not used, Supabase is primary)
+*.sqlite
+*.db

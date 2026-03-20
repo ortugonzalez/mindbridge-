@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "BRESO",
+    "tagline": "Your mental wellness companion"
+  },
+  "nav": {
+    "dashboard": "Home",
+    "checkin": "Today's check-in",
+    "signout": "Sign out"
+  },
+  "auth": {
+    "signin": "Sign in",
+    "register": "Create account",
+    "email": "Email address",
+    "password": "Password",
+    "magic_link": "Magic link",
+    "send_magic_link": "Send magic link",
+    "magic_link_sent": "Link sent! Check your inbox (expires in 15 minutes).",
+    "signing_in": "Signing in...",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?",
+    "or": "or"
+  },
+  "onboarding": {
+    "title": "Welcome to BRESO!",
+    "subtitle": "Tell me a little about yourself to personalize your experience.",
+    "language": "Preferred language",
+    "timezone": "Your timezone",
+    "checkin_time": "Preferred daily check-in time",
+    "save": "Get started",
+    "saving": "Saving..."
+  },
+  "dashboard": {
+    "greeting_morning": "Good morning",
+    "greeting_afternoon": "Good afternoon",
+    "greeting_evening": "Good evening",
+    "checkin_pending": "Your check-in for today is waiting",
+    "checkin_done": "Check-in completed today ✓",
+    "go_to_checkin": "Go to check-in",
+    "baseline_building": "Building your profile... {{count}} of 7 check-ins",
+    "baseline_ready": "Your wellness profile is active",
+    "tone_trend": "Your emotional state this week",
+    "no_data": "Complete your first check-in to see your progress"
+  },
+  "checkin": {
+    "title": "Today's check-in",
+    "placeholder": "Type your response here...",
+    "send": "Send",
+    "sending": "Processing...",
+    "loading": "Preparing your message...",
+    "already_done": "You've already completed today's check-in. See you tomorrow! 💙",
+    "privacy_note": "Your response is analyzed and discarded. We never store your message content.",
+    "follow_up": "BRESO responds:"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "auth": "Authentication error. Check your credentials.",
+    "network": "Connection error. Check your internet."
+  }
+}

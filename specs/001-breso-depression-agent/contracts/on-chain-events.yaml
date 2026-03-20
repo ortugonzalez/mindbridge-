@@ -1,0 +1,150 @@
+# On-Chain Event Contracts
+# BRESO Smart Contracts — Celo Alfajores Testnet
+# These are the events emitted by BRESO's Solidity contracts.
+# All events are indexed by AgentScan (8004scan.io) automatically.
+
+contracts:
+
+  # ─────────────────────────────────────────────────────────────────
+  # BRESOAgentRegistry.sol
+  # ERC-8004 agent identity registration — deployed once at launch
+  # ─────────────────────────────────────────────────────────────────
+  BRESOAgentRegistry:
+    standard: ERC-8004
+    network: Celo Alfajores (chainId: 44787)
+    deployed_by: BRESO_DEPLOYER_WALLET
+
+    events:
+      AgentRegistered:
+        description: Emitted when BRESO registers its on-chain identity NFT
+        indexed_fields:
+          - name: tokenId
+            type: uint256
+            description: ERC-8004 NFT token ID for BRESO agent
+          - name: agentAddress
+            type: address
+            description: BRESO operational wallet address
+        non_indexed_fields:
+          - name: agentName
+            type: string
+            value: "BRESO"
+          - name: agentVersion
+            type: string
+            example: "1.0.0"
+          - name: metadataURI
+            type: string
+            description: IPFS URI containing agent metadata JSON
+          - name: registeredAt
+            type: uint256
+            description: Unix timestamp of registration
+
+      AgentMetadataUpdated:
+        description: Emitted when BRESO updates its version or metadata
+        indexed_fields:
+          - name: tokenId
+            type: uint256
+        non_indexed_fields:
+          - name: newVersion
+            type: string
+          - name: newMetadataURI
+            type: string
+          - name: updatedAt
+            type: uint256
+
+  # ─────────────────────────────────────────────────────────────────
+  # ConsentRegistry.sol
+  # Append-only consent record — no personal data on-chain
+  # ─────────────────────────────────────────────────────────────────
+  ConsentRegistry:
+    network: Celo Alfajores (chainId: 44787)
+    deployed_by: BRESO_DEPLOYER_WALLET
+
+    events:
+      ConsentUpdated:
+        description: >
+          Emitted on every user consent create, update, or revoke.
+          No personal data stored — only hashed payload and threshold enum.
+          Indexed by AgentScan as a BRESO agent action.
+        indexed_fields:
+          - name: userIdHash
+            type: bytes32
+            description: keccak256 of the internal user UUID — not reversible to personal data
+          - name: actionType
+            type: uint8
+            description: "0=create, 1=update, 2=revoke"
+        non_indexed_fields:
+          - name: payloadHash
+            type: bytes32
+            description: keccak256 of the full consent JSON payload (stored off-chain in SQLite)
+          - name: threshold
+            type: uint8
+            description: "0=mild, 1=moderate, 2=high"
+          - name: contactWallet
+            type: address
+            description: Trusted contact's wallet address at time of consent
+          - name: recordedAt
+            type: uint256
+            description: Unix timestamp
+
+      ConsentRevoked:
+        description: Emitted when user fully revokes all consent (account deletion path)
+        indexed_fields:
+          - name: userIdHash
+            type: bytes32
+        non_indexed_fields:
+          - name: revokedAt
+            type: uint256
+
+  # ─────────────────────────────────────────────────────────────────
+  # x402 Payment Events (Thirdweb x402 on Celo)
+  # These are emitted by Thirdweb's x402 payment contracts,
+  # not by BRESO contracts directly. Included here for reference.
+  # ─────────────────────────────────────────────────────────────────
+  x402PaymentChannel:
+    standard: Thirdweb x402
+    network: Celo Alfajores (chainId: 44787)
+    note: Contract deployed by Thirdweb — BRESO is a payment initiator only
+
+    events:
+      PaymentProcessed:
+        description: >
+          Emitted when BRESO initiates a USDT payment (subscription or consultation).
+          Visible on AgentScan as an action by the BRESO agent wallet.
+        indexed_fields:
+          - name: from
+            type: address
+            description: Payer wallet (user or BRESO agent wallet for autonomous consultation payments)
+          - name: to
+            type: address
+            description: Recipient wallet (BRESO treasury or professional wallet)
+        non_indexed_fields:
+          - name: amount
+            type: uint256
+            description: USDT amount in smallest unit (6 decimals)
+          - name: token
+            type: address
+            description: USDT contract address on Celo Alfajores
+          - name: paymentType
+            type: string
+            description: "subscription_essential | subscription_premium | consultation"
+          - name: referenceId
+            type: bytes32
+            description: keccak256 of internal booking/subscription ID (for reconciliation)
+          - name: processedAt
+            type: uint256
+
+# ─────────────────────────────────────────────────────────────────
+# AgentScan Indexing Notes
+# ─────────────────────────────────────────────────────────────────
+agentscan:
+  url: https://8004scan.io
+  indexing: automatic — all events from registered ERC-8004 agents appear automatically
+  breso_agent_page: https://8004scan.io/agent/{ERC8004_TOKEN_ID}
+  events_visible:
+    - AgentRegistered (one-time, at deployment)
+    - ConsentUpdated (one per consent change)
+    - PaymentProcessed (one per subscription cycle + one per consultation)
+  note: >
+    No special integration needed from BRESO. Once the agent is registered via
+    BRESOAgentRegistry and the agent wallet address is linked, all transactions
+    from that wallet that emit known ERC-8004 events are indexed automatically.

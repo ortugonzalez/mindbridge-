@@ -1,0 +1,60 @@
+{
+  "app": {
+    "name": "BRESO",
+    "tagline": "Tu compañero de bienestar mental"
+  },
+  "nav": {
+    "dashboard": "Inicio",
+    "checkin": "Check-in de hoy",
+    "signout": "Cerrar sesión"
+  },
+  "auth": {
+    "signin": "Iniciar sesión",
+    "register": "Crear cuenta",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "magic_link": "Enlace mágico",
+    "send_magic_link": "Enviar enlace mágico",
+    "magic_link_sent": "¡Enlace enviado! Revisa tu correo (expira en 15 minutos).",
+    "signing_in": "Iniciando sesión...",
+    "no_account": "¿No tienes cuenta?",
+    "have_account": "¿Ya tienes cuenta?",
+    "or": "o"
+  },
+  "onboarding": {
+    "title": "¡Bienvenida/o a BRESO!",
+    "subtitle": "Cuéntame un poco sobre ti para personalizar tu experiencia.",
+    "language": "Idioma preferido",
+    "timezone": "Tu zona horaria",
+    "checkin_time": "Hora preferida para el check-in diario",
+    "save": "Comenzar",
+    "saving": "Guardando..."
+  },
+  "dashboard": {
+    "greeting_morning": "Buenos días",
+    "greeting_afternoon": "Buenas tardes",
+    "greeting_evening": "Buenas noches",
+    "checkin_pending": "Tu check-in de hoy te espera",
+    "checkin_done": "Check-in completado hoy ✓",
+    "go_to_checkin": "Hacer check-in",
+    "baseline_building": "Construyendo tu perfil... {{count}} de 7 check-ins",
+    "baseline_ready": "Tu perfil de bienestar está activo",
+    "tone_trend": "Tu estado emocional esta semana",
+    "no_data": "Completa tu primer check-in para ver tu progreso"
+  },
+  "checkin": {
+    "title": "Check-in de hoy",
+    "placeholder": "Escribe tu respuesta aquí...",
+    "send": "Enviar",
+    "sending": "Procesando...",
+    "loading": "Preparando tu mensaje...",
+    "already_done": "Ya completaste tu check-in de hoy. ¡Vuelve mañana! 💙",
+    "privacy_note": "Tu respuesta se analiza y se descarta. No guardamos el contenido de tus mensajes.",
+    "follow_up": "BRESO responde:"
+  },
+  "errors": {
+    "generic": "Algo salió mal. Por favor intenta de nuevo.",
+    "auth": "Error de autenticación. Verifica tus credenciales.",
+    "network": "Error de conexión. Verifica tu internet."
+  }
+}

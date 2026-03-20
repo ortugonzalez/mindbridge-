@@ -1,0 +1,564 @@
+openapi: "3.1.0"
+info:
+  title: BRESO Agent API
+  version: "1.0.0"
+  description: >
+    REST API for the BRESO AI mental wellness agent backend (FastAPI).
+    All endpoints require authentication via Bearer token except /health and /auth/*.
+    All timestamps are ISO 8601 UTC. All monetary values are USDT (float, 2 decimal places).
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  schemas:
+    # ─── Shared ──────────────────────────────────────────────────────
+    Error:
+      type: object
+      required: [code, message, correlation_id]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        correlation_id: { type: string }
+
+    Language:
+      type: string
+      enum: [es, en]
+
+    AlertSeverity:
+      type: string
+      enum: [mild, moderate, high]
+
+    SubscriptionTier:
+      type: string
+      enum: [essential, premium]
+
+    # ─── User ────────────────────────────────────────────────────────
+    UserCreate:
+      type: object
+      required: [language, timezone, wallet_address]
+      properties:
+        language:
+          $ref: "#/components/schemas/Language"
+        timezone:
+          type: string
+          example: "America/Mexico_City"
+        wallet_address:
+          type: string
+          pattern: "^0x[a-fA-F0-9]{40}$"
+        checkin_time_preference:
+          type: string
+          pattern: "^([01]\\d|2[0-3]):([0-5]\\d)$"
+          example: "09:00"
+
+    UserProfile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        language:
+          $ref: "#/components/schemas/Language"
+        timezone: { type: string }
+        checkin_time_preference: { type: string }
+        baseline_ready: { type: boolean }
+        wallet_address: { type: string }
+        subscription_tier:
+          $ref: "#/components/schemas/SubscriptionTier"
+        subscription_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+
+    # ─── Personalization ─────────────────────────────────────────────
+    PersonalizationProfile:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        interests: { type: array, items: { type: string } }
+        energy_pattern:
+          type: object
+          description: "Hour of day (0-23) → energy level (low/medium/high)"
+          additionalProperties: { type: string, enum: [low, medium, high] }
+        active_hours: { type: array, items: { type: integer }, description: "Hours when user is most responsive" }
+        hobbies: { type: array, items: { type: string } }
+        joy_triggers: { type: array, items: { type: string } }
+        energy_drains: { type: array, items: { type: string } }
+        last_updated: { type: string, format: date-time }
+
+    # ─── Check-in ────────────────────────────────────────────────────
+    CheckInResponse:
+      type: object
+      required: [checkin_id, message]
+      properties:
+        checkin_id: { type: string, format: uuid }
+        message: { type: string, description: "Conversational check-in message in user's language" }
+        conversation_mode: { type: string, enum: [listen, motivate, propose, celebrate, silent_alert] }
+        scheduled_at: { type: string, format: date-time }
+
+    CheckInSubmit:
+      type: object
+      required: [checkin_id, response_text]
+      properties:
+        checkin_id: { type: string, format: uuid }
+        response_text:
+          type: string
+          maxLength: 2000
+          description: "Raw user response — discarded after processing, never stored"
+
+    CheckInResult:
+      type: object
+      properties:
+        checkin_id: { type: string, format: uuid }
+        processed: { type: boolean }
+        tone_score: { type: number, format: float, minimum: -1, maximum: 1 }
+        follow_up_message: { type: string, description: "Optional agent follow-up (max 1 more turn)" }
+        baseline_updated: { type: boolean }
+
+    # ─── Behavioral Baseline ─────────────────────────────────────────
+    BehavioralBaseline:
+      type: object
+      properties:
+        user_id: { type: string, format: uuid }
+        computed_at: { type: string, format: date-time }
+        checkins_count: { type: integer }
+        avg_tone_score: { type: number }
+        tone_stddev: { type: number }
+        avg_response_delay_seconds: { type: number }
+        delay_stddev: { type: number }
+        avg_word_count: { type: number }
+        wordcount_stddev: { type: number }
+        engagement_rate: { type: number, minimum: 0, maximum: 1 }
+
+    # ─── Trusted Contact ─────────────────────────────────────────────
+    ContactCreate:
+      type: object
+      required: [contact_email, relationship_label, alert_threshold]
+      properties:
+        contact_email: { type: string, format: email }
+        relationship_label:
+          type: string
+          example: "madre"
+        alert_threshold:
+          $ref: "#/components/schemas/AlertSeverity"
+        wallet_address:
+          type: string
+          pattern: "^0x[a-fA-F0-9]{40}$"
+          description: "Contact's wallet for Self Protocol ZK verification anchoring"
+
+    ContactStatus:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        contact_email: { type: string }
+        relationship_label: { type: string }
+        alert_threshold:
+          $ref: "#/components/schemas/AlertSeverity"
+        zk_verified: { type: boolean }
+        zk_verification_url: { type: string, description: "Self Protocol verification link sent to contact" }
+        active: { type: boolean }
+
+    ZKVerificationCallback:
+      type: object
+      required: [contact_id, proof_valid, age_verified]
+      properties:
+        contact_id: { type: string, format: uuid }
+        proof_valid: { type: boolean }
+        age_verified: { type: boolean, description: "True = contact confirmed adult (≥18)" }
+        proof_nullifier: { type: string, description: "ZK proof nullifier for deduplication — not personal data" }
+
+    # ─── Alerts ──────────────────────────────────────────────────────
+    AlertSummary:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        triggered_at: { type: string, format: date-time }
+        severity_level:
+          $ref: "#/components/schemas/AlertSeverity"
+        triggering_dimensions: { type: array, items: { type: string } }
+        contact_notified_at: { type: string, format: date-time, nullable: true }
+        booking_initiated: { type: boolean }
+        on_chain_tx_hash: { type: string, nullable: true }
+
+    # ─── Consultation Booking ─────────────────────────────────────────
+    BookingStatus:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        alert_id: { type: string, format: uuid }
+        professional_name: { type: string }
+        consultation_datetime: { type: string, format: date-time, nullable: true }
+        payment_status: { type: string, enum: [pending, confirmed, failed] }
+        payment_tx_hash: { type: string, nullable: true }
+        booking_status: { type: string, enum: [initiated, confirmed, failed] }
+        failure_reason: { type: string, nullable: true }
+
+    ProfessionalDecisionTree:
+      type: object
+      description: "Coordination decision tree result"
+      properties:
+        path: { type: string, enum: [own_professional, insurance_network, breso_network] }
+        professional_id: { type: string, format: uuid, nullable: true }
+        professional_name: { type: string, nullable: true }
+        consultation_rate_usdt: { type: number, nullable: true }
+        notes: { type: string }
+
+    # ─── Subscriptions ────────────────────────────────────────────────
+    SubscriptionInitiate:
+      type: object
+      required: [tier]
+      properties:
+        tier:
+          $ref: "#/components/schemas/SubscriptionTier"
+        wallet_address:
+          type: string
+          pattern: "^0x[a-fA-F0-9]{40}$"
+
+    SubscriptionPaymentIntent:
+      type: object
+      properties:
+        payment_intent_id: { type: string }
+        tier:
+          $ref: "#/components/schemas/SubscriptionTier"
+        amount_usdt: { type: number }
+        recipient_address: { type: string }
+        chain_id: { type: integer, example: 44787, description: "Celo Alfajores chain ID" }
+        expires_at: { type: string, format: date-time }
+        x402_payload: { type: object, description: "Thirdweb x402 payment payload for frontend SDK" }
+
+    SubscriptionStatus:
+      type: object
+      properties:
+        tier:
+          $ref: "#/components/schemas/SubscriptionTier"
+        active: { type: boolean }
+        started_at: { type: string, format: date-time, nullable: true }
+        expires_at: { type: string, format: date-time, nullable: true }
+        payment_tx_hash: { type: string, nullable: true }
+
+    # ─── Agent Identity ───────────────────────────────────────────────
+    AgentIdentityInfo:
+      type: object
+      properties:
+        nft_token_id: { type: string }
+        contract_address: { type: string }
+        agent_wallet_address: { type: string }
+        agent_name: { type: string }
+        agent_version: { type: string }
+        registered_at: { type: string, format: date-time }
+        agentscan_url: { type: string, example: "https://8004scan.io/agent/{nft_token_id}" }
+
+paths:
+  # ─── Health ────────────────────────────────────────────────────────
+  /health:
+    get:
+      summary: Health check
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  version: { type: string }
+
+  # ─── Auth ──────────────────────────────────────────────────────────
+  /auth/register:
+    post:
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserCreate"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_id: { type: string, format: uuid }
+                  token: { type: string }
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  # ─── User ──────────────────────────────────────────────────────────
+  /users/me:
+    get:
+      summary: Get current user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserProfile" }
+
+  /users/me/personalization:
+    get:
+      summary: Get personalization profile
+      responses:
+        "200":
+          description: Personalization profile
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PersonalizationProfile" }
+
+  /users/me/baseline:
+    get:
+      summary: Get behavioral baseline
+      responses:
+        "200":
+          description: Behavioral baseline
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BehavioralBaseline" }
+        "404":
+          description: Baseline not yet ready (< 7 check-ins)
+
+  # ─── Check-ins ────────────────────────────────────────────────────
+  /checkins/today:
+    get:
+      summary: Get today's check-in message
+      responses:
+        "200":
+          description: Today's check-in
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckInResponse" }
+        "404":
+          description: No check-in scheduled today
+
+  /checkins/respond:
+    post:
+      summary: Submit user response to check-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CheckInSubmit" }
+      responses:
+        "200":
+          description: Response processed
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CheckInResult" }
+        "400":
+          description: Invalid checkin_id or already responded
+
+  /checkins/history:
+    get:
+      summary: Get check-in history (anonymized metrics only)
+      parameters:
+        - name: days
+          in: query
+          schema: { type: integer, default: 30 }
+      responses:
+        "200":
+          description: Check-in history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    scheduled_at: { type: string, format: date-time }
+                    responded: { type: boolean }
+                    tone_score: { type: number, nullable: true }
+                    word_count: { type: integer, nullable: true }
+                    response_delay_seconds: { type: integer, nullable: true }
+
+  # ─── Trusted Contact ──────────────────────────────────────────────
+  /contacts:
+    post:
+      summary: Add or update trusted contact
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactCreate" }
+      responses:
+        "201":
+          description: Contact created, ZK verification initiated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactStatus" }
+    get:
+      summary: Get trusted contact status
+      responses:
+        "200":
+          description: Contact status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactStatus" }
+        "404":
+          description: No contact configured
+
+  /contacts/zk-callback:
+    post:
+      summary: Self Protocol ZK verification callback
+      description: Called by Self Protocol after contact completes verification. Internally verified signature.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ZKVerificationCallback" }
+      responses:
+        "200":
+          description: Verification result recorded
+
+  /contacts/threshold:
+    patch:
+      summary: Update alert threshold
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [alert_threshold]
+              properties:
+                alert_threshold: { $ref: "#/components/schemas/AlertSeverity" }
+      responses:
+        "200":
+          description: Threshold updated, consent record written on-chain
+
+  # ─── Alerts ───────────────────────────────────────────────────────
+  /alerts:
+    get:
+      summary: List alerts for current user
+      responses:
+        "200":
+          description: Alert list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AlertSummary" }
+
+  # ─── Bookings ─────────────────────────────────────────────────────
+  /bookings/decision-tree:
+    get:
+      summary: Get professional coordination decision tree result
+      description: Agent evaluates decision tree and returns recommended path
+      responses:
+        "200":
+          description: Decision tree result
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProfessionalDecisionTree" }
+
+  /bookings/{booking_id}:
+    get:
+      summary: Get booking status
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "200":
+          description: Booking status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BookingStatus" }
+
+  # ─── Subscriptions ────────────────────────────────────────────────
+  /subscriptions/status:
+    get:
+      summary: Get current subscription status
+      responses:
+        "200":
+          description: Subscription status
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubscriptionStatus" }
+
+  /subscriptions/initiate:
+    post:
+      summary: Initiate subscription payment (returns x402 payment intent)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SubscriptionInitiate" }
+      responses:
+        "200":
+          description: Payment intent ready for frontend wallet signing
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubscriptionPaymentIntent" }
+
+  /subscriptions/confirm:
+    post:
+      summary: Confirm subscription after on-chain payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [payment_intent_id, tx_hash]
+              properties:
+                payment_intent_id: { type: string }
+                tx_hash: { type: string }
+      responses:
+        "200":
+          description: Subscription activated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SubscriptionStatus" }
+
+  # ─── Agent Identity ───────────────────────────────────────────────
+  /agent/identity:
+    get:
+      summary: Get BRESO on-chain agent identity info
+      security: []
+      responses:
+        "200":
+          description: Agent identity
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentIdentityInfo" }
+
+  # ─── Crisis ───────────────────────────────────────────────────────
+  /crisis/numbers:
+    get:
+      summary: Get country-specific crisis line numbers
+      security: []
+      parameters:
+        - name: country_code
+          in: query
+          schema: { type: string, example: MX }
+      responses:
+        "200":
+          description: Crisis numbers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  country_code: { type: string }
+                  numbers:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        label: { type: string }
+                        number: { type: string }

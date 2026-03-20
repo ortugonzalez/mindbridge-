@@ -1,0 +1,163 @@
+{
+  "language": {
+    "es": "ES",
+    "en": "EN",
+    "label": "Language",
+    "arFlag": "🇦🇷",
+    "usFlag": "🇺🇸"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "tryAgain": "Try again",
+    "required": "This field is required.",
+    "send": "Send"
+  },
+  "landing": {
+    "hero": "Your mental wellness companion",
+    "cta": "Start free",
+    "guide": "Welcome to BRESO. A calm space to care for yourself.",
+    "plans": {
+      "essential": {
+        "title": "Essential",
+        "price": "$5/month",
+        "features": [
+          "1 daily check-in",
+          "30-day history",
+          "1 trusted contact",
+          "3x/week proposals"
+        ]
+      },
+      "premium": {
+        "title": "Premium",
+        "price": "$12/month",
+        "features": [
+          "Unlimited check-ins",
+          "2 trusted contacts",
+          "Professional coordination",
+          "Monthly report"
+        ]
+      }
+    }
+  },
+  "onboarding": {
+    "title": "Onboarding",
+    "guide": "We’ll ask you a few questions to get to know you better.",
+    "step1Prompt": "Hi, I’m BRESO 🌱 What’s your name?",
+    "step2Prompt": "Nice to meet you, {{name}}. What language would you like us to use?",
+    "step3Prompt": "Is there someone you trust that you’d like to add to support you? (you can skip this)",
+    "step4Done": "All set {{name}}. Let’s begin 🌱",
+    "continue": "Continue",
+    "addContact": "Add contact",
+    "skipContact": "Skip for now",
+    "name": "Name",
+    "email": "Email",
+    "password": "Password",
+    "preferredLanguage": "Preferred language",
+    "languageHint": "Select ES or EN",
+    "trustContact": "Add trusted contact",
+    "contactName": "Contact name",
+    "contactEmail": "Contact email",
+    "relation": "Relationship",
+    "relationPlaceholder": "e.g., sister, friend...",
+    "ageCheck": "Soy mayor de 18 años / I am over 18",
+    "submit": "Create account",
+    "submitLoading": "Creating your account...",
+    "contactAdding": "Adding your contact...",
+    "errors": {
+      "ageRequired": "Please confirm you are over 18.",
+      "missingFields": "Please fill the required fields."
+    }
+  },
+  "chat": {
+    "header": {
+      "mode": "Current mode"
+    },
+    "yourName": "Your name",
+    "guide": "This is your safe space. Tell me how you’re feeling today.",
+    "welcome": "Hi {{name}}. I’m BRESO 🌱 Ready to begin?",
+    "firstQuestion": {
+      "listening": "How are you feeling today?",
+      "motivation": "What small step would help you today?",
+      "proposal": "Pick a proposal for today. Which one would you like to try?",
+      "celebration": "What was the best part of your day to celebrate?"
+    },
+    "modeDescriptions": {
+      "listening": "Calm and listening",
+      "motivation": "Small, gentle action",
+      "proposal": "Practical step-by-step",
+      "celebration": "Recognize and celebrate"
+    },
+    "inputPlaceholder": "Type something...",
+    "loadingReply": "BRESO is replying...",
+    "typing": "BRESO is typing...",
+    "errorReply": "Could not send your check-in. Please try again.",
+    "modes": {
+      "listening": { "es": "Escucha", "en": "Listening" },
+      "motivation": { "es": "Motivación", "en": "Motivation" },
+      "proposal": { "es": "Propuesta", "en": "Proposal" },
+      "celebration": { "es": "Celebración", "en": "Celebration" }
+    },
+    "mockMessages": [
+      {
+        "from": "breso",
+        "text": "Hi Ana. I’m here to listen to you with calm."
+      },
+      {
+        "from": "user",
+        "text": "Thanks. Today I feel a bit anxious."
+      },
+      {
+        "from": "breso",
+        "text": "We can start with a short breathing exercise. Ready?"
+      }
+    ],
+    "mockReplies": {
+      "listening": "Let’s breathe together: inhale 4 seconds, exhale 6. How does your body feel right now?",
+      "motivation": "Choose a small step for today. What’s the next action that feels doable?",
+      "proposal": "Perfect. Go for a 15-minute walk today and note how you felt.",
+      "celebration": "Great job! Celebrating is also self-care. What was the best part of your day?"
+    }
+  },
+  "dashboard": {
+    "loading": "Loading your dashboard...",
+    "error": "Could not load the dashboard. Please try again.",
+    "guide": "Here you can see your progress and how you’re growing.",
+    "greeting": "Hi {{name}}",
+    "greetingNoName": "Hi",
+    "streakLabel": "Streak:",
+    "streak": "{{days}} days in a row / {{days}} días consecutivos 🔥",
+    "weeklyTitle": "Weekly history",
+    "nextProposalTitle": "Next BRESO proposal",
+    "trustContactTitle": "Trusted contact",
+    "startToday": "Iniciar check-in del día (5 minutos) / Start today's check-in (5 minutes)",
+    "startLoading": "Starting check-in...",
+    "viewHistory": "View history",
+    "viewHistoryHelp": "See how your week went",
+    "configureContact": "Configure contact",
+    "configureContactHelp": "Add someone you trust",
+    "historyDetailsTitle": "Your week (7 days)",
+    "status": {
+      "completed": "Completed",
+      "pending": "Pending"
+    },
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "contactModalTitle": "Configure contact",
+    "contactFormName": "Contact name",
+    "contactFormEmail": "Contact email",
+    "contactFormRelation": "Relationship",
+    "contactSave": "Save contact",
+    "contactSaving": "Saving...",
+    "contactCancel": "Cancel",
+    "mock": {
+      "userName": "Ana García",
+      "contactName": "María",
+      "contactRelation": "sister",
+      "nextProposal": "Take a 15-minute walk today",
+      "streakDays": 4,
+      "weeklyCompleted": [true, true, true, true, false, false, false],
+      "mode": "listening"
+    }
+  }
+}
+
