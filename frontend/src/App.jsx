@@ -40,19 +40,20 @@ function App() {
           <LanguageToggle />
           <main className="mx-auto w-full max-w-xl px-4 pt-16 pb-8">
             <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/welcome" element={<Welcome />} />
-              <Route path="/onboarding" element={<Onboarding />} />
+              <Route path="/" element={<SignIn />} />
+              <Route path="/signin" element={<SignIn />} />
+              <Route path="/landing" element={<AuthGuard><Landing /></AuthGuard>} />
+              <Route path="/welcome" element={<AuthGuard><Welcome /></AuthGuard>} />
+              <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
               <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />
               <Route path="/dashboard" element={<AuthGuard><Dashboard /></AuthGuard>} />
-              <Route path="/signin" element={<SignIn />} />
               <Route path="/checkin" element={<AuthGuard><CheckIn /></AuthGuard>} />
               <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
               <Route path="/notifications" element={<AuthGuard><Notifications /></AuthGuard>} />
               <Route path="/contacts" element={<AuthGuard><Contacts /></AuthGuard>} />
               <Route path="/settings" element={<AuthGuard><Settings /></AuthGuard>} />
               <Route path="/help" element={<AuthGuard><Help /></AuthGuard>} />
-              <Route path="/payment" element={<Payment />} />
+              <Route path="/payment" element={<AuthGuard><Payment /></AuthGuard>} />
               <Route path="/family-dashboard" element={<AuthGuard><FamilyDashboard /></AuthGuard>} />
               <Route path="/professional-dashboard" element={<AuthGuard><ProfessionalDashboard /></AuthGuard>} />
               <Route path="*" element={<Navigate to="/" replace />} />

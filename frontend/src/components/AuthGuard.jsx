@@ -2,9 +2,9 @@ import { Navigate } from 'react-router-dom'
 
 /**
  * AuthGuard — protects private routes.
- * In mock mode (no VITE_API_BASE_URL), considers a user "logged in" if they
- * have completed onboarding (breso_user_name in localStorage).
- * In real mode, requires breso_token.
+ * Mock mode (no VITE_API_BASE_URL): logged in if breso_user_name OR breso_token present.
+ * Real mode: requires breso_token.
+ * Public routes (/signin, /) do not use AuthGuard.
  */
 export default function AuthGuard({ children }) {
   const hasMockUser = (() => { try { return !!localStorage.getItem('breso_user_name') } catch { return false } })()
