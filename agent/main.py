@@ -16,8 +16,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from agent.integrations.agentscan import register_on_agentscan
 from agent.integrations.supabase_client import get_supabase
-from agent.routers import alerts, auth, bookings, checkins, contacts, subscriptions, users
+from agent.routers import alerts, auth, bookings, checkins, contacts, payments, subscriptions, users
 from agent.services import scheduler
 
 # ---------------------------------------------------------------------------
@@ -69,6 +70,7 @@ logger = logging.getLogger("breso.main")
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # noqa: ANN201
     scheduler.start()
+    await register_on_agentscan()
     logger.info({"event": "app.startup"})
     yield
     scheduler.stop()
@@ -133,6 +135,7 @@ app.include_router(alerts.router)
 app.include_router(contacts.router)
 app.include_router(bookings.router)
 app.include_router(subscriptions.router)
+app.include_router(payments.router)
 
 
 # ---------------------------------------------------------------------------

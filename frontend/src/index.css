@@ -36,21 +36,24 @@ body {
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--sans);
-  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 .dark {
-  /* Theme Variables - Dark */
-  --color-primary: #60A5FA;
-  --color-primary-hover: #93C5FD;
-  --color-secondary: #34D399;
-  --color-secondary-hover: #6EE7B7;
-  --color-background: #1A1A2E;
-  --color-surface: #252545;
-  --color-text: #E8E8E8;
-  --color-text-muted: #9CA3AF;
-  --color-border: #374151;
-  --color-ghost-hover: rgba(96, 165, 250, 0.2);
+  /* Theme Variables - Dark (Olive Green) */
+  --color-primary: #7C9A7E;
+  --color-primary-hover: #9CAF9C;
+  --color-secondary: #4A5E4A;
+  --color-secondary-hover: #3D4F3D;
+  --color-background: #2D3B2D;
+  --color-surface: #3D4F3D;
+  --color-text: #E8EDE8;
+  --color-text-muted: #9CAF9C;
+  --color-border: #4A5E4A;
+  --color-ghost-hover: rgba(124, 154, 126, 0.2);
 }
 
 .dark body {

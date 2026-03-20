@@ -57,6 +57,8 @@ class UserCreate(BaseModel):
     language: Language
     timezone: str
     checkin_time_preference: str = "09:00"
+    phone_number: Optional[str] = None
+    display_name: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

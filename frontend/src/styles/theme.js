@@ -14,17 +14,17 @@ export const theme = {
       ghostHover: 'rgba(59, 130, 246, 0.1)',
     },
     dark: {
-      primary: '#60A5FA', // Blue-400
-      primaryHover: '#93C5FD', // Blue-300
-      secondary: '#34D399', // Emerald-400
-      secondaryHover: '#6EE7B7', // Emerald-300
-      background: '#1A1A2E',
-      surface: '#252545',
-      text: '#E8E8E8',
-      textMuted: '#9CA3AF',
-      border: '#374151',
+      primary: '#7C9A7E',
+      primaryHover: '#9CAF9C',
+      secondary: '#4A5E4A',
+      secondaryHover: '#3D4F3D',
+      background: '#2D3B2D',
+      surface: '#3D4F3D',
+      text: '#E8EDE8',
+      textMuted: '#9CAF9C',
+      border: '#4A5E4A',
       ghost: 'transparent',
-      ghostHover: 'rgba(96, 165, 250, 0.2)',
+      ghostHover: 'rgba(124, 154, 126, 0.2)',
     }
   },
   typography: {

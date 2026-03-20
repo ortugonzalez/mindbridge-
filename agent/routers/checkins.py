@@ -62,6 +62,76 @@ def _get_user_language(user_id: str) -> str:
         return "en"
 
 
+def _check_trial_expired(user_id: str) -> bool:
+    """Return True if user is on free_trial and 15 days have elapsed."""
+    try:
+        supabase = get_supabase()
+        resp = (
+            supabase.table("users")
+            .select("plan, trial_start")
+            .eq("id", user_id)
+            .single()
+            .execute()
+        )
+        row = resp.data or {}
+        if row.get("plan") != "free_trial":
+            return False
+        trial_start_str = row.get("trial_start")
+        if not trial_start_str:
+            return False
+        trial_start = datetime.fromisoformat(trial_start_str.replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - trial_start).days >= 15
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def _log_missed_checkin(user_id: str) -> None:
+    """
+    Check if the user missed their last scheduled check-in.
+    - 24h with no response → log a warning
+    - 48h with no response → log alert (contact notification handled separately)
+    """
+    try:
+        supabase = get_supabase()
+        cutoff_48h = (datetime.now(timezone.utc) - timedelta(hours=48)).isoformat()
+        resp = (
+            supabase.table("check_ins")
+            .select("id, scheduled_at, responded_at")
+            .eq("user_id", user_id)
+            .lt("scheduled_at", cutoff_48h)
+            .is_("responded_at", "null")
+            .order("scheduled_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        rows = resp.data or []
+        if not rows:
+            return
+        missed = rows[0]
+        scheduled_dt = datetime.fromisoformat(missed["scheduled_at"].replace("Z", "+00:00"))
+        hours_missed = (datetime.now(timezone.utc) - scheduled_dt).total_seconds() / 3600
+        if hours_missed >= 48:
+            logger.warning(
+                {
+                    "event": "checkins.missed.48h_alert",
+                    "user_id": user_id,
+                    "checkin_id": missed["id"],
+                    "hours_since_scheduled": round(hours_missed, 1),
+                }
+            )
+        elif hours_missed >= 24:
+            logger.warning(
+                {
+                    "event": "checkins.missed.24h_warning",
+                    "user_id": user_id,
+                    "checkin_id": missed["id"],
+                    "hours_since_scheduled": round(hours_missed, 1),
+                }
+            )
+    except Exception:  # noqa: BLE001
+        pass
+
+
 # ---------------------------------------------------------------------------
 # GET /checkins/today
 # ---------------------------------------------------------------------------
@@ -74,6 +144,14 @@ async def get_today_checkin(current_user=Depends(get_current_user)) -> CheckInRe
     If one already exists, return it. Otherwise generate a new one via LLM.
     """
     user_id: str = current_user.id
+
+    # Trial expiry guard — return 402 if free trial has elapsed
+    if _check_trial_expired(user_id):
+        raise HTTPException(status_code=402, detail={"trial_expired": True})
+
+    # Log any missed check-ins (24h / 48h)
+    _log_missed_checkin(user_id)
+
     supabase = get_supabase()
 
     # Check if a check-in already exists for today

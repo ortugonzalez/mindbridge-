@@ -29,15 +29,19 @@ async def register(body: UserCreate) -> dict:
         raise HTTPException(status_code=400, detail="Registration failed — no user returned")
 
     try:
-        supabase.table("users").insert(
-            {
-                "id": auth_user.id,
-                "language": body.language.value,
-                "timezone": body.timezone,
-                "checkin_time_preference": body.checkin_time_preference,
-                "baseline_ready": False,
-            }
-        ).execute()
+        row: dict = {
+            "id": auth_user.id,
+            "language": body.language.value,
+            "timezone": body.timezone,
+            "checkin_time_preference": body.checkin_time_preference,
+            "baseline_ready": False,
+            "plan": "free_trial",
+        }
+        if body.phone_number:
+            row["phone_number"] = body.phone_number
+        if body.display_name:
+            row["display_name"] = body.display_name
+        supabase.table("users").insert(row).execute()
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "auth.register.db_error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to create user profile") from exc

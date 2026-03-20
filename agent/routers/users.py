@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
@@ -98,6 +98,44 @@ async def update_me(body: dict, current_user=Depends(get_current_user)) -> dict:
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "users.update_me.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to update user profile") from exc
+
+
+@router.get("/me/profile")
+async def get_profile(current_user=Depends(get_current_user)) -> dict:
+    """Return a summary profile: name, phone, plan, trial status, language."""
+    supabase = get_supabase()
+    try:
+        resp = (
+            supabase.table("users")
+            .select("display_name, phone_number, plan, trial_start, language")
+            .eq("id", current_user.id)
+            .single()
+            .execute()
+        )
+        if not resp.data:
+            raise HTTPException(status_code=404, detail="User profile not found")
+        row = resp.data
+        trial_days_left: int | None = None
+        if row.get("plan") == "free_trial" and row.get("trial_start"):
+            try:
+                trial_start = datetime.fromisoformat(row["trial_start"].replace("Z", "+00:00"))
+                elapsed = (datetime.now(timezone.utc) - trial_start).days
+                trial_days_left = max(0, 15 - elapsed)
+            except Exception:  # noqa: BLE001
+                trial_days_left = None
+        return {
+            "name": row.get("display_name"),
+            "phone": row.get("phone_number"),
+            "plan": row.get("plan", "free_trial"),
+            "language": row.get("language", "es"),
+            "trial_start": row.get("trial_start"),
+            "trial_days_left": trial_days_left,
+        }
+    except HTTPException:
+        raise
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "users.get_profile.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
 
 
 @router.get("/me/baseline")
