@@ -53,12 +53,12 @@ export default function Landing() {
     try {
       localStorage.setItem('breso_selected_plan', 'free')
       localStorage.setItem('breso_trial_start', new Date().toISOString())
-    } catch {}
+    } catch { }
     navigate('/welcome')
   }
 
   const handleEssential = () => {
-    try { localStorage.setItem('breso_selected_plan', 'essential') } catch {}
+    try { localStorage.setItem('breso_selected_plan', 'essential') } catch { }
     navigate('/payment?plan=essential')
   }
 
@@ -79,75 +79,91 @@ export default function Landing() {
       <div className="flex flex-col gap-4">
 
         {/* ── FREE TRIAL ── */}
-        <div className="relative rounded-2xl border-2 border-sage bg-sage/5 dark:bg-sage/10 p-5">
-          <div className="absolute -top-3 right-4">
-            {trialActive ? (
-              <span className="rounded-full bg-green-500 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                {trialDaysLeft > 0 ? `${trialDaysLeft} días restantes` : 'Prueba finalizada'}
-              </span>
-            ) : (
-              <span className="rounded-full bg-sage px-3 py-1 text-xs font-bold text-white shadow-sm">
-                {t('landing.free.badge')}
-              </span>
-            )}
-          </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-textdark dark:text-dm-text">{t('landing.free.title')}</span>
-            <span className="text-sm font-semibold text-sage">{t('landing.free.price')}</span>
+        <div className="relative rounded-2xl border border-sage/60 dark:border-sage/40 bg-white dark:bg-dm-surface p-6 shadow-sm overflow-hidden">
+          <div className="flex items-baseline justify-between mb-4">
+            <span className="text-xl font-bold text-textdark dark:text-dm-text">Versión de prueba</span>
+            <span className="text-sm font-semibold text-sage">15 días</span>
           </div>
           <PlanFeatures features={freeFeatures} accentClass="text-sage" />
-          <p className="mt-3 text-xs text-textdark/45 dark:text-dm-muted">{t('landing.free.note')}</p>
+
           {trialActive ? (
-            <div className="mt-4 w-full rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 px-5 py-3 text-sm font-semibold text-green-700 dark:text-green-400 text-center">
-              Ya reclamado ✓ — Período de prueba activo
+            <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
+              <div className="flex justify-between items-end mb-2">
+                <span className="text-sm font-semibold text-green-600 dark:text-green-500">{trialDaysLeft > 0 ? `${trialDaysLeft} días restantes` : 'Finalizada'}</span>
+                <span className="text-xs font-medium text-textdark/50 dark:text-dm-muted">{15 - trialDaysLeft}/15 usados</span>
+              </div>
+              <div className="w-full h-2 bg-softgray dark:bg-dm-border rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-green-500 transition-all duration-500"
+                  style={{ width: `${((15 - trialDaysLeft) / 15) * 100}%` }}
+                ></div>
+              </div>
+              <button
+                type="button"
+                disabled
+                className="w-full rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 px-5 py-3 text-sm font-semibold text-green-700 dark:text-green-400 opacity-90 cursor-default"
+              >
+                Prueba en curso ✓
+              </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={handleFree}
-              className="mt-4 w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90"
-            >
-              {t('landing.free.cta')}
-            </button>
+            <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
+              <button
+                type="button"
+                onClick={handleFree}
+                className="w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+              >
+                {t('landing.free.cta')}
+              </button>
+            </div>
           )}
         </div>
 
         {/* ── ESSENTIAL ── */}
-        <div className="rounded-2xl border-2 border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-5 transition hover:border-sage/40">
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-textdark dark:text-dm-text">{t('landing.essential.title')}</span>
-            <span className="text-sm font-semibold text-textdark/60 dark:text-dm-muted">{t('landing.essential.price')}</span>
+        <div className="relative rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-sm transition hover:border-sage/40 hover:shadow-md">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-xl font-bold text-textdark dark:text-dm-text">Esencial</span>
+          </div>
+          <div className="mb-4">
+            <span className="text-2xl font-black text-textdark dark:text-dm-text">5 USDT</span>
+            <span className="text-sm font-semibold text-textdark/50 dark:text-dm-muted">/mes</span>
           </div>
           <PlanFeatures features={essentialFeatures} accentClass="text-sage" />
-          <p className="mt-3 text-xs text-textdark/40 dark:text-dm-muted">{t('landing.essential.note')}</p>
-          <button
-            type="button"
-            onClick={handleEssential}
-            className="mt-4 w-full rounded-full border-2 border-sage px-5 py-3 text-sm font-semibold text-sage transition hover:bg-sage hover:text-white"
-          >
-            {t('landing.essential.cta')}
-          </button>
+          <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
+            <button
+              type="button"
+              onClick={handleEssential}
+              className="w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+            >
+              Seleccionar
+            </button>
+          </div>
         </div>
 
         {/* ── PREMIUM ── */}
-        <div className="relative rounded-2xl border-2 border-[#C4962A] bg-[#C4962A]/5 dark:bg-[#C4962A]/10 p-5">
-          <div className="absolute -top-3 right-4">
-            <span className="rounded-full bg-[#C4962A] px-3 py-1 text-xs font-bold text-white shadow-sm">Premium</span>
+        <div className="relative rounded-2xl border-2 border-[#B8860B]/70 bg-gradient-to-b from-white to-[#B8860B]/5 dark:from-dm-surface dark:to-[#B8860B]/10 p-6 shadow-md transition hover:shadow-lg">
+          <div className="absolute top-4 right-4">
+            <span className="rounded-full bg-gradient-to-r from-[#B8860B] to-[#DAA520] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">Premium</span>
           </div>
-          <div className="flex items-baseline justify-between">
-            <span className="text-lg font-bold text-textdark dark:text-dm-text">{t('landing.premium.title')}</span>
-            <span className="text-sm font-semibold text-[#C4962A]">{t('landing.premium.price')}</span>
+          <div className="flex items-baseline justify-between mb-2 pr-20">
+            <span className="text-xl font-bold text-textdark dark:text-dm-text">Premium</span>
           </div>
-          <PlanFeatures features={premiumFeatures} accentClass="text-[#C4962A]" />
-          <p className="mt-3 text-xs text-textdark/40 dark:text-dm-muted">{t('landing.premium.note')}</p>
-          <button
-            type="button"
-            onClick={handlePremium}
-            className="mt-4 w-full rounded-full border-2 border-[#C4962A] px-5 py-3 text-sm font-semibold text-[#C4962A] transition hover:bg-[#C4962A] hover:text-white"
-          >
-            {t('landing.premium.cta')}
-          </button>
+          <div className="mb-4">
+            <span className="text-2xl font-black text-[#B8860B] dark:text-[#E8CD81]">12 USDT</span>
+            <span className="text-sm font-semibold text-textdark/50 dark:text-dm-muted">/mes</span>
+          </div>
+          <PlanFeatures features={premiumFeatures} accentClass="text-[#B8860B]" />
+          <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
+            <button
+              type="button"
+              onClick={handlePremium}
+              className="w-full rounded-full border border-[#B8860B] bg-white dark:bg-dm-surface px-5 py-3 text-sm font-semibold text-[#B8860B] transition-all hover:bg-[#B8860B] hover:text-white hover:-translate-y-0.5 hover:shadow-md active:scale-95"
+            >
+              Seleccionar
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
   )

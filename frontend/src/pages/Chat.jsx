@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
-import { getDashboard, postCheckin, getConversationHistory } from '../services/api'
+import { getDashboard, sendMessageToSoledad, getConversationHistory } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 
@@ -118,10 +118,8 @@ export default function Chat() {
     setSending(true)
 
     try {
-      const res = await postCheckin({ message: trimmed, mode })
-      const replyText = res.data?.replyText || t('chat.mockReplies.listening')
-      const nextMode = res.data?.nextMode || mode
-      setMode(nextMode)
+      const lang = i18n.language?.startsWith('es') ? 'es' : 'en'
+      const replyText = await sendMessageToSoledad(trimmed, lang)
       setMessages((prev) => [...prev, { from: 'breso', text: replyText }])
     } catch {
       setSendError(t('chat.errorReply'))

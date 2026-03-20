@@ -1,8 +1,9 @@
 import axios from 'axios'
 import i18n from '../i18n'
+import { supabase } from '../lib/supabase'
 
-// Use env var for Vercel; empty string means "no backend" → always use mock
-const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+// PRIORITY 1: Always connect to Railway backend; env var overrides for other environments
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mindbridge-production-c766.up.railway.app'
 
 const axiosClient = axios.create({
   baseURL: API_BASE,
@@ -231,6 +232,44 @@ export async function registerUser({ name, email, password }) {
       }),
     () => ({ ok: true, fromMock: true })
   )
+}
+
+// ---------------------------------------------------------------------------
+// PRIORITY 1: Direct Railway backend chat function
+// ---------------------------------------------------------------------------
+
+const ES_MOCKS = [
+  "Lo que describís suena agotador. No es solo un mal día, ¿verdad? ¿Hace cuánto venís sintiéndote así?",
+  "Eso que decís me queda dando vueltas. ¿Podés contarme un poco más?",
+  "A veces 'estoy bien' viene solo, casi por inercia. ¿Cómo venís siendo honestamente esta semana?",
+  "Lo raro es difícil de explicar justamente porque no encontrás la palabra. ¿Hay algo que pasó últimamente?",
+]
+const EN_MOCKS = [
+  "What you're describing sounds exhausting. It's not just a bad day, is it? How long have you been feeling this way?",
+  "What you said stays with me. Can you tell me a bit more?",
+  "Sometimes 'I'm fine' just comes out automatically. How have you honestly been this week?",
+]
+
+export async function sendMessageToSoledad(message, language = 'es') {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    const token = session?.access_token || safeLocalStorage('breso_token')
+    const response = await fetch(`${API_BASE}/checkins/respond`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ message, language }),
+      signal: AbortSignal.timeout(15000),
+    })
+    if (!response.ok) throw new Error(`Backend error ${response.status}`)
+    const data = await response.json()
+    return data.response || data.message || data.breso_message || data.reply
+  } catch {
+    const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
+    return pool[Math.floor(Math.random() * pool.length)]
+  }
 }
 
 export async function addContact({ name, email, relation }) {

@@ -26,8 +26,9 @@ export default function Settings() {
     } catch { return '20:00' }
   })
 
-  // FIX 6: export state
+  // PRIORITY 7: export state
   const [exportMsg, setExportMsg] = useState(false)
+  const [showExportChoice, setShowExportChoice] = useState(false)
 
   const handleLangChange = (e) => {
     const l = e.target.value
@@ -58,34 +59,55 @@ export default function Settings() {
     } catch {}
   }
 
-  // FIX 6: export user data
-  const handleExport = async () => {
+  // PRIORITY 7: dual export
+  const downloadJSON = (data, filename) => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const handleExportPersonal = async () => {
     const data = {
-      exportDate: new Date().toISOString(),
-      userName: localStorage.getItem('breso_user_name') || null,
-      conversationHistory: (() => {
+      nombre: localStorage.getItem('breso_user_name') || null,
+      plan: localStorage.getItem('breso_selected_plan') || null,
+      dias_racha: null,
+      conversaciones: (() => {
         try { return JSON.parse(localStorage.getItem('breso_conversation_history') || '[]') } catch { return [] }
       })(),
-      trustedContacts: (() => {
+      contactos: (() => {
         try { return JSON.parse(localStorage.getItem('breso_trusted_contacts') || '[]') } catch { return [] }
       })(),
-      trialStart: localStorage.getItem('breso_trial_start') || null,
-      selectedPlan: localStorage.getItem('breso_selected_plan') || null,
+      exportado_el: new Date().toISOString(),
     }
     try {
       const res = await getConversationHistory(200)
       if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        data.conversationHistoryBackend = res.data
+        data.conversaciones_backend = res.data
       }
     } catch {}
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
     const date = new Date().toISOString().split('T')[0]
-    a.href = url
-    a.download = `breso_datos_${date}.json`
-    a.click()
-    URL.revokeObjectURL(url)
+    downloadJSON(data, `breso_datos_${date}.json`)
+    setShowExportChoice(false)
+    setExportMsg(true)
+    setTimeout(() => setExportMsg(false), 3000)
+  }
+
+  const handleExportProfessional = () => {
+    const data = {
+      paciente: 'Anónimo',
+      periodo: '30 días',
+      resumen: 'Check-ins regulares',
+      alertas: 0,
+      generado_por: 'Soledad por BRESO',
+      exportado_el: new Date().toISOString(),
+    }
+    const date = new Date().toISOString().split('T')[0]
+    downloadJSON(data, `breso_informe_profesional_${date}.json`)
+    setShowExportChoice(false)
     setExportMsg(true)
     setTimeout(() => setExportMsg(false), 3000)
   }
@@ -205,16 +227,34 @@ export default function Settings() {
 
         {/* Danger Zone */}
         <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">
-          {/* FIX 6: Export data */}
-          <div className="space-y-1">
+          {/* PRIORITY 7: Export data with two choices */}
+          <div className="space-y-2">
             <button
               type="button"
-              onClick={handleExport}
+              onClick={() => setShowExportChoice(v => !v)}
               className="w-full flex justify-between items-center py-2 text-textdark dark:text-dm-text hover:text-sage dark:hover:text-sage transition-colors font-medium"
             >
               {t('settings.export_data')}
               <span>⬇️</span>
             </button>
+            {showExportChoice && (
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleExportPersonal}
+                  className="flex-1 rounded-xl border border-sage text-sage text-sm font-semibold py-2 hover:bg-sage hover:text-white transition-colors"
+                >
+                  Para mí
+                </button>
+                <button
+                  type="button"
+                  onClick={handleExportProfessional}
+                  className="flex-1 rounded-xl border border-textdark/20 dark:border-dm-border text-textdark/70 dark:text-dm-muted text-sm font-semibold py-2 hover:bg-softgray dark:hover:bg-dm-border transition-colors"
+                >
+                  Para mi profesional
+                </button>
+              </div>
+            )}
             {exportMsg && (
               <p className="text-xs text-sage font-medium">Tus datos fueron descargados</p>
             )}

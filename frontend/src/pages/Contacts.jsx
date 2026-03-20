@@ -120,11 +120,9 @@ export default function Contacts() {
                   <h3 className="font-bold text-textdark dark:text-dm-text">{contact.name}</h3>
                   <p className="text-sm text-textdark/60 dark:text-dm-muted capitalize">{contact.relationship}</p>
                 </div>
-                <div className={`px-2.5 py-1 rounded-full text-xs font-semibold ${contact.status === 'active'
-                    ? 'bg-sage/10 text-sage dark:bg-sage/20'
-                    : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-500'
-                  }`}>
-                  {t(`contacts.status_${contact.status}`)}
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
+                  <span className="text-xs font-semibold text-sage">Activo</span>
                 </div>
               </div>
 

@@ -29,14 +29,14 @@ export default function Navigation() {
     const root = document.documentElement
     if (theme === 'dark') root.classList.add('dark')
     else root.classList.remove('dark')
-    try { localStorage.setItem(THEME_KEY, theme) } catch {}
+    try { localStorage.setItem(THEME_KEY, theme) } catch { }
   }, [theme])
 
   // Close when navigating
   useEffect(() => { setIsOpen(false) }, [location.pathname])
 
   const setLanguage = (next) => {
-    try { localStorage.setItem(STORAGE_KEY, next) } catch {}
+    try { localStorage.setItem(STORAGE_KEY, next) } catch { }
     i18n.changeLanguage(next)
   }
 
@@ -45,7 +45,7 @@ export default function Navigation() {
   const showBack = !NO_BACK_ROUTES.has(location.pathname)
 
   const links = [
-    { path: '/', icon: '🏠', label: t('nav.home') },
+    { path: '/home', icon: '🏠', label: t('nav.home') },
     { path: '/chat', icon: '💬', label: t('nav.chat') },
     { path: '/dashboard', icon: '📊', label: t('nav.progress') },
     { path: '/profile', icon: '👤', label: t('nav.profile') },
@@ -82,12 +82,10 @@ export default function Navigation() {
       )}
 
       {/* Overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      <div
+        className={`fixed inset-0 z-40 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsOpen(false)}
+      />
 
       {/* Sidebar */}
       <div

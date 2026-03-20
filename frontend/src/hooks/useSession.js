@@ -21,7 +21,7 @@ function resolveRedirect() {
   if (!hasName) return '/landing'
   if (userType === 'family') return '/family-dashboard'
   if (userType === 'professional') return '/professional-dashboard'
-  return '/chat'
+  return '/home'
 }
 
 /**
