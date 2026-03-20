@@ -119,7 +119,6 @@ export default function Onboarding() {
       persistEverything({ relation, skipContact })
 
       // 2) Register user.
-      // The backend might still require email/password; for the demo we use placeholders.
       const demoEmail = `${slugifyName(userName)}@breso.dev`
       const demoPassword = 'breso-demo'
       await registerUser({ name: userName.trim(), email: demoEmail, password: demoPassword })
@@ -265,4 +264,3 @@ export default function Onboarding() {
     </div>
   )
 }
-

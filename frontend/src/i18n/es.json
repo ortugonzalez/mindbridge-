@@ -1,60 +1,162 @@
 {
-  "app": {
-    "name": "BRESO",
-    "tagline": "Tu compañero de bienestar mental"
+  "app": { "name": "BRESO", "tagline": "Tu compañero de bienestar mental" },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Algo salió mal. Intentá de nuevo.",
+    "required": "Este campo es obligatorio.",
+    "send": "Enviar"
   },
-  "nav": {
-    "dashboard": "Inicio",
-    "checkin": "Check-in de hoy",
-    "signout": "Cerrar sesión"
-  },
+  "nav": { "dashboard": "Inicio", "checkin": "Check-in de hoy", "signout": "Cerrar sesión" },
   "auth": {
-    "signin": "Iniciar sesión",
-    "register": "Crear cuenta",
-    "email": "Correo electrónico",
-    "password": "Contraseña",
-    "magic_link": "Enlace mágico",
-    "send_magic_link": "Enviar enlace mágico",
-    "magic_link_sent": "¡Enlace enviado! Revisa tu correo (expira en 15 minutos).",
-    "signing_in": "Iniciando sesión...",
-    "no_account": "¿No tienes cuenta?",
-    "have_account": "¿Ya tienes cuenta?",
-    "or": "o"
+    "signin": "Iniciar sesión", "register": "Crear cuenta",
+    "email": "Correo electrónico", "password": "Contraseña",
+    "magic_link": "Enlace mágico", "send_magic_link": "Enviar enlace mágico",
+    "magic_link_sent": "¡Enlace enviado! Revisá tu correo.",
+    "signing_in": "Iniciando sesión...", "no_account": "¿No tenés cuenta?",
+    "have_account": "¿Ya tenés cuenta?", "or": "o"
+  },
+  "landing": {
+    "guide": "Tu espacio de bienestar",
+    "hero": "Tu compañero de bienestar mental 🌱",
+    "heroSub": "BRESO te acompaña cada día con check-ins personalizados, detecta cuando necesitás apoyo y conecta con quienes te quieren.",
+    "cta": "Empezar gratis",
+    "plans": {
+      "essential": {
+        "title": "Esencial",
+        "price": "$5/mes",
+        "features": ["1 check-in diario", "Historial 30 días", "1 contacto de confianza", "Propuestas 3x semana"]
+      },
+      "premium": {
+        "title": "Premium",
+        "price": "$12/mes",
+        "features": ["Check-ins ilimitados", "2 contactos", "Coordinación profesional", "Reporte mensual"]
+      }
+    }
   },
   "onboarding": {
-    "title": "¡Bienvenida/o a BRESO!",
-    "subtitle": "Cuéntame un poco sobre ti para personalizar tu experiencia.",
+    "guide": "Te vamos a conocer mejor",
+    "title": "¡Bienvenido/a a BRESO!",
+    "subtitle": "Algunas preguntas para personalizar tu experiencia.",
+    "step1Prompt": "¡Hola! Soy Soledad, tu compañera de bienestar 🌱 ¿Cómo te llamás?",
+    "step1Placeholder": "Tu nombre...",
+    "step2Prompt": "¿En qué idioma preferís que hablemos?",
+    "step3Prompt": "¿Hay alguien de confianza que quieras agregar?",
+    "step3Skip": "Saltear por ahora",
+    "step3ContactName": "Nombre",
+    "step3ContactEmail": "Email",
+    "step4Message": "¡Todo listo! Empecemos 🌱",
+    "step4Done": "¡Todo listo, {{name}}! Empecemos 🌱",
     "language": "Idioma preferido",
     "timezone": "Tu zona horaria",
-    "checkin_time": "Hora preferida para el check-in diario",
+    "checkin_time": "Hora preferida para el check-in",
     "save": "Comenzar",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "name": "Nombre",
+    "continue": "Continuar",
+    "contactName": "Nombre del contacto",
+    "contactEmail": "Email del contacto",
+    "addContact": "Agregar contacto",
+    "skipContact": "Saltear por ahora"
   },
+  "language": { "es": "Español", "en": "English" },
   "dashboard": {
+    "guide": "Aquí podés ver tu progreso",
+    "greeting": "Hola, {{name}}",
+    "greetingNoName": "Hola",
     "greeting_morning": "Buenos días",
     "greeting_afternoon": "Buenas tardes",
     "greeting_evening": "Buenas noches",
     "checkin_pending": "Tu check-in de hoy te espera",
     "checkin_done": "Check-in completado hoy ✓",
-    "go_to_checkin": "Hacer check-in",
+    "go_to_checkin": "Iniciar check-in del día (5 minutos)",
+    "view_history": "Ver cómo estuvo tu semana",
+    "config_contact": "Agregar a alguien de confianza",
     "baseline_building": "Construyendo tu perfil... {{count}} de 7 check-ins",
     "baseline_ready": "Tu perfil de bienestar está activo",
     "tone_trend": "Tu estado emocional esta semana",
-    "no_data": "Completa tu primer check-in para ver tu progreso"
+    "no_data": "Completá tu primer check-in para ver tu progreso",
+    "loading": "Cargando tu dashboard...",
+    "error": "No pudimos cargar el dashboard. Intentá nuevamente.",
+    "streakLabel": "Racha:",
+    "streak": "{{days}} días consecutivos 🔥",
+    "weeklyTitle": "Historial semanal",
+    "nextProposalTitle": "Próxima propuesta",
+    "trustContactTitle": "Contacto de confianza",
+    "startToday": "Iniciar check-in del día (5 minutos)",
+    "startLoading": "Iniciando...",
+    "viewHistory": "Ver historial",
+    "viewHistoryHelp": "Ver cómo estuvo tu semana",
+    "configureContact": "Configurar contacto",
+    "configureContactHelp": "Agregar a alguien de confianza",
+    "historyDetailsTitle": "Tu semana (7 días)",
+    "weekdays": ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+    "status": { "completed": "Completado", "pending": "Pendiente" },
+    "contactModalTitle": "Configurar contacto",
+    "contactFormName": "Nombre del contacto",
+    "contactFormEmail": "Email del contacto",
+    "contactFormRelation": "Relación",
+    "contactSave": "Guardar",
+    "contactSaving": "Guardando...",
+    "contactCancel": "Cancelar",
+    "mock": {
+      "userName": "Ana García",
+      "contactName": "María",
+      "contactRelation": "hermana",
+      "nextProposal": "Salí a caminar 15 minutos hoy",
+      "streakDays": 4,
+      "weeklyCompleted": [true, true, true, true, false, false, false],
+      "mode": "listening"
+    }
+  },
+  "chat": {
+    "guide": "Este es tu espacio seguro. Contame cómo estás hoy.",
+    "title": "Chat con Soledad",
+    "typing": "Soledad está escribiendo...",
+    "placeholder": "Escribí tu respuesta...",
+    "inputPlaceholder": "Escribí algo...",
+    "send": "Enviar",
+    "modeLabel": "Modo actual",
+    "loadingReply": "Soledad está respondiendo...",
+    "errorReply": "No se pudo enviar tu respuesta. Intentá de nuevo.",
+    "yourName": "Tu nombre",
+    "header": { "mode": "Modo" },
+    "welcome": "¡Hola! Soy Soledad, tu compañera de bienestar 🌱",
+    "firstQuestion": {
+      "listening": "¿Cómo estás hoy? Contame lo que quieras.",
+      "motivation": "¿Qué es algo pequeño que podrías hacer hoy para sentirte mejor?",
+      "proposal": "Tengo una propuesta para vos. ¿Querés escucharla?",
+      "celebration": "¡Hola! ¿Qué cosa buena pasó hoy, aunque sea pequeña?"
+    },
+    "modeListening": "Escucha",
+    "modeMotivation": "Motivación",
+    "modeProposal": "Propuesta",
+    "modeCelebration": "Celebración",
+    "modeDescriptions": {
+      "listening": "Estoy aquí para escucharte sin juzgar",
+      "motivation": "Pequeños pasos hacia el bienestar",
+      "proposal": "Una propuesta práctica para hoy",
+      "celebration": "Celebremos lo positivo juntos"
+    },
+    "mockReplies": {
+      "listening": "Respiremos juntos: inhala 4 segundos, exhala 6. ¿Cómo se siente tu cuerpo ahora?",
+      "motivation": "Elegí una acción pequeña para hoy. ¿Qué paso te queda más cerca?",
+      "proposal": "Perfecto. Salí a caminar 15 minutos hoy y anotá cómo te sentiste.",
+      "celebration": "¡Qué bueno escuchar eso! 🌱 Contame más."
+    }
   },
   "checkin": {
     "title": "Check-in de hoy",
-    "placeholder": "Escribe tu respuesta aquí...",
+    "placeholder": "Escribí tu respuesta aquí...",
     "send": "Enviar",
     "sending": "Procesando...",
     "loading": "Preparando tu mensaje...",
-    "already_done": "Ya completaste tu check-in de hoy. ¡Vuelve mañana! 💙",
+    "already_done": "Ya completaste tu check-in de hoy. ¡Volvé mañana! 💙",
     "privacy_note": "Tu respuesta se analiza y se descarta. No guardamos el contenido de tus mensajes.",
-    "follow_up": "BRESO responde:"
+    "follow_up": "Soledad responde:"
   },
   "errors": {
-    "generic": "Algo salió mal. Por favor intenta de nuevo.",
-    "auth": "Error de autenticación. Verifica tus credenciales.",
-    "network": "Error de conexión. Verifica tu internet."
+    "generic": "Algo salió mal. Por favor intentá de nuevo.",
+    "auth": "Error de autenticación.",
+    "network": "Error de conexión. Verificá tu internet."
   }
 }

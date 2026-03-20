@@ -4,6 +4,8 @@ import Landing from './pages/Landing'
 import Onboarding from './pages/Onboarding'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
+import SignIn from './pages/SignIn'
+import CheckIn from './pages/CheckIn'
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/signin" element={<SignIn />} />
+            <Route path="/checkin" element={<CheckIn />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

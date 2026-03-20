@@ -1,60 +1,162 @@
 {
-  "app": {
-    "name": "BRESO",
-    "tagline": "Your mental wellness companion"
+  "app": { "name": "BRESO", "tagline": "Your mental wellness companion" },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again.",
+    "required": "This field is required.",
+    "send": "Send"
   },
-  "nav": {
-    "dashboard": "Home",
-    "checkin": "Today's check-in",
-    "signout": "Sign out"
-  },
+  "nav": { "dashboard": "Home", "checkin": "Today's check-in", "signout": "Sign out" },
   "auth": {
-    "signin": "Sign in",
-    "register": "Create account",
-    "email": "Email address",
-    "password": "Password",
-    "magic_link": "Magic link",
-    "send_magic_link": "Send magic link",
-    "magic_link_sent": "Link sent! Check your inbox (expires in 15 minutes).",
-    "signing_in": "Signing in...",
-    "no_account": "Don't have an account?",
-    "have_account": "Already have an account?",
-    "or": "or"
+    "signin": "Sign in", "register": "Create account",
+    "email": "Email", "password": "Password",
+    "magic_link": "Magic link", "send_magic_link": "Send magic link",
+    "magic_link_sent": "Link sent! Check your email.",
+    "signing_in": "Signing in...", "no_account": "Don't have an account?",
+    "have_account": "Already have an account?", "or": "or"
+  },
+  "landing": {
+    "guide": "Your wellness space",
+    "hero": "Your mental wellness companion 🌱",
+    "heroSub": "BRESO accompanies you every day with personalized check-ins, detects when you need support and connects you with people who care.",
+    "cta": "Get started free",
+    "plans": {
+      "essential": {
+        "title": "Essential",
+        "price": "$5/month",
+        "features": ["1 daily check-in", "30-day history", "1 trusted contact", "Proposals 3x/week"]
+      },
+      "premium": {
+        "title": "Premium",
+        "price": "$12/month",
+        "features": ["Unlimited check-ins", "2 contacts", "Professional coordination", "Monthly report"]
+      }
+    }
   },
   "onboarding": {
+    "guide": "Let us get to know you better",
     "title": "Welcome to BRESO!",
-    "subtitle": "Tell me a little about yourself to personalize your experience.",
+    "subtitle": "A few questions to personalize your experience.",
+    "step1Prompt": "Hi! I'm Soledad, your wellness companion 🌱 What's your name?",
+    "step1Placeholder": "Your name...",
+    "step2Prompt": "Which language do you prefer?",
+    "step3Prompt": "Is there someone you trust you'd like to add?",
+    "step3Skip": "Skip for now",
+    "step3ContactName": "Name",
+    "step3ContactEmail": "Email",
+    "step4Message": "All set! Let's begin 🌱",
+    "step4Done": "All set, {{name}}! Let's begin 🌱",
     "language": "Preferred language",
     "timezone": "Your timezone",
-    "checkin_time": "Preferred daily check-in time",
+    "checkin_time": "Preferred check-in time",
     "save": "Get started",
-    "saving": "Saving..."
+    "saving": "Saving...",
+    "name": "Name",
+    "continue": "Continue",
+    "contactName": "Contact name",
+    "contactEmail": "Contact email",
+    "addContact": "Add contact",
+    "skipContact": "Skip for now"
   },
+  "language": { "es": "Español", "en": "English" },
   "dashboard": {
+    "guide": "Here you can see your progress",
+    "greeting": "Hi, {{name}}",
+    "greetingNoName": "Hi",
     "greeting_morning": "Good morning",
     "greeting_afternoon": "Good afternoon",
     "greeting_evening": "Good evening",
-    "checkin_pending": "Your check-in for today is waiting",
+    "checkin_pending": "Today's check-in is waiting for you",
     "checkin_done": "Check-in completed today ✓",
-    "go_to_checkin": "Go to check-in",
+    "go_to_checkin": "Start today's check-in (5 minutes)",
+    "view_history": "See how your week went",
+    "config_contact": "Add a trusted contact",
     "baseline_building": "Building your profile... {{count}} of 7 check-ins",
     "baseline_ready": "Your wellness profile is active",
     "tone_trend": "Your emotional state this week",
-    "no_data": "Complete your first check-in to see your progress"
+    "no_data": "Complete your first check-in to see your progress",
+    "loading": "Loading your dashboard...",
+    "error": "Could not load the dashboard. Please try again.",
+    "streakLabel": "Streak:",
+    "streak": "{{days}} days in a row 🔥",
+    "weeklyTitle": "Weekly history",
+    "nextProposalTitle": "Next proposal",
+    "trustContactTitle": "Trusted contact",
+    "startToday": "Start today's check-in (5 minutes)",
+    "startLoading": "Starting...",
+    "viewHistory": "View history",
+    "viewHistoryHelp": "See how your week went",
+    "configureContact": "Configure contact",
+    "configureContactHelp": "Add someone you trust",
+    "historyDetailsTitle": "Your week (7 days)",
+    "weekdays": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "status": { "completed": "Completed", "pending": "Pending" },
+    "contactModalTitle": "Configure contact",
+    "contactFormName": "Contact name",
+    "contactFormEmail": "Contact email",
+    "contactFormRelation": "Relationship",
+    "contactSave": "Save",
+    "contactSaving": "Saving...",
+    "contactCancel": "Cancel",
+    "mock": {
+      "userName": "Ana García",
+      "contactName": "María",
+      "contactRelation": "sister",
+      "nextProposal": "Take a 15-minute walk today",
+      "streakDays": 4,
+      "weeklyCompleted": [true, true, true, true, false, false, false],
+      "mode": "listening"
+    }
+  },
+  "chat": {
+    "guide": "This is your safe space. Tell me how you are today.",
+    "title": "Chat with Soledad",
+    "typing": "Soledad is typing...",
+    "placeholder": "Write your response...",
+    "inputPlaceholder": "Type something...",
+    "send": "Send",
+    "modeLabel": "Current mode",
+    "loadingReply": "Soledad is replying...",
+    "errorReply": "Could not send your response. Please try again.",
+    "yourName": "Your name",
+    "header": { "mode": "Mode" },
+    "welcome": "Hi! I'm Soledad, your wellness companion 🌱",
+    "firstQuestion": {
+      "listening": "How are you feeling today? Tell me anything.",
+      "motivation": "What's one small thing you could do today to feel better?",
+      "proposal": "I have a proposal for you. Want to hear it?",
+      "celebration": "Hi! What good thing happened today, even something small?"
+    },
+    "modeListening": "Listening",
+    "modeMotivation": "Motivation",
+    "modeProposal": "Proposal",
+    "modeCelebration": "Celebration",
+    "modeDescriptions": {
+      "listening": "I'm here to listen without judgment",
+      "motivation": "Small steps towards wellbeing",
+      "proposal": "A practical proposal for today",
+      "celebration": "Let's celebrate the positive together"
+    },
+    "mockReplies": {
+      "listening": "Let's breathe together: inhale 4 seconds, exhale 6. How does your body feel right now?",
+      "motivation": "Choose a small step for today. What's the next action that feels doable?",
+      "proposal": "Perfect. Go for a 15-minute walk today and note how you felt.",
+      "celebration": "That's great to hear! 🌱 Tell me more."
+    }
   },
   "checkin": {
     "title": "Today's check-in",
-    "placeholder": "Type your response here...",
+    "placeholder": "Write your response here...",
     "send": "Send",
     "sending": "Processing...",
     "loading": "Preparing your message...",
-    "already_done": "You've already completed today's check-in. See you tomorrow! 💙",
-    "privacy_note": "Your response is analyzed and discarded. We never store your message content.",
-    "follow_up": "BRESO responds:"
+    "already_done": "You already completed today's check-in. Come back tomorrow! 💙",
+    "privacy_note": "Your response is analyzed and discarded. We never store message content.",
+    "follow_up": "Soledad responds:"
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",
-    "auth": "Authentication error. Check your credentials.",
+    "auth": "Authentication error.",
     "network": "Connection error. Check your internet."
   }
 }

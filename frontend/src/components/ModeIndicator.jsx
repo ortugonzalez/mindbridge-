@@ -14,8 +14,7 @@ export default function ModeIndicator({ mode, onChange }) {
     <div className="flex flex-wrap items-center gap-2">
       {MODES.map((m) => {
         const isActive = m.key === mode
-        const labelEs = t(`chat.modes.${m.key}.es`)
-        const labelEn = t(`chat.modes.${m.key}.en`)
+        const label = t(`chat.mode${m.key.charAt(0).toUpperCase() + m.key.slice(1)}`)
         return (
           <button
             key={m.key}
@@ -31,13 +30,10 @@ export default function ModeIndicator({ mode, onChange }) {
             aria-pressed={isActive}
           >
             <span className="text-base">{m.emoji}</span>
-            <span className="whitespace-nowrap">
-              {labelEs} / {labelEn}
-            </span>
+            <span className="whitespace-nowrap">{label}</span>
           </button>
         )
       })}
     </div>
   )
 }
-

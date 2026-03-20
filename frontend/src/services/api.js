@@ -185,7 +185,6 @@ export async function postCheckin({ message, mode }) {
           res.data?.text ||
           null
 
-        // Optional: some backends may change mode dynamically
         const nextMode = modeToKey(res.data?.nextMode || res.data?.mode)
 
         return {
@@ -199,4 +198,3 @@ export async function postCheckin({ message, mode }) {
     }
   )
 }
-

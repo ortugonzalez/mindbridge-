@@ -125,7 +125,7 @@ export default function Chat() {
           <div className="text-right">
             <div className="text-xs font-semibold text-textdark/60">{t('chat.header.mode')}</div>
             <div className="mt-1 text-sm font-semibold text-textdark">
-              {MODE_EMOJI_MAP[mode] || '🎧'} {t(`chat.modes.${mode}.es`)} / {t(`chat.modes.${mode}.en`)}
+              {MODE_EMOJI_MAP[mode] || '🎧'} {t(`chat.mode${mode.charAt(0).toUpperCase() + mode.slice(1)}`)}
             </div>
             <div className="mt-1 text-xs font-semibold text-textdark/70">{modeDesc}</div>
           </div>
@@ -147,4 +147,3 @@ export default function Chat() {
     </div>
   )
 }
-
