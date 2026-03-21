@@ -5,11 +5,13 @@ import logging
 from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
+from pydantic import BaseModel
 
 from integrations.supabase_client import get_supabase
 
 router = APIRouter(prefix="/users", tags=["users"])
 family_router = APIRouter(prefix="/family", tags=["family"])
+dashboard_router = APIRouter(tags=["dashboard"])
 logger = logging.getLogger("breso.users")
 
 
@@ -284,6 +286,101 @@ async def get_personalization(current_user=Depends(get_current_user)) -> dict:
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "users.get_personalization.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to fetch personalization profile") from exc
+
+
+# ---------------------------------------------------------------------------
+# POST /users/me/push-subscription
+# ---------------------------------------------------------------------------
+
+
+class PushSubscriptionBody(BaseModel):
+    subscription: dict
+
+
+@router.post("/me/push-subscription")
+async def save_push_subscription(
+    body: PushSubscriptionBody,
+    current_user=Depends(get_current_user),
+) -> dict:
+    """Save a browser Web Push subscription for the authenticated user."""
+    supabase = get_supabase()
+    try:
+        supabase.table("push_subscriptions").upsert(
+            {
+                "user_id": current_user.id,
+                "subscription": body.subscription,
+            },
+            on_conflict="user_id",
+        ).execute()
+        logger.info({"event": "users.push_subscription.saved", "user_id": current_user.id})
+        return {"ok": True}
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "users.push_subscription.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to save push subscription") from exc
+
+
+# ---------------------------------------------------------------------------
+# GET /dashboard
+# ---------------------------------------------------------------------------
+
+
+@dashboard_router.get("/dashboard")
+async def get_dashboard(current_user=Depends(get_current_user)) -> dict:
+    """Return streak, weekly check-ins, achievements, and recent check-ins for the dashboard."""
+    supabase = get_supabase()
+    user_id = str(current_user.id)
+
+    # Streak data
+    streak_res = (
+        supabase.table("user_streaks")
+        .select("current_streak, longest_streak, total_checkins, points")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    streak_data = streak_res.data[0] if streak_res.data else {
+        "current_streak": 0,
+        "longest_streak": 0,
+        "total_checkins": 0,
+        "points": 0,
+    }
+
+    # Last 7 days check-ins
+    week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    checkins_res = (
+        supabase.table("check_ins")
+        .select("responded_at, tone_score, breso_message")
+        .eq("user_id", user_id)
+        .gte("responded_at", week_ago)
+        .not_.is_("responded_at", "null")
+        .order("responded_at", desc=False)
+        .execute()
+    )
+    checkins = checkins_res.data or []
+
+    # Build weekly_checkins boolean array [Mon..Sun] relative to today
+    by_date: set[str] = {c["responded_at"][:10] for c in checkins}
+    weekly_checkins = [
+        (datetime.now(timezone.utc) - timedelta(days=i)).strftime("%Y-%m-%d") in by_date
+        for i in range(6, -1, -1)
+    ]
+
+    # Achievements
+    achievements_res = (
+        supabase.table("user_achievements")
+        .select("achievement_id, unlocked_at")
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    return {
+        "streak": streak_data.get("current_streak", 0),
+        "longest_streak": streak_data.get("longest_streak", 0),
+        "total_checkins": streak_data.get("total_checkins", 0),
+        "points": streak_data.get("points", 0),
+        "weekly_checkins": weekly_checkins,
+        "achievements": achievements_res.data or [],
+        "recent_checkins": checkins[-5:],
+    }
 
 
 # ---------------------------------------------------------------------------
