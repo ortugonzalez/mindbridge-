@@ -395,10 +395,23 @@ async def respond_to_checkin(
     language = body.language if body.language in ("es", "en") else _get_user_language(user_id)
     mode: str = pattern_analyzer.select_conversation_mode(user_id)
 
-    # Convert history to standard format
+    # Convert history to standard format.
+    # The frontend includes the current user message as the last item in body.history
+    # (because it appends userMsg before calling sendMessageToSoledad). We strip it
+    # here so generate_response can append it once at the end — otherwise the Anthropic
+    # API receives two consecutive "user" messages and rejects the request.
+    raw_history = body.history
+    if (
+        raw_history
+        and raw_history[-1].role == "user"
+        and raw_history[-1].content.strip() == body.message.strip()
+    ):
+        raw_history = raw_history[:-1]
+
     conversation_history = [
         {"role": msg.role, "content": msg.content}
-        for msg in body.history[-10:]
+        for msg in raw_history[-10:]
+        if msg.content
     ]
 
     # --- FEATURE 1: Load persistent memory ---

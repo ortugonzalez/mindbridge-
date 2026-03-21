@@ -305,19 +305,41 @@ def generate_response(
             else base_system
         )
 
-        # Build message list (prior turns + current message)
-        # History items may use {role, content} (new standard) or {user, soledad} (legacy)
+        # Build message list (prior turns + current message).
+        # History items may use {role, content} (new standard) or {user, soledad} (legacy).
+        # The Anthropic API requires:
+        #   1. Messages must alternate between "user" and "assistant"
+        #   2. The first message must be "user"
+        # We enforce this by merging consecutive same-role turns (keep the latest content)
+        # and dropping any leading "assistant" turns.
         messages: list[dict] = []
         for turn in (conversation_history or []):
             if "role" in turn and "content" in turn:
                 role = turn["role"] if turn["role"] in ("user", "assistant") else "user"
-                if turn["content"]:
-                    messages.append({"role": role, "content": turn["content"]})
-            else:
+                content = turn["content"]
+            elif turn.get("user") or turn.get("soledad"):
+                # Legacy {user, soledad} format
                 if turn.get("user"):
-                    messages.append({"role": "user", "content": turn["user"]})
-                if turn.get("soledad"):
-                    messages.append({"role": "assistant", "content": turn["soledad"]})
+                    role, content = "user", turn["user"]
+                else:
+                    role, content = "assistant", turn["soledad"]
+            else:
+                continue
+
+            if not content:
+                continue
+
+            if messages and messages[-1]["role"] == role:
+                # Consecutive same role — replace with latest (keeps context coherent)
+                messages[-1] = {"role": role, "content": content}
+            else:
+                messages.append({"role": role, "content": content})
+
+        # Drop leading assistant turns (Anthropic requires first message to be "user")
+        while messages and messages[0]["role"] == "assistant":
+            messages.pop(0)
+
+        # Append the current user message
         messages.append({"role": "user", "content": user_message})
 
         client = _get_client()
