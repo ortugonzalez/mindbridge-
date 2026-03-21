@@ -32,12 +32,12 @@ export default function Chat() {
     { from: 'breso', textKey: 'chat.openingQuestion' },
   ]
 
-  // FIX 3: save messages to localStorage whenever they change (only after user interaction)
+  // Save messages to localStorage whenever they change (only after user interaction)
   useEffect(() => {
     if (!hasUserReplied.current || messages.length === 0) return
     try {
-      const toStore = messages.map(m => ({ from: m.from, text: m.text, textKey: m.textKey }))
-      localStorage.setItem('breso_conversation_history', JSON.stringify(toStore.slice(-50)))
+      const toStore = messages.map(m => ({ from: m.from, role: m.role, text: m.text, textKey: m.textKey }))
+      localStorage.setItem('breso_conversation', JSON.stringify(toStore.slice(-50)))
     } catch {}
   }, [messages])
 
@@ -56,18 +56,18 @@ export default function Chat() {
           // Build message pairs oldest-first
           const historicMessages = [...items].reverse().flatMap((item) => {
             const msgs = []
-            if (item.user_message) msgs.push({ from: 'user', text: item.user_message })
-            if (item.soledad_response) msgs.push({ from: 'breso', text: item.soledad_response })
+            if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message })
+            if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response })
             return msgs
           })
           setMessages(historicMessages)
           return
         }
       } catch {}
-      // FIX 3: fallback to localStorage if backend returned nothing
+      // Fallback to localStorage if backend returned nothing
       if (mounted && !historyLoaded.current) {
         try {
-          const stored = localStorage.getItem('breso_conversation_history')
+          const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
           if (stored) {
             const parsed = JSON.parse(stored)
             if (Array.isArray(parsed) && parsed.length > 0) {
@@ -114,13 +114,16 @@ export default function Chat() {
 
     hasUserReplied.current = true
     setSendError('')
-    setMessages((prev) => [...prev, { from: 'user', text: trimmed }])
+    const userMsg = { from: 'user', role: 'user', text: trimmed, timestamp: Date.now() }
+    setMessages((prev) => [...prev, userMsg])
     setSending(true)
 
     try {
       const lang = i18n.language?.startsWith('es') ? 'es' : 'en'
-      const replyText = await sendMessageToSoledad(trimmed, lang)
-      setMessages((prev) => [...prev, { from: 'breso', text: replyText }])
+      // Pass full conversation history (including the new user message) to backend
+      const currentMessages = [...messages, userMsg]
+      const replyText = await sendMessageToSoledad(trimmed, currentMessages, lang)
+      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: replyText, timestamp: Date.now() }])
     } catch {
       setSendError(t('chat.errorReply'))
     } finally {

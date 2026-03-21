@@ -250,17 +250,27 @@ const EN_MOCKS = [
   "Sometimes 'I'm fine' just comes out automatically. How have you honestly been this week?",
 ]
 
-export async function sendMessageToSoledad(message, language = 'es') {
+export async function sendMessageToSoledad(message, history = [], language = 'es') {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     const token = session?.access_token || safeLocalStorage('breso_token')
+
+    if (!token) throw new Error('No auth token')
+
     const response = await fetch(`${API_BASE}/checkins/respond`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        'Authorization': `Bearer ${token}`,
       },
-      body: JSON.stringify({ message, language }),
+      body: JSON.stringify({
+        message,
+        language,
+        history: history.slice(-10).map(m => ({
+          role: m.role === 'soledad' ? 'assistant' : 'user',
+          content: m.text,
+        })),
+      }),
       signal: AbortSignal.timeout(15000),
     })
     if (!response.ok) throw new Error(`Backend error ${response.status}`)

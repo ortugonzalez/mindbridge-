@@ -9,6 +9,19 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from integrations.email_client import send_alert_email
 from integrations.supabase_client import get_supabase
 from models.types import CheckInResponse, CheckInResult, CheckInSubmit, ConversationMode
+from pydantic import BaseModel
+from typing import List, Optional
+
+
+class HistoryMessage(BaseModel):
+    role: str  # "user" or "assistant"
+    content: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    language: str = "es"
+    history: List[HistoryMessage] = []
 from routers.users import get_current_user
 from services import llm_client, pattern_analyzer
 
@@ -288,86 +301,70 @@ async def get_today_checkin(current_user=Depends(get_current_user)) -> CheckInRe
 # ---------------------------------------------------------------------------
 
 
-@router.post("/respond", response_model=CheckInResult)
+@router.post("/respond")
 async def respond_to_checkin(
-    body: CheckInSubmit, current_user=Depends(get_current_user)
-) -> CheckInResult:
+    body: ChatRequest, current_user=Depends(get_current_user)
+) -> dict:
     """
-    Submit the user's response to a check-in.
-    Analyzes tone, updates profile, marks check-in as responded.
-    The raw response_text is NEVER stored.
+    Receive a chat message from the user and return Soledad's reply.
+    Accepts full conversation history for context. Runs tone analysis and
+    profile updates in the background.
     """
     user_id: str = current_user.id
     supabase = get_supabase()
-
-    # Validate ownership and that the check-in hasn't already been responded to
-    try:
-        resp = (
-            supabase.table("check_ins")
-            .select("*")
-            .eq("id", body.checkin_id)
-            .eq("user_id", user_id)
-            .single()
-            .execute()
-        )
-        checkin_row: dict = resp.data or {}
-    except Exception as exc:  # noqa: BLE001
-        logger.error({"event": "checkins.respond.fetch_error", "error": str(exc)})
-        raise HTTPException(status_code=404, detail="Check-in not found") from exc
-
-    if not checkin_row:
-        raise HTTPException(status_code=404, detail="Check-in not found or access denied")
-
-    if checkin_row.get("responded_at") is not None:
-        raise HTTPException(status_code=409, detail="Check-in already responded to")
-
-    # Compute response metrics
     now_utc = datetime.now(timezone.utc)
-    scheduled_str: str = checkin_row.get("scheduled_at", now_utc.isoformat())
-    try:
-        scheduled_dt = datetime.fromisoformat(scheduled_str.replace("Z", "+00:00"))
-        response_delay_seconds = int((now_utc - scheduled_dt).total_seconds())
-    except Exception:  # noqa: BLE001
-        response_delay_seconds = 0
 
-    word_count = len(body.response_text.split())
-
-    # Tone analysis
-    tone_result = llm_client.analyze_tone(body.response_text)
+    # Tone analysis (for alerts — non-blocking on failure)
+    tone_result = llm_client.analyze_tone(body.message)
     tone_score: float = tone_result.get("tone_score", 0.0)
     contains_crisis: bool = tone_result.get("contains_crisis_keywords", False)
 
     # Profile update extraction
     current_profile = _get_user_profile(user_id)
-    profile_update = llm_client.extract_profile_update(body.response_text, current_profile)
+    profile_update = llm_client.extract_profile_update(body.message, current_profile)
 
-    # Generate Soledad's reply using full conversational LLM
-    language = _get_user_language(user_id)
-    mode = checkin_row.get("conversation_mode", "listen")
+    # Determine language and mode
+    language = body.language if body.language in ("es", "en") else _get_user_language(user_id)
+    mode: str = pattern_analyzer.select_conversation_mode(user_id)
+
+    # Convert history to format expected by llm_client
+    conversation_history = [
+        {"role": msg.role, "content": msg.content}
+        for msg in body.history[-10:]
+    ]
+
+    # Generate Soledad's reply with full conversation history
     breso_response: str = llm_client.generate_response(
-        user_message=body.response_text,
+        user_message=body.message,
         mode=mode,
         language=language,
         profile=current_profile,
+        conversation_history=conversation_history,
     )
 
-    # Update the check-in row — save both messages
+    # Store this exchange in check_ins table
     try:
-        supabase.table("check_ins").update(
-            {
-                "responded_at": now_utc.isoformat(),
-                "response_delay_seconds": response_delay_seconds,
-                "word_count": word_count,
-                "tone_score": tone_score,
-                "engagement_flag": True,
-                "llm_model_id": llm_client.ANTHROPIC_MODEL,
-                "user_response": body.response_text,
-                "breso_response": breso_response,
-            }
-        ).eq("id", body.checkin_id).execute()
+        insert_resp = (
+            supabase.table("check_ins")
+            .insert(
+                {
+                    "user_id": user_id,
+                    "scheduled_at": now_utc.isoformat(),
+                    "responded_at": now_utc.isoformat(),
+                    "prompt_version": "chat_v1",
+                    "engagement_flag": True,
+                    "conversation_mode": mode,
+                    "tone_score": tone_score,
+                    "word_count": len(body.message.split()),
+                    "llm_model_id": llm_client.ANTHROPIC_MODEL,
+                    "user_response": body.message,
+                    "breso_response": breso_response,
+                }
+            )
+            .execute()
+        )
     except Exception as exc:  # noqa: BLE001
-        logger.error({"event": "checkins.respond.update_error", "error": str(exc)})
-        raise HTTPException(status_code=500, detail="Failed to update check-in") from exc
+        logger.warning({"event": "checkins.respond.insert_error", "error": str(exc)})
 
     # Merge and upsert personalization profile if we got new data
     if profile_update:
@@ -395,21 +392,17 @@ async def respond_to_checkin(
                 ),
                 "checkins_contributing": current_profile.get("checkins_contributing", 0) + 1,
             }
-            # Preserve existing fields not in the update
             for field in ("energy_by_hour", "active_hours"):
                 if field in current_profile:
                     merged[field] = current_profile[field]
-
             supabase.table("personalization_profiles").upsert(merged).execute()
         except Exception as exc:  # noqa: BLE001
             logger.warning(
                 {"event": "checkins.respond.profile_upsert_error", "error": str(exc)}
             )
 
-    # Update behavioral baseline
+    # Update behavioral baseline and evaluate alert level
     baseline_updated = pattern_analyzer.update_baseline(user_id)
-
-    # Evaluate alert level — dispatch red email immediately on Level 3
     alert_level = pattern_analyzer.evaluate_alert_level(user_id)
     if alert_level:
         logger.warning(
@@ -439,20 +432,12 @@ async def respond_to_checkin(
         {
             "event": "checkins.respond.success",
             "user_id": user_id,
-            "checkin_id": body.checkin_id,
             "tone_score": tone_score,
-            "word_count": word_count,
             "baseline_updated": baseline_updated,
         }
     )
 
-    return CheckInResult(
-        checkin_id=body.checkin_id,
-        processed=True,
-        tone_score=tone_score,
-        follow_up_message=breso_response,
-        baseline_updated=baseline_updated,
-    )
+    return {"response": breso_response}
 
 
 # ---------------------------------------------------------------------------

@@ -235,12 +235,18 @@ def generate_response(
         )
 
         # Build message list (prior turns + current message)
+        # History items may use {role, content} (new standard) or {user, soledad} (legacy)
         messages: list[dict] = []
         for turn in (conversation_history or []):
-            if turn.get("user"):
-                messages.append({"role": "user", "content": turn["user"]})
-            if turn.get("soledad"):
-                messages.append({"role": "assistant", "content": turn["soledad"]})
+            if "role" in turn and "content" in turn:
+                role = turn["role"] if turn["role"] in ("user", "assistant") else "user"
+                if turn["content"]:
+                    messages.append({"role": role, "content": turn["content"]})
+            else:
+                if turn.get("user"):
+                    messages.append({"role": "user", "content": turn["user"]})
+                if turn.get("soledad"):
+                    messages.append({"role": "assistant", "content": turn["soledad"]})
         messages.append({"role": "user", "content": user_message})
 
         client = _get_client()

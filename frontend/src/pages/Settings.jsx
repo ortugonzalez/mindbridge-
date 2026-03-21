@@ -26,9 +26,80 @@ export default function Settings() {
     } catch { return '20:00' }
   })
 
-  // PRIORITY 7: export state
   const [exportMsg, setExportMsg] = useState(false)
   const [showExportChoice, setShowExportChoice] = useState(false)
+
+  const exportAsPDF = (data, type) => {
+    const conversaciones = type === 'personal' ? data.conversaciones || [] : []
+    const content = type === 'personal' ? `
+      <html>
+      <head>
+        <style>
+          body { font-family: Inter, sans-serif; padding: 40px; color: #2D2D2D; }
+          h1 { color: #7C9A7E; font-weight: 400; }
+          h2 { color: #2D2D2D; font-weight: 500; margin-top: 24px; }
+          .label { color: #6B7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 12px; }
+          .value { font-size: 16px; margin-bottom: 8px; }
+          .message { border-left: 3px solid #7C9A7E; padding: 8px 16px; margin: 8px 0; border-radius: 0 8px 8px 0; }
+          .soledad { background: #F0F7F0; }
+          .user { background: #FAFAFA; }
+          hr { border: none; border-top: 1px solid #E5E7EB; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>🌱 Mi historial en BRESO</h1>
+        <div class="label">Nombre</div>
+        <div class="value">${data.nombre || '—'}</div>
+        <div class="label">Plan activo</div>
+        <div class="value">${data.plan || '—'}</div>
+        <div class="label">Exportado el</div>
+        <div class="value">${new Date().toLocaleDateString('es-AR')}</div>
+        <hr/>
+        <h2>Conversaciones recientes</h2>
+        ${conversaciones.length === 0 ? '<p style="color:#9CA3AF">Sin conversaciones registradas.</p>' : conversaciones.map(m => `
+          <div class="message ${m.role === 'soledad' || m.from === 'breso' ? 'soledad' : 'user'}">
+            <strong>${m.role === 'soledad' || m.from === 'breso' ? 'Soledad' : 'Yo'}</strong>
+            <p style="margin:4px 0">${m.text || ''}</p>
+          </div>
+        `).join('')}
+      </body>
+      </html>
+    ` : `
+      <html>
+      <head>
+        <style>
+          body { font-family: Inter, sans-serif; padding: 40px; color: #2D2D2D; }
+          h1 { color: #7C9A7E; font-weight: 400; }
+          .label { color: #6B7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 12px; }
+          .value { font-size: 16px; margin-bottom: 8px; }
+          hr { border: none; border-top: 1px solid #E5E7EB; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <h1>🌱 Informe de bienestar — BRESO</h1>
+        <p><em>Generado por Soledad para uso profesional</em></p>
+        <div class="label">Paciente</div>
+        <div class="value">Anónimo</div>
+        <div class="label">Período</div>
+        <div class="value">Últimos 30 días</div>
+        <div class="label">Check-ins realizados</div>
+        <div class="value">${data.dias_racha || 0} días de racha</div>
+        <div class="label">Resumen</div>
+        <div class="value">El paciente ha mantenido check-ins regulares durante el período evaluado.</div>
+        <div class="label">Alertas registradas</div>
+        <div class="value">0</div>
+        <hr/>
+        <p style="color: #9CA3AF; font-size: 12px;">
+          Generado por Soledad — BRESO. Este informe no constituye un diagnóstico clínico.
+        </p>
+      </body>
+      </html>
+    `
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(content)
+    printWindow.document.close()
+    printWindow.print()
+  }
 
   const handleLangChange = (e) => {
     const l = e.target.value
@@ -59,54 +130,37 @@ export default function Settings() {
     } catch {}
   }
 
-  // PRIORITY 7: dual export
-  const downloadJSON = (data, filename) => {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   const handleExportPersonal = async () => {
+    const conversaciones = (() => {
+      try { return JSON.parse(localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history') || '[]') } catch { return [] }
+    })()
     const data = {
       nombre: localStorage.getItem('breso_user_name') || null,
       plan: localStorage.getItem('breso_selected_plan') || null,
       dias_racha: null,
-      conversaciones: (() => {
-        try { return JSON.parse(localStorage.getItem('breso_conversation_history') || '[]') } catch { return [] }
-      })(),
-      contactos: (() => {
-        try { return JSON.parse(localStorage.getItem('breso_trusted_contacts') || '[]') } catch { return [] }
-      })(),
-      exportado_el: new Date().toISOString(),
+      conversaciones,
     }
     try {
       const res = await getConversationHistory(200)
-      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
-        data.conversaciones_backend = res.data
+      const items = res.data && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : [])
+      if (items.length > 0) {
+        data.conversaciones = items.flatMap(item => {
+          const msgs = []
+          if (item.user_message) msgs.push({ role: 'user', text: item.user_message })
+          if (item.soledad_response) msgs.push({ role: 'soledad', text: item.soledad_response })
+          return msgs
+        })
       }
     } catch {}
-    const date = new Date().toISOString().split('T')[0]
-    downloadJSON(data, `breso_datos_${date}.json`)
+    exportAsPDF(data, 'personal')
     setShowExportChoice(false)
     setExportMsg(true)
     setTimeout(() => setExportMsg(false), 3000)
   }
 
   const handleExportProfessional = () => {
-    const data = {
-      paciente: 'Anónimo',
-      periodo: '30 días',
-      resumen: 'Check-ins regulares',
-      alertas: 0,
-      generado_por: 'Soledad por BRESO',
-      exportado_el: new Date().toISOString(),
-    }
-    const date = new Date().toISOString().split('T')[0]
-    downloadJSON(data, `breso_informe_profesional_${date}.json`)
+    const data = { dias_racha: null }
+    exportAsPDF(data, 'professional')
     setShowExportChoice(false)
     setExportMsg(true)
     setTimeout(() => setExportMsg(false), 3000)
