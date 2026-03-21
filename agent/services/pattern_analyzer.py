@@ -12,6 +12,74 @@ logger = logging.getLogger("breso.pattern_analyzer")
 
 
 # ---------------------------------------------------------------------------
+# Real-time keyword-based pattern detection
+# ---------------------------------------------------------------------------
+
+
+class PatternAnalyzer:
+    """Keyword-based crisis and warning detection for incoming messages."""
+
+    CRISIS_KEYWORDS_ES = [
+        "no quiero vivir", "me quiero morir", "suicid",
+        "hacerme daño", "no vale la pena", "desaparecer",
+        "no puedo más", "todo es inútil", "mejor sin mí",
+    ]
+
+    CRISIS_KEYWORDS_EN = [
+        "want to die", "kill myself", "suicid",
+        "hurt myself", "not worth living", "disappear",
+        "cant go on", "everything is pointless", "better without me",
+    ]
+
+    WARNING_KEYWORDS_ES = [
+        "no duermo", "no como", "estoy solo", "nadie me entiende",
+        "me siento vacío", "no tengo ganas", "todo me da igual",
+        "ya no disfruto", "me siento mal hace días",
+    ]
+
+    def analyze_message(self, message: str, history: list, language: str = "es") -> dict:
+        """
+        Analyze a message for crisis / warning signals.
+        Returns {'level': 'red'|'orange'|'green', 'trigger': str|None, 'keyword': str|None}
+        """
+        message_lower = message.lower()
+
+        # Check crisis keywords
+        crisis_keywords = (
+            self.CRISIS_KEYWORDS_ES if language == "es" else self.CRISIS_KEYWORDS_EN
+        )
+        for keyword in crisis_keywords:
+            if keyword in message_lower:
+                return {"level": "red", "trigger": "keyword", "keyword": keyword}
+
+        # Check warning keywords in current message
+        warning_count = sum(1 for kw in self.WARNING_KEYWORDS_ES if kw in message_lower)
+        if warning_count >= 2:
+            return {"level": "orange", "trigger": "multiple_warnings", "keyword": None}
+
+        # Check sustained pattern across last 5 history messages
+        if len(history) >= 3:
+            negative_count = sum(
+                1
+                for msg in history[-5:]
+                if msg.get("role") == "user"
+                and any(kw in msg.get("content", "").lower() for kw in self.WARNING_KEYWORDS_ES)
+            )
+            if negative_count >= 3:
+                return {"level": "orange", "trigger": "sustained_pattern", "keyword": None}
+
+        return {"level": "green", "trigger": None, "keyword": None}
+
+
+_analyzer = PatternAnalyzer()
+
+
+def analyze_message(message: str, history: list, language: str = "es") -> dict:
+    """Module-level convenience wrapper for PatternAnalyzer.analyze_message."""
+    return _analyzer.analyze_message(message, history, language)
+
+
+# ---------------------------------------------------------------------------
 # Conversation mode selection
 # ---------------------------------------------------------------------------
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
+import CrisisOverlay from '../components/CrisisOverlay'
 import { getDashboard, sendMessageToSoledad, getConversationHistory } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
@@ -27,6 +28,11 @@ export default function Chat() {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
 
+  const [crisisDetected, setCrisisDetected] = useState(false)
+  const [memoryExists, setMemoryExists] = useState(false)
+  const [showStreakBanner, setShowStreakBanner] = useState(false)
+  const [streakDays, setStreakDays] = useState(0)
+
   const buildOpening = () => [
     { from: 'breso', textKey: getGreetingKey() },
     { from: 'breso', textKey: 'chat.openingQuestion' },
@@ -38,74 +44,81 @@ export default function Chat() {
     try {
       const toStore = messages.map(m => ({ from: m.from, role: m.role, text: m.text, textKey: m.textKey }))
       localStorage.setItem('breso_conversation', JSON.stringify(toStore.slice(-50)))
-    } catch {}
+    } catch { }
   }, [messages])
 
   // Load conversation history on mount
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        const history = await getConversationHistory(20)
-        if (!mounted) return
-        // History returns newest-first; reverse to get chronological order
-        const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
-        if (items.length > 0) {
-          historyLoaded.current = true
-          hasUserReplied.current = true
-          // Build message pairs oldest-first
-          const historicMessages = [...items].reverse().flatMap((item) => {
-            const msgs = []
-            if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message })
-            if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response })
-            return msgs
-          })
-          setMessages(historicMessages)
-          return
-        }
-      } catch {}
-      // Fallback to localStorage if backend returned nothing
-      if (mounted && !historyLoaded.current) {
+      ; (async () => {
         try {
-          const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
-          if (stored) {
-            const parsed = JSON.parse(stored)
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              historyLoaded.current = true
-              hasUserReplied.current = true
-              setMessages(parsed.slice(-20))
-              return
-            }
+          const history = await getConversationHistory(20)
+          if (!mounted) return
+          // History returns newest-first; reverse to get chronological order
+          const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
+          if (items.length > 0) {
+            historyLoaded.current = true
+            hasUserReplied.current = true
+            // Build message pairs oldest-first
+            const historicMessages = [...items].reverse().flatMap((item) => {
+              const msgs = []
+              if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message })
+              if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response })
+              return msgs
+            })
+            setMessages(historicMessages)
+            return
           }
-        } catch {}
-      }
-      // No history anywhere → show opening messages
-      if (mounted && !hasUserReplied.current) setMessages(buildOpening())
-    })()
+        } catch { }
+        // Fallback to localStorage if backend returned nothing
+        if (mounted && !historyLoaded.current) {
+          try {
+            const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
+            if (stored) {
+              const parsed = JSON.parse(stored)
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                historyLoaded.current = true
+                hasUserReplied.current = true
+                setMessages(parsed.slice(-20))
+                return
+              }
+            }
+          } catch { }
+        }
+        // No history anywhere → show opening messages
+        if (mounted && !hasUserReplied.current) setMessages(buildOpening())
+      })()
     return () => { mounted = false }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fetch current mode from dashboard
   useEffect(() => {
     let mounted = true
-    ;(async () => {
-      try {
-        const res = await getDashboard()
-        if (!mounted) return
-        const apiMode = res.data?.mode
-        if (apiMode) setMode(apiMode)
-      } catch {}
-    })()
+      ; (async () => {
+        try {
+          const res = await getDashboard()
+          if (!mounted) return
+          const apiMode = res.data?.mode
+          if (apiMode) setMode(apiMode)
+
+          const days = res.data?.streakDaysConsecutive || 0
+          setStreakDays(days)
+          if (days >= 3) {
+            setShowStreakBanner(true)
+            setTimeout(() => { if (mounted) setShowStreakBanner(false) }, 3000)
+          }
+        } catch { }
+      })()
     return () => { mounted = false }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Rebuild opening messages on language change (only if user hasn't replied and no history)
   useEffect(() => {
     if (hasUserReplied.current || historyLoaded.current) return
     setMessages(buildOpening())
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language])
 
   const handleSend = async (text) => {
@@ -122,8 +135,11 @@ export default function Chat() {
       const lang = i18n.language?.startsWith('es') ? 'es' : 'en'
       // Pass full conversation history (including the new user message) to backend
       const currentMessages = [...messages, userMsg]
-      const replyText = await sendMessageToSoledad(trimmed, currentMessages, lang)
-      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: replyText, timestamp: Date.now() }])
+      const reply = await sendMessageToSoledad(trimmed, currentMessages, lang)
+      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, timestamp: Date.now() }])
+
+      if (reply.crisisDetected) setCrisisDetected(true)
+      if (reply.memoryExists) setMemoryExists(true)
     } catch {
       setSendError(t('chat.errorReply'))
     } finally {
@@ -132,14 +148,29 @@ export default function Chat() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100dvh - 5.5rem)' }}>
+    <div className="flex flex-col relative" style={{ height: 'calc(100dvh - 5.5rem)' }}>
+      {showStreakBanner && (
+        <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-500 min-w-max">
+          <div className="bg-sage text-white px-4 py-2 rounded-full shadow-md text-sm font-semibold flex items-center gap-2">
+            <span>🔥</span> Llevas {streakDays} días seguidos. Muy bien.
+          </div>
+        </div>
+      )}
+
+      <CrisisOverlay isVisible={crisisDetected} onClose={() => setCrisisDetected(false)} />
+
       {/* Header */}
       <div className="flex items-center gap-3 py-3 px-1 mb-2 flex-shrink-0">
         <div className="h-10 w-10 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white font-bold text-sm">
           S
         </div>
         <div>
-          <div className="text-base font-semibold text-textdark dark:text-dm-text">Soledad</div>
+          <div className="text-base font-semibold text-textdark dark:text-dm-text flex items-center gap-2">
+            Soledad
+            {memoryExists && (
+              <span className="text-[10px] font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full border border-sage/20">Te recuerda 🌱</span>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
             <span className="text-xs text-textdark/55 dark:text-dm-muted">{t('chat.online')}</span>

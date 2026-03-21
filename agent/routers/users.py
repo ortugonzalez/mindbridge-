@@ -163,6 +163,94 @@ async def get_baseline(current_user=Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Failed to fetch baseline") from exc
 
 
+@router.get("/me/gamification")
+async def get_gamification(current_user=Depends(get_current_user)) -> dict:
+    """Return streak, points, achievements, and next achievement progress."""
+    supabase = get_supabase()
+    user_id = current_user.id
+
+    ACHIEVEMENT_META = {
+        "first_checkin": {"name": "Primer paso", "icon": "🌱"},
+        "streak_7":      {"name": "Una semana entera", "icon": "🔥"},
+        "streak_30":     {"name": "Un mes con Soledad", "icon": "⭐"},
+        "points_100":    {"name": "100 puntos", "icon": "💎"},
+    }
+
+    ACHIEVEMENT_ORDER = ["first_checkin", "streak_7", "streak_30", "points_100"]
+
+    try:
+        streak_res = (
+            supabase.table("user_streaks").select("*").eq("user_id", user_id).execute()
+        )
+        streak = streak_res.data[0] if streak_res.data else {}
+
+        achievements_res = (
+            supabase.table("user_achievements")
+            .select("achievement_id, unlocked_at")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        unlocked = {a["achievement_id"]: a["unlocked_at"] for a in (achievements_res.data or [])}
+
+        achievements_out = [
+            {
+                "id": aid,
+                **ACHIEVEMENT_META[aid],
+                "unlocked_at": unlocked[aid],
+            }
+            for aid in ACHIEVEMENT_ORDER
+            if aid in unlocked
+        ]
+
+        # Find next locked achievement
+        current_streak = streak.get("current_streak", 0)
+        total_checkins = streak.get("total_checkins", 0)
+        points = streak.get("points", 0)
+
+        next_achievement = None
+        for aid in ACHIEVEMENT_ORDER:
+            if aid in unlocked:
+                continue
+            meta = ACHIEVEMENT_META[aid]
+            if aid == "first_checkin":
+                progress = f"{total_checkins}/1 check-ins"
+            elif aid == "streak_7":
+                progress = f"{current_streak}/7 días"
+            elif aid == "streak_30":
+                progress = f"{current_streak}/30 días"
+            elif aid == "points_100":
+                progress = f"{points}/100 puntos"
+            else:
+                progress = ""
+            next_achievement = {"id": aid, **meta, "progress": progress}
+            break
+
+        return {
+            "streak": current_streak,
+            "longest_streak": streak.get("longest_streak", 0),
+            "total_checkins": total_checkins,
+            "points": points,
+            "achievements": achievements_out,
+            "next_achievement": next_achievement,
+        }
+
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "users.get_gamification.error", "error": str(exc)})
+        return {
+            "streak": 0,
+            "longest_streak": 0,
+            "total_checkins": 0,
+            "points": 0,
+            "achievements": [],
+            "next_achievement": {
+                "id": "first_checkin",
+                "name": "Primer paso",
+                "icon": "🌱",
+                "progress": "0/1 check-ins",
+            },
+        }
+
+
 @router.get("/me/personalization")
 async def get_personalization(current_user=Depends(get_current_user)) -> dict:
     """Return the personalization profile for the user, or an empty profile with defaults."""

@@ -11,6 +11,7 @@ from typing import Any
 import anthropic
 import yaml
 from dotenv import load_dotenv
+from integrations.supabase_client import get_supabase
 
 load_dotenv()
 
@@ -133,6 +134,67 @@ def _log_llm_call(
 # ---------------------------------------------------------------------------
 
 
+def get_user_memory(user_id: str) -> str:
+    """Fetch Soledad's accumulated memory about this user. Returns '' if none."""
+    try:
+        supabase = get_supabase()
+        result = supabase.table("user_memory").select("memory_text").eq("user_id", user_id).execute()
+        if result.data:
+            return result.data[0].get("memory_text") or ""
+        return ""
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+def update_user_memory(user_id: str, conversation: list[dict]) -> None:
+    """
+    Extract key insights from the recent conversation and upsert to user_memory.
+    Runs synchronously — call from a background task to avoid blocking.
+    """
+    if not conversation:
+        return
+    try:
+        memory_prompt = (
+            "Analizá esta conversación y extraé máximo 5 insights clave sobre la persona en formato lista:\n"
+            "- Temas recurrentes\n"
+            "- Estado emocional general\n"
+            "- Situaciones mencionadas\n"
+            "- Patrones de comportamiento\n"
+            "Solo los hechos, sin análisis. Máximo 200 palabras."
+        )
+        conversation_text = "\n".join(
+            f"{m.get('role', 'user')}: {m.get('content', '')}"
+            for m in conversation[-6:]
+        )
+        client = _get_client()
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=300,
+            messages=[{
+                "role": "user",
+                "content": f"{memory_prompt}\n\nConversación:\n{conversation_text}",
+            }],
+        )
+        new_memory = response.content[0].text.strip()
+        if not new_memory:
+            return
+
+        supabase = get_supabase()
+        existing = supabase.table("user_memory").select("id").eq("user_id", user_id).execute()
+        if existing.data:
+            supabase.table("user_memory").update({
+                "memory_text": new_memory,
+                "updated_at": "now()",
+            }).eq("user_id", user_id).execute()
+        else:
+            supabase.table("user_memory").insert({
+                "user_id": user_id,
+                "memory_text": new_memory,
+            }).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "llm.memory_update_failed", "user_id": user_id, "error": str(exc)})
+
+
 def generate_checkin_message(mode: str, language: str, profile: dict) -> str:
     """Generate a personalised check-in message for the given mode and language."""
     fallback_lang = language if language in ("es", "en") else "en"
@@ -212,10 +274,11 @@ def generate_response(
     language: str,
     profile: dict,
     conversation_history: list[dict] | None = None,
+    memory: str = "",
 ) -> str:
     """
     Generate Soledad's conversational reply to a user message.
-    Uses the full system prompt + mode instructions + optional prior turns.
+    Uses the full system prompt + mode instructions + optional prior turns + persistent memory.
     """
     fallback_lang = language if language in ("es", "en") else "es"
     fallback_text: str = (
@@ -228,6 +291,11 @@ def generate_response(
         modes_cfg = _CHECKIN_PROMPTS.get("modes", {})
         mode_cfg = modes_cfg.get(mode, modes_cfg.get("listen", {}))
         mode_instructions: str = mode_cfg.get(language) or mode_cfg.get("es", "")
+
+        # Prepend persistent memory to the system prompt when available
+        if memory:
+            base_system = f"Lo que recordás de esta persona:\n{memory}\n\n{base_system}"
+
         system_prompt: str = (
             f"{base_system}\n\n{mode_instructions}".strip()
             if mode_instructions

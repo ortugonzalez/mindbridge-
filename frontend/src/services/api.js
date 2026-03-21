@@ -17,7 +17,7 @@ axiosClient.interceptors.request.use((config) => {
   try {
     const token = localStorage.getItem('breso_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
-  } catch {}
+  } catch { }
   return config
 })
 
@@ -187,7 +187,7 @@ export async function signIn({ email, password }) {
     () =>
       axiosClient.post('/auth/signin', { email, password }).then((res) => {
         const token = res.data?.access_token || res.data?.token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
         return res.data
       }),
     () => ({ access_token: 'mock-token', user_id: 'mock-user', fromMock: true })
@@ -227,7 +227,7 @@ export async function registerUser({ name, email, password }) {
     () =>
       axiosClient.post('/auth/register', { name, email, password, preferred_language: lang }).then((res) => {
         const token = res.data?.token || res.data?.access_token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
         return res.data
       }),
     () => ({ ok: true, fromMock: true })
@@ -275,10 +275,19 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
     })
     if (!response.ok) throw new Error(`Backend error ${response.status}`)
     const data = await response.json()
-    return data.response || data.message || data.breso_message || data.reply
+    const text = data.response || data.message || data.breso_message || data.reply
+    return {
+      text,
+      crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
+      memoryExists: !!(data.memory || data.has_memory || data.memoryExists)
+    }
   } catch {
     const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
-    return pool[Math.floor(Math.random() * pool.length)]
+    return {
+      text: pool[Math.floor(Math.random() * pool.length)],
+      crisisDetected: false,
+      memoryExists: true // mock memory true for demo purposes
+    }
   }
 }
 
