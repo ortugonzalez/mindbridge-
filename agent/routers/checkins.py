@@ -388,12 +388,14 @@ async def respond_to_checkin(
     keyword-based crisis detection, tone analysis, and gamification.
     """
     user_id: str = current_user.id
+    logger.info({"event": "checkins.respond.received", "user_id": user_id, "message_preview": body.message[:50], "history_len": len(body.history), "language": body.language})
     supabase = get_supabase()
     now_utc = datetime.now(timezone.utc)
 
     # Determine language and mode
     language = body.language if body.language in ("es", "en") else _get_user_language(user_id)
     mode: str = pattern_analyzer.select_conversation_mode(user_id)
+    logger.info({"event": "checkins.respond.mode", "user_id": user_id, "mode": mode, "language": language})
 
     # Convert history to standard format.
     # The frontend includes the current user message as the last item in body.history
@@ -431,14 +433,20 @@ async def respond_to_checkin(
     profile_update = llm_client.extract_profile_update(body.message, current_profile)
 
     # Generate Soledad's reply with full history + persistent memory
-    breso_response: str = llm_client.generate_response(
-        user_message=body.message,
-        mode=mode,
-        language=language,
-        profile=current_profile,
-        conversation_history=conversation_history,
-        memory=memory,
-    )
+    logger.info({"event": "checkins.respond.calling_llm", "user_id": user_id, "conversation_history_len": len(conversation_history)})
+    try:
+        breso_response: str = llm_client.generate_response(
+            user_message=body.message,
+            mode=mode,
+            language=language,
+            profile=current_profile,
+            conversation_history=conversation_history,
+            memory=memory,
+        )
+    except Exception as exc:
+        logger.error({"event": "checkins.respond.llm_error", "user_id": user_id, "error_type": type(exc).__name__, "error": str(exc)})
+        raise HTTPException(status_code=500, detail=f"LLM error: {type(exc).__name__}: {exc}") from exc
+    logger.info({"event": "checkins.respond.llm_ok", "user_id": user_id, "response_preview": breso_response[:80]})
 
     # --- FEATURE 3: Crisis response modifications ---
     if pattern_level == "red":

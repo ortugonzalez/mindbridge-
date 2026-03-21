@@ -305,56 +305,53 @@ def generate_response(
     Generate Soledad's conversational reply to a user message.
     Uses the full system prompt + mode instructions + optional prior turns + persistent memory.
     """
-    fallback_lang = language if language in ("es", "en") else "es"
-    fallback_text: str = (
-        _CHECKIN_PROMPTS.get("fallback", {}).get(fallback_lang)
-        or "Hola, estoy acá. ¿Cómo estás hoy?"
+    logger.info({"event": "llm.generate_response.called", "message_preview": user_message[:50], "history_len": len(conversation_history or []), "memory_exists": bool(memory)})
+
+    base_system: str = _CHECKIN_PROMPTS.get("system", "")
+    modes_cfg = _CHECKIN_PROMPTS.get("modes", {})
+    mode_cfg = modes_cfg.get(mode, modes_cfg.get("listen", {}))
+    mode_instructions: str = mode_cfg.get(language) or mode_cfg.get("es", "")
+
+    if memory:
+        base_system = f"Lo que recordás de esta persona:\n{memory}\n\n{base_system}"
+
+    system_prompt: str = (
+        f"{base_system}\n\n{mode_instructions}".strip()
+        if mode_instructions
+        else base_system
     )
 
-    try:
-        base_system: str = _CHECKIN_PROMPTS.get("system", "")
-        modes_cfg = _CHECKIN_PROMPTS.get("modes", {})
-        mode_cfg = modes_cfg.get(mode, modes_cfg.get("listen", {}))
-        mode_instructions: str = mode_cfg.get(language) or mode_cfg.get("es", "")
-
-        # Prepend persistent memory to the system prompt when available
-        if memory:
-            base_system = f"Lo que recordás de esta persona:\n{memory}\n\n{base_system}"
-
-        system_prompt: str = (
-            f"{base_system}\n\n{mode_instructions}".strip()
-            if mode_instructions
-            else base_system
-        )
-
-        # Build message list from history, then clean and append current message.
-        # History items may use {role, content} (new standard) or {user, soledad} (legacy).
-        raw_messages: list[dict] = []
-        for turn in (conversation_history or []):
-            if "role" in turn and "content" in turn:
-                role = turn["role"] if turn["role"] in ("user", "assistant") else "user"
-                content = turn["content"]
-            elif turn.get("user") or turn.get("soledad"):
-                # Legacy {user, soledad} format
-                if turn.get("user"):
-                    role, content = "user", turn["user"]
-                else:
-                    role, content = "assistant", turn["soledad"]
+    # Build message list from history, then clean and append current message.
+    # History items may use {role, content} (new standard) or {user, soledad} (legacy).
+    raw_messages: list[dict] = []
+    for turn in (conversation_history or []):
+        if "role" in turn and "content" in turn:
+            role = turn["role"] if turn["role"] in ("user", "assistant") else "user"
+            content = turn["content"]
+        elif turn.get("user") or turn.get("soledad"):
+            if turn.get("user"):
+                role, content = "user", turn["user"]
             else:
-                continue
+                role, content = "assistant", turn["soledad"]
+        else:
+            continue
 
-            if not content:
-                continue
+        if not content:
+            continue
 
-            raw_messages.append({"role": role, "content": content})
+        logger.info({"event": "llm.history_msg", "role": role, "content_preview": str(content)[:30]})
+        raw_messages.append({"role": role, "content": content})
 
-        # Enforce Anthropic API rules (alternating roles, starts with "user")
-        messages = clean_messages(raw_messages)
+    # Enforce Anthropic API rules (alternating roles, starts with "user")
+    messages = clean_messages(raw_messages)
+    logger.info({"event": "llm.messages_after_clean", "count": len(messages)})
 
-        # Append current user message
-        messages.append({"role": "user", "content": user_message})
+    # Append current user message
+    messages.append({"role": "user", "content": user_message})
+    logger.info({"event": "llm.final_messages_to_claude", "count": len(messages)})
 
-        client = _get_client()
+    client = _get_client()
+    try:
         t0 = time.monotonic()
         response = client.messages.create(
             model=ANTHROPIC_MODEL,
@@ -367,6 +364,7 @@ def generate_response(
         latency_ms = int((time.monotonic() - t0) * 1000)
         text: str = response.content[0].text.strip()
 
+        logger.info({"event": "llm.response.success", "response_preview": text[:80], "model_id": ANTHROPIC_MODEL, "latency_ms": latency_ms, "prompt_tokens": response.usage.input_tokens, "completion_tokens": response.usage.output_tokens})
         _log_llm_call(
             event="llm.response.success",
             model_id=ANTHROPIC_MODEL,
@@ -378,20 +376,9 @@ def generate_response(
         )
         return text
 
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(
-            {
-                "event": "llm.fallback_triggered",
-                "reason": "generate_response",
-                "error": str(exc),
-                "model_id": ANTHROPIC_MODEL,
-                "prompt_tokens": 0,
-                "completion_tokens": 0,
-                "latency_ms": 0,
-                "outcome": "fallback",
-            }
-        )
-        return fallback_text
+    except Exception as exc:
+        logger.error({"event": "llm.generate_response.error", "error_type": type(exc).__name__, "error": str(exc), "messages_count": len(messages), "model_id": ANTHROPIC_MODEL})
+        raise
 
 
 def analyze_tone(text: str) -> dict:
