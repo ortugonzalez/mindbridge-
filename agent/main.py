@@ -95,10 +95,9 @@ app.add_middleware(
         "https://frontend-eta-pearl.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
-        "*",  # temporary for development
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
