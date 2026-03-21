@@ -34,8 +34,8 @@ export default function Chat() {
   const [streakDays, setStreakDays] = useState(0)
 
   const buildOpening = () => [
-    { from: 'breso', textKey: getGreetingKey() },
-    { from: 'breso', textKey: 'chat.openingQuestion' },
+    { from: 'breso', role: 'soledad', textKey: getGreetingKey(), text: t(getGreetingKey()) },
+    { from: 'breso', role: 'soledad', textKey: 'chat.openingQuestion', text: t('chat.openingQuestion') },
   ]
 
   // Save messages to localStorage whenever they change (only after user interaction)
@@ -140,7 +140,8 @@ export default function Chat() {
 
       if (reply.crisisDetected) setCrisisDetected(true)
       if (reply.memoryExists) setMemoryExists(true)
-    } catch {
+    } catch (err) {
+      console.error('[Chat] handleSend failed:', err?.message || err)
       setSendError(t('chat.errorReply'))
     } finally {
       setSending(false)
