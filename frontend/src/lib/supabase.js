@@ -7,4 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase env vars missing — auth will not work')
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '')
+export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '', {
+  auth: {
+    detectSessionInUrl: true,
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+})
