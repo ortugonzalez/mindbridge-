@@ -33,10 +33,13 @@ export default function Chat() {
   const [showStreakBanner, setShowStreakBanner] = useState(false)
   const [streakDays, setStreakDays] = useState(0)
 
-  const buildOpening = () => [
-    { from: 'breso', role: 'soledad', textKey: getGreetingKey(), text: t(getGreetingKey()) },
-    { from: 'breso', role: 'soledad', textKey: 'chat.openingQuestion', text: t('chat.openingQuestion') },
-  ]
+  const buildOpening = () => {
+    const now = new Date().toISOString()
+    return [
+      { from: 'breso', role: 'soledad', textKey: getGreetingKey(), text: t(getGreetingKey()), timestamp: now },
+      { from: 'breso', role: 'soledad', textKey: 'chat.openingQuestion', text: t('chat.openingQuestion'), timestamp: now },
+    ]
+  }
 
   // Save messages to localStorage whenever they change (only after user interaction)
   useEffect(() => {
@@ -127,7 +130,7 @@ export default function Chat() {
 
     hasUserReplied.current = true
     setSendError('')
-    const userMsg = { from: 'user', role: 'user', text: trimmed, timestamp: Date.now() }
+    const userMsg = { from: 'user', role: 'user', text: trimmed, timestamp: new Date().toISOString() }
     setMessages((prev) => [...prev, userMsg])
     setSending(true)
 
@@ -136,7 +139,7 @@ export default function Chat() {
       // Pass full conversation history (including the new user message) to backend
       const currentMessages = [...messages, userMsg]
       const reply = await sendMessageToSoledad(trimmed, currentMessages, lang)
-      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, timestamp: Date.now() }])
+      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, timestamp: new Date().toISOString() }])
 
       if (reply.crisisDetected) setCrisisDetected(true)
       if (reply.memoryExists) setMemoryExists(true)

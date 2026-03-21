@@ -7,8 +7,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mindbridge-produc
 
 const axiosClient = axios.create({
   baseURL: API_BASE,
-  // Short timeout so fallback to mock is fast when backend is unreachable
-  timeout: 3000,
+  timeout: 30000,
   withCredentials: true,
 })
 
@@ -251,65 +250,62 @@ const EN_MOCKS = [
 ]
 
 export async function sendMessageToSoledad(message, history = [], language = 'es') {
-  try {
-    // Always prefer the live Supabase session token; fall back to localStorage only as last resort
-    const { data: { session } } = await supabase.auth.getSession()
-    const token = session?.access_token || safeLocalStorage('breso_token')
+  // Bug B fix: ONLY use Supabase session token — no localStorage fallback
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
 
-    console.log('[Soledad] sendMessage — token source:', session?.access_token ? 'supabase_session' : 'localStorage', '| token prefix:', token?.slice(0, 20) || 'NONE')
+  console.log('[Soledad] token source:', token ? 'supabase_session' : 'NONE')
 
-    if (!token || token === 'mock-token') {
-      console.warn('[Soledad] No valid auth token — cannot reach backend, using mock')
-      throw new Error('No valid auth token')
+  if (!token) {
+    console.error('[Soledad] No auth session — user must be signed in via Supabase')
+    throw new Error('No auth session')
+  }
+
+  // Bug C fix: resolve textKey to actual text, then filter empty entries
+  const historyPayload = history
+    .slice(-10)
+    .map(m => ({
+      role: (m.role === 'soledad' || m.from === 'breso') ? 'assistant' : 'user',
+      content: m.text || (m.textKey ? i18n.t(m.textKey) : ''),
+    }))
+    .filter(m => m.content)
+
+  const BASE_URL = API_BASE
+  console.log('[Soledad] POST to:', BASE_URL + '/checkins/respond')
+  console.log('[Soledad] history length:', historyPayload.length)
+
+  const response = await fetch(`${BASE_URL}/checkins/respond`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message, language, history: historyPayload }),
+    signal: AbortSignal.timeout(30000),
+  })
+
+  console.log('[Soledad] response status:', response.status)
+
+  // Bug A fix: never swallow errors silently — surface the full details
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    console.error('[Soledad] Backend error', response.status, errorBody)
+    // Only fall back to mock when there is no backend URL at all
+    if (!API_BASE) {
+      const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
+      return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
     }
+    throw new Error(`Backend ${response.status}: ${errorBody}`)
+  }
 
-    // Filter history: only include messages that have actual text content
-    const historyPayload = history
-      .filter(m => m.text && (m.role === 'user' || m.role === 'soledad' || m.from === 'user' || m.from === 'breso'))
-      .slice(-10)
-      .map(m => ({
-        role: (m.role === 'soledad' || m.from === 'breso') ? 'assistant' : 'user',
-        content: m.text,
-      }))
+  const data = await response.json()
+  console.log('[Soledad] response data:', JSON.stringify(data).slice(0, 200))
 
-    const body = { message, language, history: historyPayload }
-    console.log('[Soledad] POST', `${API_BASE}/checkins/respond`, '| history length:', historyPayload.length, '| body:', JSON.stringify(body).slice(0, 300))
-
-    const response = await fetch(`${API_BASE}/checkins/respond`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(20000),
-    })
-
-    console.log('[Soledad] response status:', response.status)
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => '')
-      console.error('[Soledad] Backend error', response.status, errorText)
-      throw new Error(`Backend error ${response.status}: ${errorText}`)
-    }
-
-    const data = await response.json()
-    console.log('[Soledad] response data:', JSON.stringify(data).slice(0, 200))
-
-    const text = data.response || data.message || data.breso_message || data.reply
-    return {
-      text,
-      crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
-      memoryExists: !!(data.memory || data.has_memory || data.memoryExists)
-    }
-  } catch (err) {
-    console.error('[Soledad] sendMessageToSoledad failed:', err?.message || err)
-    const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
-    return {
-      text: pool[Math.floor(Math.random() * pool.length)],
-      crisisDetected: false,
-      memoryExists: false,
-    }
+  const text = data.response || data.message || data.breso_message || data.reply
+  return {
+    text,
+    crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
+    memoryExists: !!(data.memory || data.has_memory || data.memoryExists),
   }
 }
 
