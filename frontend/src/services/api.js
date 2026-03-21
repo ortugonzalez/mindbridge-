@@ -376,6 +376,34 @@ export async function submitCheckinResponse({ checkinId, response, mode }) {
  * postCheckin — legacy alias used by Chat.jsx.
  * Maps to submitCheckinResponse internally.
  */
+export async function getDailySummaries() {
+  return requestWithMock(
+    () => axiosClient.get('/checkins/daily-summaries').then((res) => res.data),
+    () => []
+  )
+}
+
+export async function getFamilyPatientStatus() {
+  return requestWithMock(
+    () => axiosClient.get('/family/patient-status').then((res) => res.data),
+    () => ({ alert_level: 'green', streak: 0, last_checkin: 'Sin datos', checkins_this_week: 0, weekly_summary: '', needs_attention: false })
+  )
+}
+
+export async function getFamilyWeeklyReport() {
+  return requestWithMock(
+    () => axiosClient.get('/family/weekly-report').then((res) => res.data),
+    () => ({ week: '', summary: '', alert_level: 'green', recommendation: '' })
+  )
+}
+
+export async function notifyPatient({ message }) {
+  return requestWithMock(
+    () => axiosClient.post('/family/notify-patient', { message }).then((res) => res.data),
+    () => ({ ok: true, fromMock: true })
+  )
+}
+
 export async function postCheckin({ message, mode }) {
   const result = await submitCheckinResponse({ checkinId: 'today', response: message, mode })
   // Return shape Chat.jsx expects: { data: { replyText, nextMode } }

@@ -567,6 +567,31 @@ async def respond_to_checkin(
     # Update behavioral baseline
     baseline_updated = pattern_analyzer.update_baseline(user_id)
 
+    # --- Sustained negativity check → family push alert ---
+    try:
+        recent_scores_res = (
+            get_supabase()
+            .table("check_ins")
+            .select("tone_score")
+            .eq("user_id", user_id)
+            .not_.is_("tone_score", "null")
+            .order("responded_at", desc=True)
+            .limit(5)
+            .execute()
+        )
+        recent_scores = [r["tone_score"] for r in (recent_scores_res.data or [])]
+        if pattern_analyzer.check_sustained_negativity(recent_scores):
+            from services.scheduler import send_push_to_family
+            background_tasks.add_task(
+                send_push_to_family,
+                user_id,
+                "orange",
+                "Negatividad sostenida en los últimos 5 check-ins",
+            )
+            logger.info({"event": "checkins.respond.sustained_negativity_alert", "user_id": user_id})
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "checkins.respond.sustained_negativity_check_error", "error": str(exc)})
+
     # --- FEATURE 4: Gamification ---
     background_tasks.add_task(_update_gamification, user_id)
 
@@ -664,3 +689,103 @@ async def get_history(
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "checkins.history.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to fetch check-in history") from exc
+
+
+# ---------------------------------------------------------------------------
+# GET /checkins/daily-summaries
+# ---------------------------------------------------------------------------
+
+
+@router.get("/daily-summaries")
+async def get_daily_summaries(
+    current_user=Depends(get_current_user),
+) -> list[dict]:
+    """
+    Return one AI-generated summary per day for the last 30 days.
+    Each entry contains date, messages_count, summary, tone_score, alert_level.
+    """
+    user_id: str = current_user.id
+    supabase = get_supabase()
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat()
+
+    try:
+        resp = (
+            supabase.table("check_ins")
+            .select("scheduled_at, responded_at, user_response, breso_message, tone_score")
+            .eq("user_id", user_id)
+            .gte("scheduled_at", cutoff)
+            .not_.is_("responded_at", "null")
+            .order("scheduled_at", desc=False)
+            .execute()
+        )
+        rows = resp.data or []
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "checkins.daily_summaries.fetch_error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to fetch check-in data") from exc
+
+    # Group rows by date
+    from collections import defaultdict
+    by_date: dict[str, list[dict]] = defaultdict(list)
+    for row in rows:
+        ts = row.get("responded_at") or row.get("scheduled_at") or ""
+        day = ts[:10]  # "YYYY-MM-DD"
+        if day:
+            by_date[day].append(row)
+
+    results: list[dict] = []
+    client = llm_client._get_client()
+
+    for day in sorted(by_date.keys()):
+        day_rows = by_date[day]
+        avg_tone = (
+            sum(r["tone_score"] for r in day_rows if r.get("tone_score") is not None)
+            / max(1, sum(1 for r in day_rows if r.get("tone_score") is not None))
+        ) if any(r.get("tone_score") is not None for r in day_rows) else None
+
+        alert_level = "green"
+        if avg_tone is not None:
+            if avg_tone < -0.3:
+                alert_level = "red"
+            elif avg_tone < 0.0:
+                alert_level = "orange"
+            elif avg_tone < 0.3:
+                alert_level = "yellow"
+
+        # Build conversation text for Claude
+        parts = []
+        for r in day_rows:
+            if r.get("user_response"):
+                parts.append(f"Usuario: {r['user_response']}")
+            if r.get("breso_message"):
+                parts.append(f"Soledad: {r['breso_message']}")
+        messages_text = "\n".join(parts)[:1500]
+
+        summary = "Sin resumen disponible."
+        if messages_text:
+            try:
+                ai_resp = client.messages.create(
+                    model=llm_client.ANTHROPIC_MODEL,
+                    max_tokens=100,
+                    messages=[{
+                        "role": "user",
+                        "content": (
+                            "Resumí en una oración lo que habló esta persona hoy, "
+                            "sin revelar detalles privados. Solo el estado emocional general "
+                            "y los temas principales. Máximo 20 palabras.\n\n"
+                            f"Conversación:\n{messages_text}"
+                        ),
+                    }],
+                )
+                summary = ai_resp.content[0].text.strip()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning({"event": "checkins.daily_summaries.llm_error", "date": day, "error": str(exc)})
+
+        results.append({
+            "date": day,
+            "messages_count": len(day_rows),
+            "summary": summary,
+            "tone_score": round(avg_tone, 2) if avg_tone is not None else None,
+            "alert_level": alert_level,
+        })
+
+    return results

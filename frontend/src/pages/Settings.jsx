@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '../contexts/ThemeContext'
 import i18n, { STORAGE_KEY } from '../i18n'
-import { getConversationHistory } from '../services/api'
+import { getConversationHistory, getDailySummaries } from '../services/api'
 
 export default function Settings() {
   const { t } = useTranslation()
@@ -31,6 +31,7 @@ export default function Settings() {
 
   const exportAsPDF = (data, type) => {
     const conversaciones = type === 'personal' ? data.conversaciones || [] : []
+    const summaries = type === 'personal' ? data.summaries || [] : []
     const content = type === 'personal' ? `
       <html>
       <head>
@@ -43,6 +44,9 @@ export default function Settings() {
           .message { border-left: 3px solid #7C9A7E; padding: 8px 16px; margin: 8px 0; border-radius: 0 8px 8px 0; }
           .soledad { background: #F0F7F0; }
           .user { background: #FAFAFA; }
+          .day-row { display: flex; gap: 16px; padding: 8px 0; border-bottom: 1px solid #F3F4F6; font-size: 14px; }
+          .day-date { color: #6B7280; min-width: 100px; }
+          .day-summary { color: #2D2D2D; flex: 1; }
           hr { border: none; border-top: 1px solid #E5E7EB; margin: 20px 0; }
         </style>
       </head>
@@ -54,6 +58,16 @@ export default function Settings() {
         <div class="value">${data.plan || '—'}</div>
         <div class="label">Exportado el</div>
         <div class="value">${new Date().toLocaleDateString('es-AR')}</div>
+        <hr/>
+        <h2>Historial por día</h2>
+        ${summaries.length === 0
+          ? '<p style="color:#9CA3AF">Sin resúmenes disponibles.</p>'
+          : summaries.map(s => `
+            <div class="day-row">
+              <span class="day-date">${s.date}</span>
+              <span class="day-summary">${s.summary}</span>
+            </div>
+          `).join('')}
         <hr/>
         <h2>Conversaciones recientes</h2>
         ${conversaciones.length === 0 ? '<p style="color:#9CA3AF">Sin conversaciones registradas.</p>' : conversaciones.map(m => `
@@ -139,6 +153,7 @@ export default function Settings() {
       plan: localStorage.getItem('breso_selected_plan') || null,
       dias_racha: null,
       conversaciones,
+      summaries: [],
     }
     try {
       const res = await getConversationHistory(200)
@@ -151,6 +166,11 @@ export default function Settings() {
           return msgs
         })
       }
+    } catch {}
+    try {
+      const summaryRes = await getDailySummaries()
+      const summaryItems = Array.isArray(summaryRes.data) ? summaryRes.data : (Array.isArray(summaryRes) ? summaryRes : [])
+      if (summaryItems.length > 0) data.summaries = summaryItems
     } catch {}
     exportAsPDF(data, 'personal')
     setShowExportChoice(false)

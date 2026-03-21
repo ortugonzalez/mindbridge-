@@ -79,6 +79,18 @@ def analyze_message(message: str, history: list, language: str = "es") -> dict:
     return _analyzer.analyze_message(message, history, language)
 
 
+def check_sustained_negativity(history_scores: list) -> bool:
+    """
+    Returns True if the last 5 tone scores are all below -0.2 (sustained negativity).
+    Used after each check-in to decide whether to trigger a family alert.
+    history_scores: list of float tone scores, most recent last.
+    """
+    if not history_scores or len(history_scores) < 5:
+        return False
+    recent = history_scores[-5:]
+    return all(score < -0.2 for score in recent if score is not None)
+
+
 # ---------------------------------------------------------------------------
 # Conversation mode selection
 # ---------------------------------------------------------------------------
