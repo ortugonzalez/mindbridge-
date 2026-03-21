@@ -98,6 +98,9 @@ except Exception as exc:  # noqa: BLE001
 
 
 def _get_client() -> anthropic.Anthropic:
+    if not ANTHROPIC_API_KEY:
+        logger.error({"event": "llm.init_error", "error": "ANTHROPIC_API_KEY environment variable is not set"})
+        raise ValueError("ANTHROPIC_API_KEY environment variable is not set")
     return anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 
