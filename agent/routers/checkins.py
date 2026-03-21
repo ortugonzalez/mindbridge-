@@ -532,7 +532,7 @@ async def respond_to_checkin(
             "word_count": len(body.message.split()),
             "llm_model_id": llm_client.ANTHROPIC_MODEL,
             "user_response": body.message,
-            "breso_response": breso_response,
+            "breso_message": breso_response,
         }).execute()
     except Exception as exc:  # noqa: BLE001
         logger.warning({"event": "checkins.respond.insert_error", "error": str(exc)})

@@ -357,7 +357,6 @@ def generate_response(
             model=ANTHROPIC_MODEL,
             max_tokens=CHECKIN_MAX_TOKENS,
             temperature=CHECKIN_TEMPERATURE,
-            top_p=CHECKIN_TOP_P,
             system=system_prompt,
             messages=messages,
         )
