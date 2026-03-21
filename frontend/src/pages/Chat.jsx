@@ -36,8 +36,12 @@ export default function Chat() {
   const buildOpening = () => {
     const now = new Date().toISOString()
     return [
-      { from: 'breso', role: 'soledad', textKey: getGreetingKey(), text: t(getGreetingKey()), timestamp: now },
-      { from: 'breso', role: 'soledad', textKey: 'chat.openingQuestion', text: t('chat.openingQuestion'), timestamp: now },
+      {
+        from: 'breso',
+        role: 'soledad',
+        text: t(getGreetingKey()) + ' ' + t('chat.openingQuestion'),
+        timestamp: now,
+      },
     ]
   }
 

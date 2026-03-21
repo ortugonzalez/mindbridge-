@@ -271,6 +271,28 @@ def generate_checkin_message(mode: str, language: str, profile: dict) -> str:
         return fallback_text
 
 
+def clean_messages(messages: list) -> list:
+    """
+    Sanitize a message list so it satisfies Anthropic API rules:
+      - No consecutive turns with the same role (keep the later one)
+      - Must not start with an "assistant" turn
+    """
+    if not messages:
+        return []
+
+    cleaned: list[dict] = []
+    for msg in messages:
+        if cleaned and cleaned[-1]["role"] == msg["role"]:
+            cleaned[-1] = msg  # replace with later same-role message
+        else:
+            cleaned.append(msg)
+
+    while cleaned and cleaned[0]["role"] == "assistant":
+        cleaned.pop(0)
+
+    return cleaned
+
+
 def generate_response(
     user_message: str,
     mode: str,
@@ -305,14 +327,9 @@ def generate_response(
             else base_system
         )
 
-        # Build message list (prior turns + current message).
+        # Build message list from history, then clean and append current message.
         # History items may use {role, content} (new standard) or {user, soledad} (legacy).
-        # The Anthropic API requires:
-        #   1. Messages must alternate between "user" and "assistant"
-        #   2. The first message must be "user"
-        # We enforce this by merging consecutive same-role turns (keep the latest content)
-        # and dropping any leading "assistant" turns.
-        messages: list[dict] = []
+        raw_messages: list[dict] = []
         for turn in (conversation_history or []):
             if "role" in turn and "content" in turn:
                 role = turn["role"] if turn["role"] in ("user", "assistant") else "user"
@@ -329,17 +346,12 @@ def generate_response(
             if not content:
                 continue
 
-            if messages and messages[-1]["role"] == role:
-                # Consecutive same role — replace with latest (keeps context coherent)
-                messages[-1] = {"role": role, "content": content}
-            else:
-                messages.append({"role": role, "content": content})
+            raw_messages.append({"role": role, "content": content})
 
-        # Drop leading assistant turns (Anthropic requires first message to be "user")
-        while messages and messages[0]["role"] == "assistant":
-            messages.pop(0)
+        # Enforce Anthropic API rules (alternating roles, starts with "user")
+        messages = clean_messages(raw_messages)
 
-        # Append the current user message
+        # Append current user message
         messages.append({"role": "user", "content": user_message})
 
         client = _get_client()
