@@ -638,9 +638,9 @@ async def get_conversation_history(
     try:
         resp = (
             supabase.table("check_ins")
-            .select("id, scheduled_at, responded_at, user_response, breso_response, tone_score, conversation_mode")
+            .select("id, scheduled_at, responded_at, user_response, breso_message, tone_score, conversation_mode")
             .eq("user_id", user_id)
-            .not_.is_("responded_at", "null")
+            .not_.is_("breso_message", "null")
             .order("responded_at", desc=True)
             .limit(limit)
             .execute()
@@ -650,17 +650,22 @@ async def get_conversation_history(
         logger.error({"event": "checkins.conversation_history.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to fetch conversation history") from exc
 
-    return [
-        {
-            "id": r["id"],
-            "date": r.get("responded_at") or r.get("scheduled_at"),
-            "user_message": r.get("user_response"),
-            "soledad_response": r.get("breso_response"),
-            "tone_score": r.get("tone_score"),
-            "created_at": r.get("scheduled_at"),
-        }
-        for r in rows
-    ]
+    messages = []
+    for r in rows:
+        if r.get("user_response"):
+            messages.append({
+                "role": "user",
+                "text": r["user_response"],
+                "timestamp": r.get("responded_at") or r.get("scheduled_at"),
+            })
+        if r.get("breso_message"):
+            messages.append({
+                "role": "soledad",
+                "text": r["breso_message"],
+                "timestamp": r.get("responded_at") or r.get("scheduled_at"),
+            })
+    messages.reverse()
+    return {"messages": messages, "total": len(messages)}
 
 
 @router.get("/history")
