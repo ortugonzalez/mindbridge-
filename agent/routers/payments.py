@@ -85,10 +85,24 @@ class VerifyPaymentBody(BaseModel):
 # ---------------------------------------------------------------------------
 
 
+PAYMENT_OPTIONS = [
+    {
+        "token": "USDT",
+        "address": "0x48065fbBE25f71C9282ddf5e1cD6D6A887483D5e",
+        "network": "Celo Sepolia",
+    },
+    {
+        "token": "cUSD",
+        "address": "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1",
+        "network": "Celo Sepolia",
+    },
+]
+
+
 @router.get("/plans")
 async def get_plans() -> dict:
-    """Return the available subscription plans with USD prices and features."""
-    return {"plans": PLANS_CATALOGUE}
+    """Return the available subscription plans with USD prices, features, and payment options."""
+    return {"plans": PLANS_CATALOGUE, "payment_options": PAYMENT_OPTIONS}
 
 
 # ---------------------------------------------------------------------------

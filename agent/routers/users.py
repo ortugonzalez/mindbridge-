@@ -322,6 +322,39 @@ class PushSubscriptionBody(BaseModel):
     subscription: dict
 
 
+@router.get("/me/verify-identity")
+async def get_verification_request(current_user=Depends(get_current_user)) -> dict:
+    """Create a Self Protocol identity verification request for the current user."""
+    from integrations.self_protocol import create_verification_request
+    result = await create_verification_request(str(current_user.id))
+    return {
+        "verification_url": "https://app.ai.self.xyz",
+        "qr_code": result.get("qrCode", ""),
+        "verification_id": result.get("verificationId", ""),
+        "instructions": "Escaneá el QR con la app Self Protocol para verificar tu identidad",
+    }
+
+
+@router.post("/me/verify-identity")
+async def submit_verification(data: dict, current_user=Depends(get_current_user)) -> dict:
+    """Submit a Self Protocol ZK proof and mark user as identity-verified."""
+    from integrations.self_protocol import verify_proof
+    result = await verify_proof(
+        data.get("verification_id", ""),
+        data.get("proof", ""),
+    )
+    if result.get("verified"):
+        supabase = get_supabase()
+        try:
+            supabase.table("users").update(
+                {"identity_verified": True}
+            ).eq("id", str(current_user.id)).execute()
+            logger.info({"event": "self_protocol.verified", "user_id": current_user.id})
+        except Exception as exc:  # noqa: BLE001
+            logger.error({"event": "self_protocol.db_update_failed", "error": str(exc)})
+    return result
+
+
 @router.post("/me/push-subscription")
 async def save_push_subscription(
     body: PushSubscriptionBody,
