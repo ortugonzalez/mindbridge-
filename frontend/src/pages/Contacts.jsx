@@ -60,6 +60,7 @@ export default function Contacts() {
     }
     try {
       await inviteContact({ email: form.email, name: form.name, relationship: form.relationship })
+      alert(`✅ Invitación enviada a ${form.email}`)
     } catch { }
     const updated = [...contacts, newContact]
     setContacts(updated)

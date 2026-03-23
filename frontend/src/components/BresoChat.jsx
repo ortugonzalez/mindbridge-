@@ -36,6 +36,24 @@ function SoledadAvatar({ large }) {
   )
 }
 
+function SuggestionCard({ suggestion }) {
+  const [dismissed, setDismissed] = useState(false)
+  if (!suggestion || dismissed) return null
+  return (
+    <div className="mt-2 w-full p-3 rounded-xl border border-sage/40 bg-sage/5 max-w-full text-left shadow-sm animate-fade-up">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span>💡</span>
+        <span className="text-xs font-bold text-sage">Soledad tiene una idea</span>
+      </div>
+      <p className="text-sm text-textdark dark:text-dm-text font-medium italic mb-3">"{suggestion}"</p>
+      <div className="flex gap-2">
+        <button onClick={() => setDismissed(true)} className="flex-1 bg-sage text-white text-xs font-bold py-1.5 px-3 rounded-lg active:scale-95 transition">Aceptar</button>
+        <button onClick={() => setDismissed(true)} className="flex-1 border border-sage text-sage bg-transparent text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-sage/10 active:scale-95 transition">Ahora no</button>
+      </div>
+    </div>
+  )
+}
+
 export default function BresoChat({ messages = [], onSend, isSending = false, error }) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
@@ -110,6 +128,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
                     >
                       {m.textKey ? t(m.textKey) : m.text}
                     </div>
+                    {m.suggestion && <SuggestionCard suggestion={m.suggestion} />}
                     <div className="text-[10px] text-textdark/40 dark:text-dm-muted/60 mt-1 px-1">
                       {m.time}
                     </div>

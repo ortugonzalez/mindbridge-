@@ -301,9 +301,11 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
   const data = await response.json()
   console.log('[Soledad] response data:', JSON.stringify(data).slice(0, 200))
 
-  const text = data.response || data.message || data.breso_message || data.reply
+  const rawText = data.response || data.message || data.breso_message || data.reply || ''
+  const text = typeof rawText === 'string' ? rawText.replace(/ — /g, ', ').replace(/—/g, ', ') : rawText
   return {
     text,
+    suggestion: data.suggestion || null,
     crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
     memoryExists: !!(data.memory || data.has_memory || data.memoryExists),
   }
@@ -356,15 +358,14 @@ export async function getTodaysCheckin() {
 export async function submitCheckinResponse({ checkinId, response, mode }) {
   return requestWithMock(
     () =>
-      axiosClient.post(`/checkins/${checkinId}/respond`, { response, mode }).then((res) => ({
-        reply:
-          res.data?.reply?.text ||
-          res.data?.replyText ||
-          res.data?.message ||
-          res.data?.text ||
-          mockCheckinReply(mode),
-        nextMode: modeToKey(res.data?.nextMode || res.data?.mode || mode),
-      })),
+      axiosClient.post(`/checkins/${checkinId}/respond`, { response, mode }).then((res) => {
+        const rawReply = res.data?.reply?.text || res.data?.replyText || res.data?.message || res.data?.text || mockCheckinReply(mode)
+        const safeReply = typeof rawReply === 'string' ? rawReply.replace(/ — /g, ', ').replace(/—/g, ', ') : rawReply
+        return {
+          reply: safeReply,
+          nextMode: modeToKey(res.data?.nextMode || res.data?.mode || mode),
+        }
+      }),
     () => ({
       reply: mockCheckinReply(mode),
       nextMode: modeToKey(mode),

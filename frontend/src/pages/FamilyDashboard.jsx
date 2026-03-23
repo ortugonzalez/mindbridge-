@@ -183,13 +183,7 @@ export default function FamilyDashboard() {
       {/* Stats Row */}
       <div className="grid grid-cols-1 gap-2">
         <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
-          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.checkins_this_week ?? '0'}/7 check-ins esta semana</p>
-        </div>
-        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
-          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.streak ?? '0'} días seguidos</p>
-        </div>
-        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
-          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight w-full truncate">Último: {status.last_checkin || 'Sin datos'}</p>
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.checkins_this_week ?? '0'} check-ins esta semana</p>
         </div>
       </div>
 

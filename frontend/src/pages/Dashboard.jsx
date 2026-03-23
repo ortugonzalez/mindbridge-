@@ -5,8 +5,6 @@ import CheckInHistory from '../components/CheckInHistory'
 import { addContact, getCheckinHistory, getDashboard } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
-const CONTACT_NAME_KEY = 'breso_trust_contact_name'
-const CONTACT_REL_KEY = 'breso_trust_contact_relation'
 
 function safeGetLocalStorage(key) {
   try {
@@ -29,8 +27,6 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   const storedUserName = safeGetLocalStorage(USER_NAME_KEY)
-  const storedContactName = safeGetLocalStorage(CONTACT_NAME_KEY)
-  const storedContactRelation = safeGetLocalStorage(CONTACT_REL_KEY)
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -40,13 +36,7 @@ export default function Dashboard() {
 
   const [startLoading, setStartLoading] = useState(false)
   const [showHistoryDetails, setShowHistoryDetails] = useState(false)
-
-  const [contactModalOpen, setContactModalOpen] = useState(false)
-  const [contactSaving, setContactSaving] = useState(false)
-  const [contactFormName, setContactFormName] = useState('')
-  const [contactFormEmail, setContactFormEmail] = useState('')
-  const [contactFormRelation, setContactFormRelation] = useState('')
-  const [contactError, setContactError] = useState('')
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null)
 
   const weekdays = t('dashboard.weekdays', { returnObjects: true }) || []
 
@@ -84,8 +74,6 @@ export default function Dashboard() {
   }, [dashboard, history])
 
   const nextProposal = dashboard?.proposal || ''
-  const contactName = dashboard?.contact?.nombre || storedContactName
-  const contactRelation = dashboard?.contact?.relacion || storedContactRelation
 
   const streakMilestones = [3, 7, 30, 100]
   const nextMilestone = streakMilestones.find(m => m > streakDays) || 100
@@ -117,37 +105,12 @@ export default function Dashboard() {
     navigate('/chat', { state: { mode: dashboard?.mode || 'listening' } })
   }
 
-  const openContactModal = () => {
-    setContactError('')
-    setContactSaving(false)
-    setContactFormName(contactName || '')
-    setContactFormRelation(contactRelation || '')
-    setContactFormEmail('')
-    setContactModalOpen(true)
-  }
-
-  const handleSaveContact = async () => {
-    setContactError('')
-    const n = contactFormName.trim()
-    const e = contactFormEmail.trim()
-    const r = contactFormRelation.trim()
-    if (!n || !e || !r) {
-      setContactError(t('common.required'))
-      return
-    }
-
-    setContactSaving(true)
-    try {
-      safeSetLocalStorage(CONTACT_NAME_KEY, n)
-      safeSetLocalStorage(CONTACT_REL_KEY, r)
-      await addContact({ name: n, email: e, relation: r })
-      const dashRes = await getDashboard()
-      setDashboard(dashRes.data || null)
-      setContactModalOpen(false)
-    } catch {
-      setContactError(t('common.error'))
-    } finally {
-      setContactSaving(false)
+  const getMoodDot = (level) => {
+    switch(level) {
+      case 'red': return 'bg-red-500'
+      case 'orange': return 'bg-orange-500'
+      case 'yellow': return 'bg-yellow-500'
+      default: return 'bg-green-500'
     }
   }
 
@@ -233,20 +196,31 @@ export default function Dashboard() {
               </div>
 
               {showHistoryDetails ? (
-                <div className="mt-4 rounded-xl border border-softgray bg-softgray/40 p-4">
-                  <div className="text-sm font-semibold text-textdark/80">{t('dashboard.historyDetailsTitle')}</div>
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    {Array.from({ length: 7 }).map((_, i) => {
-                      const completed = Boolean(weeklyCompleted[i])
-                      const label = weekdays[i] || `D${i + 1}`
-                      return (
-                        <div key={i} className="flex items-center gap-2 text-xs font-semibold text-textdark/70">
-                          <span className={`h-2.5 w-2.5 rounded-full ${completed ? 'bg-sage' : 'bg-softgray'}`} />
-                          <span>{label}</span>
-                          <span className="text-textdark/60">{completed ? completedLabel : pendingLabel}</span>
+                <div className="mt-4 rounded-xl border border-softgray bg-softgray/40 p-4 space-y-3">
+                  <div className="text-sm font-semibold text-textdark/80">Historial completo</div>
+                  <div className="space-y-2">
+                    {history?.items?.length ? (
+                      history.items.map((item, i) => (
+                        <div 
+                          key={i} 
+                          onClick={() => setSelectedHistoryItem(item)}
+                          className="flex items-center gap-3 bg-white dark:bg-dm-surface p-3 rounded-xl border border-softgray dark:border-dm-border cursor-pointer hover:bg-softgray/50 transition shadow-sm"
+                        >
+                          <span className="text-xl">📅</span>
+                          <span className={`h-3 w-3 rounded-full flex-shrink-0 shadow-sm ${getMoodDot(item.alert_level)}`} />
+                          <div className="flex-1 truncate">
+                            <p className="text-xs font-bold text-textdark dark:text-dm-text">
+                              {new Date(item.created_at).toLocaleDateString()}
+                            </p>
+                            <p className="text-sm text-textdark/80 dark:text-dm-muted truncate">
+                              {(item.breso_message || item.summary || 'Check-in completado').substring(0, 50)}...
+                            </p>
+                          </div>
                         </div>
-                      )
-                    })}
+                      ))
+                    ) : (
+                      <p className="text-sm text-textdark/50 italic">No hay historial disponible aún.</p>
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -258,119 +232,38 @@ export default function Dashboard() {
             <div className="text-lg font-bold text-textdark/90 leading-tight">{todaysProposal}</div>
           </section>
 
-          <section className="rounded-2xl border border-softgray bg-whiteish p-5 shadow-soft">
-            <div className="text-sm font-semibold text-textdark/70">{t('dashboard.trustContactTitle')}</div>
-            <div className="mt-2 text-lg font-semibold text-textdark">
-              {contactName
-                ? `${contactName}${contactRelation ? ` · ${contactRelation}` : ''}`
-                : contactRelation || '—'}
-            </div>
-          </section>
-
-          <button
-            type="button"
-            onClick={handleStart}
-            disabled={startLoading}
-            className="w-full rounded-full bg-sage px-6 py-3 text-sm font-semibold text-whiteish shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {startLoading ? t('dashboard.startLoading') : t('dashboard.startToday')}
-          </button>
-
           <button
             type="button"
             onClick={() => setShowHistoryDetails((v) => !v)}
             className="w-full rounded-full border border-softgray bg-whiteish px-6 py-3 text-left shadow-soft transition hover:bg-softgray disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <div className="text-sm font-semibold text-textdark">{t('dashboard.viewHistory')}</div>
-            <div className="mt-0.5 text-xs font-semibold text-textdark/70">{t('dashboard.viewHistoryHelp')}</div>
-          </button>
-
-          <button
-            type="button"
-            onClick={openContactModal}
-            className="w-full rounded-full border border-softgray bg-whiteish px-6 py-3 text-left shadow-soft transition hover:bg-softgray disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            <div className="text-sm font-semibold text-textdark">{t('dashboard.configureContact')}</div>
-            <div className="mt-0.5 text-xs font-semibold text-textdark/70">{t('dashboard.configureContactHelp')}</div>
+            <div className="text-sm font-semibold text-textdark">Ver historial completo</div>
+            <div className="mt-0.5 text-xs font-semibold text-textdark/70">Revisá todas tus conversaciones previas</div>
           </button>
         </>
       ) : null}
 
-      {contactModalOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-softgray bg-whiteish p-5 shadow-soft">
-            <div className="flex items-start justify-between gap-3">
+      {selectedHistoryItem ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md max-h-[80vh] flex flex-col rounded-[20px] bg-white dark:bg-dm-elevated shadow-xl overflow-hidden">
+            <div className="p-4 border-b border-softgray dark:border-dm-border flex justify-between items-center bg-sage/5">
               <div>
-                <div className="text-lg font-bold text-textdark">{t('dashboard.contactModalTitle')}</div>
-                <div className="mt-1 text-sm font-semibold text-textdark/70">{t('dashboard.configureContactHelp')}</div>
+                <h3 className="font-bold text-textdark dark:text-dm-text">Check-in</h3>
+                <p className="text-xs text-textdark/60 dark:text-dm-muted">
+                  {new Date(selectedHistoryItem.created_at).toLocaleString()}
+                </p>
               </div>
-              <button
-                type="button"
-                className="rounded-full border border-softgray bg-whiteish px-3 py-1 text-xs font-semibold text-textdark hover:bg-softgray"
-                onClick={() => setContactModalOpen(false)}
-                disabled={contactSaving}
+              <button 
+                onClick={() => setSelectedHistoryItem(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-softgray dark:hover:bg-dm-border transition text-textdark dark:text-dm-text"
               >
                 ✕
               </button>
             </div>
-
-            <div className="mt-4 space-y-3">
-              <label className="block">
-                <div className="text-sm font-semibold text-textdark/90">{t('dashboard.contactFormName')}</div>
-                <input
-                  value={contactFormName}
-                  onChange={(e) => setContactFormName(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
-                  type="text"
-                  disabled={contactSaving}
-                  placeholder={t('dashboard.contactFormName')}
-                />
-              </label>
-              <label className="block">
-                <div className="text-sm font-semibold text-textdark/90">{t('dashboard.contactFormEmail')}</div>
-                <input
-                  value={contactFormEmail}
-                  onChange={(e) => setContactFormEmail(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
-                  type="email"
-                  disabled={contactSaving}
-                  placeholder={t('dashboard.contactFormEmail')}
-                />
-              </label>
-              <label className="block">
-                <div className="text-sm font-semibold text-textdark/90">{t('dashboard.contactFormRelation')}</div>
-                <input
-                  value={contactFormRelation}
-                  onChange={(e) => setContactFormRelation(e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-softgray bg-whiteish px-3 py-2 text-sm outline-none focus:border-sage"
-                  type="text"
-                  disabled={contactSaving}
-                  placeholder={activeLang === 'es' ? 'Ej: hermana, amigo...' : 'e.g., sister, friend...'}
-                />
-              </label>
-            </div>
-
-            {contactError ? (
-              <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">{contactError}</div>
-            ) : null}
-
-            <div className="mt-5 flex gap-2">
-              <button
-                type="button"
-                onClick={() => setContactModalOpen(false)}
-                disabled={contactSaving}
-                className="flex-1 rounded-full border border-softgray bg-whiteish px-4 py-2 text-sm font-semibold text-textdark shadow-soft transition hover:bg-softgray disabled:opacity-70"
-              >
-                {t('dashboard.contactCancel')}
-              </button>
-              <button
-                type="button"
-                onClick={handleSaveContact}
-                disabled={contactSaving}
-                className="flex-1 rounded-full bg-sage px-4 py-2 text-sm font-semibold text-whiteish shadow-soft transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {contactSaving ? t('dashboard.contactSaving') : t('dashboard.contactSave')}
-              </button>
+            <div className="p-5 overflow-y-auto w-full">
+              <p className="text-sm leading-relaxed text-textdark dark:text-dm-text whitespace-pre-wrap">
+                {selectedHistoryItem.breso_message || selectedHistoryItem.summary || 'Sin datos detallados.'}
+              </p>
             </div>
           </div>
         </div>

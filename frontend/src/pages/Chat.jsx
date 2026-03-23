@@ -141,7 +141,7 @@ export default function Chat() {
       // Pass full conversation history (including the new user message) to backend
       const currentMessages = [...messages, userMsg]
       const reply = await sendMessageToSoledad(trimmed, currentMessages, lang)
-      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, timestamp: new Date().toISOString() }])
+      setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, suggestion: reply.suggestion, timestamp: new Date().toISOString() }])
 
       if (reply.crisisDetected) setCrisisDetected(true)
       if (reply.memoryExists) setMemoryExists(true)

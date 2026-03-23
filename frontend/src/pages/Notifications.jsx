@@ -25,8 +25,10 @@ export default function Notifications() {
     }
   ])
 
-  const filtered = notifications.filter(n => filter === 'all' || n.type === filter)
-  const unreadCount = notifications.filter(n => !n.read).length
+  const isPatient = localStorage.getItem('breso_user_type') === 'patient' || !localStorage.getItem('breso_user_type')
+  const visibleNotifications = notifications.filter(n => !(isPatient && n.type === 'family_alert_sent'))
+  const filtered = visibleNotifications.filter(n => filter === 'all' || n.type === filter)
+  const unreadCount = visibleNotifications.filter(n => !n.read).length
 
   const markAllRead = () => {
     setNotifications(notifications.map(n => ({ ...n, read: true })))

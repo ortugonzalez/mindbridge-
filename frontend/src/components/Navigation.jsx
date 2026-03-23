@@ -45,17 +45,22 @@ export default function Navigation() {
 
   const showBack = !NO_BACK_ROUTES.has(location.pathname)
 
-  const links = [
-    { path: '/home', icon: '🏠', label: t('nav.home') },
-    { path: '/chat', icon: '💬', label: t('nav.chatSoledad') },
-    { path: '/dashboard', icon: '📊', label: t('nav.progress') },
-    { path: '/profile', icon: '👤', label: t('nav.profile') },
-    { path: '/notifications', icon: '🔔', label: t('nav.notifications') },
-    { path: '/contacts', icon: '🤝', label: t('nav.contacts') },
-    { path: '/payment', icon: '💳', label: t('nav.subscription') },
-    { path: '/settings', icon: '⚙️', label: t('nav.settings') },
-    { path: '/help', icon: '❓', label: t('nav.help') }
+  const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
+
+  const allLinks = [
+    { path: '/home', icon: '🏠', label: 'Inicio', roles: ['patient', 'family'] },
+    { path: '/chat', icon: '💬', label: 'Hablar con Soledad', roles: ['patient'] },
+    { path: '/dashboard', icon: '📊', label: 'Mi progreso', roles: ['patient'] },
+    { path: '/family-dashboard', icon: '📊', label: 'Panel de seguimiento', roles: ['family'] },
+    { path: '/profile', icon: '👤', label: 'Mi perfil', roles: ['patient'] },
+    { path: '/notifications', icon: '🔔', label: 'Notificaciones', roles: ['patient'] },
+    { path: '/contacts', icon: '🤝', label: 'Contactos de confianza', roles: ['patient'] },
+    { path: '/payment', icon: '💳', label: 'Mi suscripción', roles: ['patient'] },
+    { path: '/settings', icon: '⚙️', label: 'Configuración', roles: ['patient', 'family'] },
+    { path: '/help', icon: '❓', label: 'Ayuda', roles: ['patient', 'family'] }
   ]
+
+  const links = allLinks.filter(l => l.roles.includes(userType))
 
   const handleSignOut = async () => {
     setIsOpen(false)
