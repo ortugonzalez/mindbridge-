@@ -310,6 +310,35 @@ async def payment_status(current_user=Depends(get_current_user)) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# POST /payments/cancel-subscription
+# ---------------------------------------------------------------------------
+
+
+@router.post("/cancel-subscription")
+async def cancel_subscription(current_user=Depends(get_current_user)) -> dict:
+    """
+    Cancel the current user's subscription.
+    Resets plan to free_trial with a fresh trial_start so they retain access
+    through the current billing period (reflected as a new 15-day window).
+    """
+    supabase = get_supabase()
+    try:
+        supabase.table("users").update({
+            "plan": "free_trial",
+            "trial_start": datetime.now(timezone.utc).isoformat(),
+        }).eq("id", current_user.id).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "payments.cancel_subscription.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to cancel subscription") from exc
+
+    logger.info({"event": "payments.cancel_subscription.success", "user_id": current_user.id})
+    return {
+        "success": True,
+        "message": "Suscripción cancelada. Seguís teniendo acceso hasta fin del período.",
+    }
+
+
+# ---------------------------------------------------------------------------
 # Internal helper
 # ---------------------------------------------------------------------------
 

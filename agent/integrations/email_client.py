@@ -169,6 +169,71 @@ def send_invite_email(
         return {"success": False, "error": str(exc)}
 
 
+def send_contact_invite_email(
+    to_email: str,
+    to_name: str,
+    patient_name: str,
+    invite_url: str,
+) -> dict:
+    """
+    Send an invite email from a patient to their trusted contact.
+    Direction: patient → contact (e.g. "Juan te agregó como contacto de confianza").
+    """
+    html = f"""
+    <div style="font-family:Inter,sans-serif;max-width:600px;
+                margin:0 auto;padding:40px 20px;">
+      <div style="text-align:center;margin-bottom:32px;">
+        <span style="font-size:48px;">🌱</span>
+        <h1 style="color:#7C9A7E;font-weight:400;font-size:24px;">
+          Soledad
+        </h1>
+        <p style="color:#6B7280;font-size:14px;">por BRESO</p>
+      </div>
+      <p style="color:#2D2D2D;font-size:16px;line-height:1.7;">
+        Hola {to_name},
+      </p>
+      <p style="color:#2D2D2D;font-size:16px;line-height:1.7;">
+        {patient_name} te agregó como contacto de confianza en BRESO.
+        Esto significa que si Soledad detecta que {patient_name}
+        necesita apoyo, vas a recibir una notificación.
+      </p>
+      <p style="color:#2D2D2D;font-size:16px;line-height:1.7;">
+        Para activar tu acceso al panel de seguimiento,
+        hacé click acá:
+      </p>
+      <div style="text-align:center;margin:32px 0;">
+        <a href="{invite_url}"
+           style="background:#7C9A7E;color:white;padding:16px 32px;
+                  border-radius:8px;text-decoration:none;font-size:16px;">
+          Activar mi acceso
+        </a>
+      </div>
+      <p style="color:#6B7280;font-size:14px;line-height:1.6;">
+        No vas a poder ver el contenido de las conversaciones
+        de {patient_name}. Solo recibirás alertas cuando
+        sea necesario.
+      </p>
+      <p style="color:#9CA3AF;font-size:12px;text-align:center;
+                margin-top:32px;">
+        — Soledad, por BRESO
+      </p>
+    </div>
+    """
+    try:
+        response = resend.Emails.send({
+            "from": "Soledad <soledad@breso.app>",
+            "to": [to_email],
+            "subject": f"{patient_name} te agregó como contacto de confianza",
+            "html": html,
+        })
+        email_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
+        logger.info({"event": "email.contact_invite.sent", "to": to_email, "id": email_id})
+        return {"success": True, "id": email_id}
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "email.contact_invite.failed", "error": str(exc), "to": to_email})
+        return {"success": False, "error": str(exc)}
+
+
 def send_checkin_reminder(to_email: str, user_name: str) -> None:
     """Send a proactive daily check-in reminder from Soledad."""
     html = f"""

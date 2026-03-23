@@ -201,6 +201,39 @@ def _log_missed_checkin(user_id: str) -> None:
         pass
 
 
+def _notify_contact_users(patient_id: str, patient_name: str, alert_level: str, message: str) -> None:
+    """
+    Create in-app notification records for family contacts of a patient.
+    IMPORTANT: notifications are written for the CONTACT's user_id only —
+    the patient must never receive a 'Alert sent to X' notification.
+    """
+    try:
+        supabase = get_supabase()
+        contacts_res = (
+            supabase.table("user_relationships")
+            .select("related_user_id")
+            .eq("patient_id", patient_id)
+            .eq("status", "active")
+            .execute()
+        )
+        for rel in (contacts_res.data or []):
+            contact_user_id = rel.get("related_user_id")
+            if not contact_user_id or contact_user_id == patient_id:
+                continue  # Safety guard: never create for the patient
+            try:
+                supabase.table("user_notifications").insert({
+                    "user_id": contact_user_id,  # TARGET contact — not the patient
+                    "type": f"alert_{alert_level}",
+                    "title": f"Mensaje sobre {patient_name}",
+                    "body": message,
+                    "read": False,
+                }).execute()
+            except Exception:  # noqa: BLE001
+                pass  # Notification failure never blocks the alert flow
+    except Exception:  # noqa: BLE001
+        pass
+
+
 def _send_missed_checkin_emails(user_id: str, level: str) -> None:
     """Send alert emails to all trusted contacts for a missed check-in."""
     contacts = _get_trusted_contacts(user_id)
@@ -503,18 +536,21 @@ async def respond_to_checkin(
         # Immediate notification to all trusted contacts
         patient_name = _get_patient_name(user_id)
         contacts = _get_trusted_contacts(user_id)
+        red_message = (
+            f"Soledad detectó señales de que {patient_name} puede estar "
+            "pasando un momento muy difícil ahora mismo. "
+            "Por favor, intentá comunicarte con ella/él lo antes posible."
+        )
         for contact in contacts:
             send_alert_email(
                 to_email=contact["contact_email"],
                 to_name=contact.get("relationship_label", ""),
                 patient_name=patient_name,
                 alert_level="red",
-                message=(
-                    f"Soledad detectó señales de que {patient_name} puede estar "
-                    "pasando un momento muy difícil ahora mismo. "
-                    "Por favor, intentá comunicarte con ella/él lo antes posible."
-                ),
+                message=red_message,
             )
+        # Create in-app notifications for contact accounts — NOT for the patient
+        _notify_contact_users(user_id, patient_name, "red", red_message)
         try:
             supabase.table("crisis_events").update(
                 {"notified_contacts": True}
@@ -537,18 +573,21 @@ async def respond_to_checkin(
 
         patient_name = _get_patient_name(user_id)
         contacts = _get_trusted_contacts(user_id)
+        orange_message = (
+            f"Soledad notó que {patient_name} ha estado expresando algunas emociones difíciles "
+            "en sus conversaciones recientes. No es una alarma, pero si tenés un momento, "
+            "puede ser un buen momento para escribirle."
+        )
         for contact in contacts:
             send_alert_email(
                 to_email=contact["contact_email"],
                 to_name=contact.get("relationship_label", ""),
                 patient_name=patient_name,
                 alert_level="orange",
-                message=(
-                    f"Soledad notó que {patient_name} ha estado expresando algunas emociones difíciles "
-                    "en sus conversaciones recientes. No es una alarma, pero si tenés un momento, "
-                    "puede ser un buen momento para escribirle."
-                ),
+                message=orange_message,
             )
+        # Create in-app notifications for contact accounts — NOT for the patient
+        _notify_contact_users(user_id, patient_name, "orange", orange_message)
 
     # Store this exchange in check_ins table
     try:
