@@ -38,25 +38,108 @@ function SoledadAvatar({ large }) {
 
 function SuggestionCard({ suggestion }) {
   const [dismissed, setDismissed] = useState(false)
+  const [accepted, setAccepted] = useState(false)
   if (!suggestion || dismissed) return null
+
+  const handleAccept = () => {
+    try {
+      const existing = JSON.parse(localStorage.getItem('breso_proposals') || '[]')
+      existing.push({ text: suggestion, date: new Date().toISOString() })
+      localStorage.setItem('breso_proposals', JSON.stringify(existing))
+    } catch {}
+    setAccepted(true)
+    setTimeout(() => setDismissed(true), 2000)
+  }
+
   return (
     <div className="mt-2 w-full p-3 rounded-xl border border-sage/40 bg-sage/5 max-w-full text-left shadow-sm animate-fade-up">
       <div className="flex items-center gap-2 mb-1.5">
         <span>💡</span>
-        <span className="text-xs font-bold text-sage">Soledad tiene una idea</span>
+        <span className="text-xs font-bold text-sage">Una idea de Soledad</span>
       </div>
       <p className="text-sm text-textdark dark:text-dm-text font-medium italic mb-3">"{suggestion}"</p>
-      <div className="flex gap-2">
-        <button onClick={() => setDismissed(true)} className="flex-1 bg-sage text-white text-xs font-bold py-1.5 px-3 rounded-lg active:scale-95 transition">Aceptar</button>
-        <button onClick={() => setDismissed(true)} className="flex-1 border border-sage text-sage bg-transparent text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-sage/10 active:scale-95 transition">Ahora no</button>
-      </div>
+      
+      {accepted ? (
+        <div className="flex items-center gap-2 text-sage text-sm font-bold bg-sage/10 rounded-lg px-3 py-1.5 w-fit">
+          <span>✓</span> Anotado
+        </div>
+      ) : (
+        <div className="flex gap-2">
+          <button onClick={handleAccept} className="flex-1 bg-sage text-white text-xs font-bold py-1.5 px-3 rounded-lg active:scale-95 transition">✓ La anoto</button>
+          <button onClick={() => setDismissed(true)} className="flex-1 border border-sage text-sage bg-transparent text-xs font-bold py-1.5 px-3 rounded-lg hover:bg-sage/10 active:scale-95 transition">Ahora no</button>
+        </div>
+      )}
     </div>
   )
 }
 
-export default function BresoChat({ messages = [], onSend, isSending = false, error }) {
-  const { t } = useTranslation()
+function ReactionMenu({ messageText, onReact }) {
+  const [copied, setCopied] = useState(false)
+  
+  const handleCopy = () => {
+    navigator.clipboard.writeText(`"${messageText}" — Soledad por BRESO 🌱`)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+  
+  return (
+    <div className="absolute -top-10 left-0 bg-white dark:bg-dm-surface rounded-full shadow-md border border-softgray dark:border-dm-border px-3 py-1.5 flex gap-2 items-center opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      {['🌱', '❤️', '💙', '🙏'].map(r => (
+        <button key={r} onClick={() => onReact(r)} className="hover:scale-125 transition-transform text-lg leading-none active:scale-90">{r}</button>
+      ))}
+      <div className="w-px h-4 bg-softgray dark:bg-dm-border mx-1" />
+      <button onClick={handleCopy} className="hover:scale-110 active:scale-95 transition-transform text-sm text-sage relative flex items-center justify-center p-1" title="Compartir">
+        🔗
+        {copied && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-textdark text-white text-[10px] px-2 py-1 rounded shadow-md whitespace-nowrap">Copiado</span>}
+      </button>
+    </div>
+  )
+}
+
+export default function BresoChat({ messages = [], onSend, isSending = false, error, onLoadOlder, loadingHistory }) {
+  const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
+  const [isListening, setIsListening] = useState(false)
+  
+  const [reactions, setReactions] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('breso_reactions') || '{}') } catch { return {} }
+  })
+
+  const handleReact = (msgId, emoji) => {
+    try {
+      const newReacts = { ...reactions, [msgId]: emoji }
+      setReactions(newReacts)
+      localStorage.setItem('breso_reactions', JSON.stringify(newReacts))
+      // MOCK: POST to /checkins/react natively.
+      fetch(import.meta.env.VITE_API_BASE_URL + '/checkins/react', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('breso_token') || ''}`
+        },
+        body: JSON.stringify({ message_id: msgId, reaction: emoji }),
+      }).catch(() => {})
+    } catch {}
+  }
+  
+  // Mood Selector hook logic
+  const todayStr = new Date().toDateString()
+  const [needsMood, setNeedsMood] = useState(
+    () => {
+      try { return localStorage.getItem('breso_last_checkin_date') !== todayStr } 
+      catch { return false }
+    }
+  )
+
+  const handleMoodSelect = async (emoji, textValue) => {
+    try {
+      localStorage.setItem('breso_last_checkin_date', todayStr)
+      localStorage.setItem('breso_today_mood', emoji)
+    } catch {}
+    setNeedsMood(false)
+    if (onSend) await onSend(textValue)
+  }
+
   const bottomRef = useRef(null)
   const baseTime = useRef(Date.now())
 
@@ -79,6 +162,29 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
 
   const canSend = text.trim().length > 0 && !isSending
 
+  const startVoiceInput = () => {
+    if (!('webkitSpeechRecognition' in window) && 
+        !('SpeechRecognition' in window)) {
+      alert('Tu navegador no soporta voz')
+      return
+    }
+    
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const recognition = new SpeechRecognition()
+    recognition.lang = (i18n && i18n.language === 'en') ? 'en-US' : 'es-AR'
+    recognition.continuous = false
+    recognition.interimResults = false
+    
+    recognition.onstart = () => setIsListening(true)
+    recognition.onend = () => setIsListening(false)
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript
+      setText((prev) => prev ? prev + ' ' + transcript : transcript)
+    }
+    
+    recognition.start()
+  }
+
   const handleSubmit = async () => {
     if (!canSend) return
     const next = text.trim()
@@ -91,9 +197,21 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
       {/* Messages */}
       <div className="flex-1 overflow-y-auto rounded-2xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg p-4">
         <div className="space-y-4">
+          {onLoadOlder && messagesWithTime.length >= 20 && (
+            <div className="flex justify-center pb-2">
+              <button 
+                onClick={onLoadOlder}
+                disabled={loadingHistory}
+                className="bg-white dark:bg-dm-surface text-sage border border-sage/20 border-b-sage/40 px-4 py-1.5 rounded-full text-xs font-bold shadow-sm active:scale-95 transition"
+              >
+                {loadingHistory ? 'Cargando...' : '📅 Ver anteriores'}
+              </button>
+            </div>
+          )}
           {messagesWithTime.map((m, idx) => {
             const fromSoledad = m.from === 'breso'
             const isOpeningMsg = messagesWithTime.length <= 2 && fromSoledad
+            const msgId = m.timestamp || `idx-${idx}`
             
             let showDivider = false
             if (idx === 0) {
@@ -116,10 +234,13 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
                 <div className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}>
                   {fromSoledad && <SoledadAvatar large={isOpeningMsg} />}
 
-                  <div className={['flex flex-col', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
+                  <div className={['flex flex-col relative group', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
+                    
+                    {fromSoledad && <ReactionMenu messageText={m.textKey ? t(m.textKey) : m.text} onReact={(emoji) => handleReact(msgId, emoji)} />}
+
                     <div
                       className={[
-                        'leading-relaxed shadow-sm animate-fade-up',
+                        'leading-relaxed shadow-sm animate-fade-up relative',
                         isOpeningMsg ? 'px-5 py-4 text-base sm:text-lg font-medium' : 'px-4 py-2.5 text-sm',
                         fromSoledad
                           ? 'bg-sage text-white rounded-[20px] rounded-bl-[4px]'
@@ -127,6 +248,12 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
                       ].join(' ')}
                     >
                       {m.textKey ? t(m.textKey) : m.text}
+                      
+                      {reactions[msgId] && (
+                        <div className="absolute -bottom-2 -right-2 bg-white dark:bg-dm-surface shadow-sm border border-softgray dark:border-dm-border rounded-full px-1.5 py-0.5 text-xs animate-fade-in-page z-10">
+                          {reactions[msgId]}
+                        </div>
+                      )}
                     </div>
                     {m.suggestion && <SuggestionCard suggestion={m.suggestion} />}
                     <div className="text-[10px] text-textdark/40 dark:text-dm-muted/60 mt-1 px-1">
@@ -140,10 +267,10 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
 
           {/* Typing indicator */}
           {isSending && (
-            <div className="flex items-end gap-2 mt-4">
+            <div className="flex items-end gap-2 mt-4 animate-fade-in-page">
               <SoledadAvatar />
-              <div className="rounded-2xl rounded-bl-sm bg-sage">
-                <TypingDots />
+              <div className="rounded-[20px] rounded-bl-[4px] bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border px-4 py-2.5 shadow-sm">
+                <span className="thinking-text font-medium">Soledad está pensando...</span>
               </div>
             </div>
           )}
@@ -152,16 +279,39 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
         </div>
       </div>
 
-      {/* Error */}
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+      {/* Mood Selector / Error / Input */}
+      <div className="flex-shrink-0 flex flex-col gap-2">
+        {error && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
 
-      {/* Input area */}
-      <div className="flex-shrink-0 rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-3 shadow-soft">
-        <div className="flex items-end gap-2">
+        {needsMood && messages.length > 0 && !isSending && (
+          <div className="rounded-2xl border border-sage/30 bg-sage/5 p-4 shadow-soft animate-fade-in-page">
+            <p className="text-center font-bold text-sage mb-3 text-sm">¿Cómo llegás hoy?</p>
+            <div className="flex justify-center gap-2 sm:gap-4">
+              {[
+                { e: '😔', v: 'Bastante mal hoy' },
+                { e: '😟', v: 'No muy bien la verdad' },
+                { e: '😐', v: 'Ni bien ni mal, regular' },
+                { e: '🙂', v: 'Más o menos bien' },
+                { e: '😊', v: 'Llegué bastante bien hoy' }
+              ].map(mood => (
+                <button
+                  key={mood.e}
+                  onClick={() => handleMoodSelect(mood.e, mood.v)}
+                  className="h-10 w-10 sm:h-12 sm:w-12 text-2xl sm:text-3xl rounded-full hover:bg-sage/20 hover:scale-110 active:scale-95 transition-all flex items-center justify-center"
+                >
+                  {mood.e}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-3 shadow-soft">
+          <div className="flex items-end gap-2">
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
@@ -193,7 +343,19 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
               <path d="M3.105 2.288a.75.75 0 00-.826.95l1.414 4.926A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.156.75.75 0 000-1.114A28.897 28.897 0 003.105 2.288z" />
             </svg>
           </button>
+          <button
+            type="button"
+            onClick={startVoiceInput}
+            title={t('chat.speak') || "Hablar / Speak"}
+            className={[
+              'h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center transition text-lg',
+              isListening ? 'bg-red-50 text-red-500 animate-pulse border border-red-200' : 'bg-sage/10 text-sage hover:bg-sage/20 border border-transparent'
+            ].join(' ')}
+          >
+            {isListening ? '🔴' : '🎤'}
+          </button>
         </div>
+      </div>
       </div>
     </div>
   )

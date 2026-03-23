@@ -5,23 +5,6 @@ import { supabase } from '../lib/supabase'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://mindbridge-production-c766.up.railway.app'
 
-const PLAN_INFO = {
-  essential: {
-    name: 'Esencial',
-    price: '$5 USDT / mes',
-    amountUSD: 5,
-    color: '#7C9A7E',
-    features: ['Check-ins ilimitados', 'Historial completo', '1 contacto de confianza', 'Propuestas personalizadas'],
-  },
-  premium: {
-    name: 'Premium',
-    price: '$12 USDT / mes',
-    amountUSD: 12,
-    color: '#C4962A',
-    features: ['Todo lo esencial', '2 contactos de confianza', 'Coordinación profesional', 'Reporte mensual'],
-  },
-}
-
 function truncateAddress(addr) {
   if (!addr) return ''
   return `${addr.slice(0, 6)}...${addr.slice(-4)}`
@@ -32,6 +15,23 @@ export default function Payment() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const plan = searchParams.get('plan') || 'essential'
+
+  const PLAN_INFO = {
+    essential: {
+      name: t('payment.plans.essential.name'),
+      price: t('payment.plans.essential.price'),
+      amountUSD: 5,
+      color: '#7C9A7E',
+      features: t('payment.plans.essential.features', { returnObjects: true }),
+    },
+    premium: {
+      name: t('payment.plans.premium.name'),
+      price: t('payment.plans.premium.price'),
+      amountUSD: 12,
+      color: '#C4962A',
+      features: t('payment.plans.premium.features', { returnObjects: true }),
+    },
+  }
   const planInfo = PLAN_INFO[plan] || PLAN_INFO.essential
 
   const [walletAddress, setWalletAddress] = useState('')
@@ -113,11 +113,11 @@ export default function Payment() {
           <span className="text-5xl">✅</span>
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-textdark dark:text-dm-text">Plan {planInfo.name} activado</h2>
-          <p className="text-sm font-medium text-sage">Cashback DeFi activado — recibís hasta un 2% de cashback mensual en tu próxima renovación</p>
+          <h2 className="text-2xl font-bold text-textdark dark:text-dm-text">{t('payment.successTitle', { plan: planInfo.name })}</h2>
+          <p className="text-sm font-medium text-sage">{t('payment.successCashback')}</p>
         </div>
         <div className="w-full bg-white dark:bg-dm-surface p-5 rounded-2xl border border-softgray dark:border-dm-border shadow-sm text-center">
-          <p className="text-sm font-medium text-textdark dark:text-dm-text">Próxima renovación</p>
+          <p className="text-sm font-medium text-textdark dark:text-dm-text">{t('payment.nextRenewal')}</p>
           <p className="text-lg font-bold text-textdark dark:text-dm-text mt-1">{renewalDate}</p>
         </div>
         <button
@@ -125,7 +125,7 @@ export default function Payment() {
           onClick={() => navigate('/home', { replace: true })}
           className="w-full rounded-xl bg-sage px-6 py-4 text-sm font-semibold text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-md active:scale-95"
         >
-          Ir a mi cuenta
+          {t('payment.goToAccount')}
         </button>
       </div>
     )
@@ -141,16 +141,16 @@ export default function Payment() {
           onClick={() => navigate(-1)}
           className="flex items-center gap-2 text-sm font-semibold text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text transition-colors"
         >
-          <span>←</span> Volver
+          <span>←</span> {t('payment.back')}
         </button>
       </div>
 
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-textdark dark:text-dm-text">Resumen de pago</h1>
+          <h1 className="text-2xl font-bold text-textdark dark:text-dm-text">{t('payment.title')}</h1>
           <p className="text-textdark/60 dark:text-dm-muted text-sm border-b border-softgray dark:border-dm-border pb-4">
-            Estás a un paso de activar tus beneficios.
+            {t('payment.subtitle')}
           </p>
         </div>
 
@@ -159,7 +159,7 @@ export default function Payment() {
           <div className="absolute top-0 right-0 w-24 h-24 rounded-bl-full opacity-10" style={{ backgroundColor: planInfo.color }} />
           <div className="relative z-10 flex items-end justify-between mb-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-widest text-textdark/50 dark:text-dm-muted mb-1">Plan Seleccionado</p>
+              <p className="text-xs font-bold uppercase tracking-widest text-textdark/50 dark:text-dm-muted mb-1">{t('payment.planSelected')}</p>
               <h2 className="text-2xl font-bold text-textdark dark:text-dm-text">{planInfo.name}</h2>
             </div>
             <span className="text-xl font-black" style={{ color: planInfo.color }}>{planInfo.price.split(' ')[0]}</span>
@@ -197,7 +197,7 @@ export default function Payment() {
         {/* Wallet / action area */}
         <div className="space-y-3">
           <p className="text-xs font-semibold text-textdark/60 dark:text-dm-muted text-center pt-2">
-            Pagás en USD. Procesamos el pago internamente en USDT sobre Celo blockchain.
+            {t('payment.billingNote')}
           </p>
 
           <button
@@ -206,32 +206,31 @@ export default function Payment() {
             disabled={loading}
             className="w-full flex items-center justify-center gap-3 rounded-xl bg-sage text-white font-bold py-3.5 shadow-md hover:-translate-y-0.5 hover:shadow-lg active:scale-95 transition disabled:opacity-50"
           >
-            {loading ? 'Procesando...' : `Activar plan — $${planInfo.amountUSD} USD/mes`}
+            {loading ? t('payment.processing') : t('payment.activate', { amount: planInfo.amountUSD })}
           </button>
 
           {/* DeFi cashback benefit card (BELOW PAYMENT) */}
           <div className="bg-[#F0F7F0] dark:bg-sage/10 rounded-2xl p-5 border border-sage/20 mt-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-lg">🌱</span>
-              <h3 className="font-bold text-[#4A7A4C] dark:text-sage">Beneficio DeFi incluido</h3>
+              <h3 className="font-bold text-[#4A7A4C] dark:text-sage">{t('payment.defiTitle')}</h3>
             </div>
             <p className="text-sm text-[#4A7A4C]/80 dark:text-sage/80 leading-relaxed mb-3">
-              Tu suscripción genera rendimientos automáticos.<br/>
-              Recibís hasta un 2% de cashback mensual en tu próxima renovación.
+              {t('payment.defiDesc')}
             </p>
-            <p className="text-xs font-medium text-[#4A7A4C]/60 dark:text-sage/50 font-mono">Powered by Celo blockchain</p>
+            <p className="text-xs font-medium text-[#4A7A4C]/60 dark:text-sage/50 font-mono">{t('payment.defiPowered')}</p>
           </div>
-          
+
           {localStorage.getItem('breso_selected_plan') === plan && (
             <div className="mt-8 pt-4 border-t border-softgray dark:border-dm-border flex flex-col items-center">
               <p className="text-xs text-textdark/50 text-center mb-2">
-                ¿Querés cancelar? Tu acceso continúa hasta el final del período. Luego volvés al plan gratuito.
+                {t('payment.cancelNote')}
               </p>
-              <button 
+              <button
                 onClick={handleCancel}
                 className="text-xs text-textdark/40 hover:text-red-500 transition px-3 py-1 font-semibold"
               >
-                Cancelar suscripción
+                {t('payment.cancel')}
               </button>
             </div>
           )}

@@ -153,6 +153,21 @@ async def create_subscription(
 # ---------------------------------------------------------------------------
 
 
+@router.get("/defi-stats")
+async def defi_stats() -> dict:
+    """Return global DeFi protocol stats for display in the UI."""
+    return {
+        "protocol": "Mento Protocol on Celo",
+        "network": "Celo Mainnet",
+        "apy": "5% annual",
+        "cashback_rate": "2% monthly of subscription",
+        "total_subscriptions_staked_usd": 0,
+        "description": "Subscriptions generate yield via Mento stablecoin pools on Celo. 30% of monthly yield is returned as cashback to subscribers.",
+        "contract": "0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
+        "explorer": "https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
+    }
+
+
 @router.get("/my-cashback")
 async def my_cashback(current_user=Depends(get_current_user)) -> dict:
     """Return pending cashback for the current user."""

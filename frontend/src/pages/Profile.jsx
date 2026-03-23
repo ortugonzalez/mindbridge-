@@ -271,19 +271,19 @@ export default function Profile() {
       {/* DeFi Cashback Card */}
       {cashback && (
         <div className="rounded-2xl bg-[#F0F7F0] dark:bg-sage/10 border border-sage/30 p-5 space-y-3 shadow-sm">
-          <p className="text-sm font-bold text-[#4A7A4C] dark:text-sage">🌱 Tu cashback DeFi</p>
+          <p className="text-sm font-bold text-[#4A7A4C] dark:text-sage">{t('profile.cashbackTitle')}</p>
           <div className="space-y-1.5 text-sm text-[#4A7A4C]/90 dark:text-sage/80">
             <div className="flex justify-between">
-              <span>Rendimiento generado</span>
-              <span className="font-semibold">${(cashback.yield_generated ?? 0).toFixed(3)}</span>
+              <span>{t('profile.cashbackYield')}</span>
+              <span className="font-semibold">${(cashback.yield_generated_monthly ?? cashback.yield_generated ?? 0).toFixed(3)}</span>
             </div>
             <div className="flex justify-between">
-              <span>Cashback disponible</span>
-              <span className="font-semibold">${(cashback.cashback_usd ?? 0).toFixed(3)}</span>
+              <span>{t('profile.cashbackAvailable')}</span>
+              <span className="font-semibold">${(cashback.cashback_amount ?? cashback.cashback_usd ?? 0).toFixed(3)}</span>
             </div>
             {cashback.expires_at && (
               <div className="flex justify-between">
-                <span>Válido hasta</span>
+                <span>{t('profile.cashbackValidUntil')}</span>
                 <span className="font-semibold">
                   {new Date(cashback.expires_at).toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })}
                 </span>
@@ -291,7 +291,7 @@ export default function Profile() {
             )}
           </div>
           <p className="text-xs text-[#4A7A4C]/65 dark:text-sage/50 leading-relaxed">
-            Se aplica en tu próxima renovación automáticamente.
+            {t('profile.cashbackNote')}
           </p>
         </div>
       )}

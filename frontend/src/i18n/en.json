@@ -208,6 +208,36 @@
     "contactSave": "Save",
     "contactSaving": "Saving...",
     "contactCancel": "Cancel",
+    "streakTitle": "Current streak",
+    "streakSubtitle": "days in a row with Soledad",
+    "nextMilestone": "Next milestone: {{days}} days",
+    "pointsTitle": "Points earned",
+    "pointsSubtitle": "points accumulated",
+    "pointsNote": "Earn 10 points for each check-in",
+    "achievementsTitle": "Your achievements",
+    "achievementUnlocked": "Achievement \"{{name}}\" unlocked on {{date}}",
+    "todaysProposalTitle": "Soledad's proposal for today",
+    "viewFullHistory": "View full history",
+    "viewFullHistoryHelp": "Review all your previous conversations",
+    "fullHistoryTitle": "Full history",
+    "noHistoryYet": "No history available yet.",
+    "celoNote": "Soledad is registered on Celo blockchain",
+    "celoContract": "View contract →",
+    "dailyProposals": [
+      "Take a 15-minute walk without your phone 🌿",
+      "Write one thing that went well today, even something small",
+      "Call someone you haven't spoken to in a while",
+      "Drink some water and take 3 deep breaths before continuing"
+    ],
+    "achievements": {
+      "primer": { "name": "First step", "desc": "first check-in" },
+      "racha3": { "name": "3 days in a row", "desc": "streak of 3" },
+      "semana": { "name": "A full week", "desc": "streak of 7" },
+      "constancia": { "name": "Consistency", "desc": "streak of 14" },
+      "mes": { "name": "A month with Soledad", "desc": "streak of 30" },
+      "conv10": { "name": "10 conversations", "desc": "10 total check-ins" },
+      "conv50": { "name": "50 conversations", "desc": "50 total check-ins" }
+    },
     "mock": {
       "userName": "Friend",
       "contactName": "Maria",
@@ -246,7 +276,12 @@
     "type_professional": "Professional",
     "current_plan": "Current plan",
     "days_left": "{{days}} days left",
-    "change_plan": "Change plan"
+    "change_plan": "Change plan",
+    "cashbackTitle": "Your DeFi cashback 🌱",
+    "cashbackYield": "Yield generated",
+    "cashbackAvailable": "Cashback available",
+    "cashbackValidUntil": "Valid until",
+    "cashbackNote": "Automatically applied at your next renewal."
   },
   "notifications": {
     "title": "Notifications",
@@ -266,7 +301,10 @@
     "status_active": "Active",
     "status_pending": "Pending",
     "linked_patient": "Linked patient: {{name}}",
-    "modal_title": "New contact"
+    "modal_title": "New contact",
+    "emptyTitle": "You haven't added any trusted contacts yet",
+    "emptyDesc": "Your support network is essential. Add people who can be there for you.",
+    "inviteSent": "✅ Invitation sent to {{email}}"
   },
   "settings": {
     "title": "Settings",
@@ -279,7 +317,12 @@
     "export_data": "Export my data",
     "confirm_delete": "Are you sure? This action cannot be undone.",
     "freq_immediate": "Immediate",
-    "freq_daily": "Daily summary"
+    "freq_daily": "Daily summary",
+    "reminderTitle": "Daily reminder",
+    "reminderDesc": "Soledad will remind you to do your daily check-in at {{time}}",
+    "exportPersonal": "For me",
+    "exportProfessional": "For my professional",
+    "exportSuccess": "Your data has been downloaded"
   },
   "help": {
     "title": "Help & Support",
@@ -318,7 +361,53 @@
     "recent_alerts": "Recent alerts",
     "how_to_help": "How I can help",
     "tip1": "Listen without judgment and offer unconditional support.",
-    "tip2": "Ask directly how you can be helpful right now."
+    "tip2": "Ask directly how you can be helpful right now.",
+    "alertTitles": {
+      "green": "All calm",
+      "yellow": "May need attention",
+      "orange": "We recommend staying close",
+      "red": "Needs support today"
+    },
+    "tips": {
+      "green": [
+        "Stay present without pressuring",
+        "A simple message like 'I was thinking of you today' helps",
+        "Celebrate the days they do their check-in"
+      ],
+      "yellow": [
+        "Message them without expecting an immediate response",
+        "Ask how their day went, without pressure",
+        "Suggest doing something together, something simple"
+      ],
+      "orange": [
+        "Message them without expecting an immediate response",
+        "Ask how their day went, without pressure",
+        "Suggest doing something together, something simple"
+      ],
+      "red": [
+        "Get in touch today if you can",
+        "Listen without judging or giving advice",
+        "If you see real risk, call crisis support with them"
+      ]
+    },
+    "notLinkedTitle": "You're not linked yet",
+    "notLinkedDesc": "To see someone's wellbeing, you first need to be added as their trusted contact.",
+    "howItWorks": "How it works",
+    "howToLinkTitle": "How to link",
+    "howToLinkSteps": [
+      "The person using BRESO must go to Contacts in their app.",
+      "They add your email as a trusted contact.",
+      "You will receive an invitation email.",
+      "Accept the invitation and this panel will activate."
+    ],
+    "headerTitle": "Supporting {{name}}",
+    "conversationsPrivate": "Their conversations are private",
+    "checkinsThisWeek": "{{count}} check-ins this week",
+    "recommendedActionsTitle": "Recommended actions to support them",
+    "generating": "Generating...",
+    "exportButton": "Export weekly summary (PDF)",
+    "crisisLines": "Crisis lines:",
+    "call135": "Call 135"
   },
   "home": {
     "greeting": "How are you today, {{name}}?",
@@ -343,6 +432,36 @@
     "pushDismiss": "Not now",
     "pushSuccess": "✅ Notifications enabled",
     "microcopy": ["Every conversation counts.", "Soledad is waiting for you.", "A moment for yourself.", "How are you really today?", "Your wellbeing matters.", "Today counts too.", "You're doing the right thing by being here."]
+  },
+  "payment": {
+    "title": "Payment summary",
+    "subtitle": "You're one step away from activating your benefits.",
+    "back": "Back",
+    "planSelected": "Selected Plan",
+    "billingNote": "You pay in USD. We process payment internally in USDT on Celo blockchain.",
+    "processing": "Processing...",
+    "activate": "Activate plan — ${{amount}} USD/mo",
+    "defiTitle": "DeFi benefit included",
+    "defiDesc": "Your subscription generates automatic yields. Get up to 2% monthly cashback on your next renewal.",
+    "defiPowered": "Powered by Celo blockchain",
+    "cancelNote": "Want to cancel? Your access continues until the end of the period. Then you return to the free plan.",
+    "cancel": "Cancel subscription",
+    "successTitle": "Plan {{plan}} activated",
+    "successCashback": "DeFi cashback activated — get up to 2% monthly cashback on your next renewal",
+    "nextRenewal": "Next renewal",
+    "goToAccount": "Go to my account",
+    "plans": {
+      "essential": {
+        "name": "Essential",
+        "price": "$5 USDT / mo",
+        "features": ["Unlimited check-ins", "Full history", "1 trusted contact", "Personalized proposals"]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$12 USDT / mo",
+        "features": ["Everything in Essential", "2 trusted contacts", "Professional coordination", "Monthly report"]
+      }
+    }
   },
   "professional_dashboard": {
     "title": "Professional Dashboard",

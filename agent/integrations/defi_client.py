@@ -26,12 +26,19 @@ class DeFiCashback:
     def calculate_cashback(self, amount_usd: float) -> dict:
         monthly_yield = amount_usd * self.MONTHLY_YIELD_RATE / 12
         cashback = monthly_yield * self.CASHBACK_PERCENTAGE
+        total_yearly = round(cashback * 12, 2)
         return {
             "subscription_amount": amount_usd,
+            "yield_generated_monthly": round(monthly_yield, 4),
+            "cashback_amount": round(cashback, 4),
+            "cashback_percentage": "2% de tu suscripción",
+            "protocol": "Mento Protocol on Celo",
+            "next_payout": "Al renovar tu suscripción",
+            "total_saved_yearly": total_yearly,
+            "message": f"Ahorrás ${total_yearly} USD al año con tu suscripción",
+            # Legacy fields kept for backwards-compat
             "yield_generated": round(monthly_yield, 4),
             "cashback_usd": round(cashback, 4),
-            "cashback_percentage": 30,
-            "valid_for": "próxima suscripción",
         }
 
     async def process_subscription_with_defi(
@@ -52,8 +59,8 @@ class DeFiCashback:
                     "user_id": user_id,
                     "plan": plan,
                     "subscription_amount": amount_usd,
-                    "yield_generated": cashback_info["yield_generated"],
-                    "cashback_amount": cashback_info["cashback_usd"],
+                    "yield_generated": cashback_info["yield_generated_monthly"],
+                    "cashback_amount": cashback_info["cashback_amount"],
                     "status": "pending",
                     "expires_at": "now() + interval '30 days'",
                 }
@@ -62,7 +69,7 @@ class DeFiCashback:
                 {
                     "event": "defi.cashback.stored",
                     "user_id": user_id,
-                    "cashback_usd": cashback_info["cashback_usd"],
+                    "cashback_amount": cashback_info["cashback_amount"],
                 }
             )
         except Exception as exc:  # noqa: BLE001

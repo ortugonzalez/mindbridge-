@@ -208,6 +208,36 @@
     "contactSave": "Guardar",
     "contactSaving": "Guardando...",
     "contactCancel": "Cancelar",
+    "streakTitle": "Racha actual",
+    "streakSubtitle": "días seguidos con Soledad",
+    "nextMilestone": "Siguiente hito: {{days}} días",
+    "pointsTitle": "Puntos generados",
+    "pointsSubtitle": "puntos acumulados",
+    "pointsNote": "Ganás 10 puntos por cada check-in",
+    "achievementsTitle": "Tus logros",
+    "achievementUnlocked": "Logro \"{{name}}\" desbloqueado el {{date}}",
+    "todaysProposalTitle": "Propuesta de Soledad para hoy",
+    "viewFullHistory": "Ver historial completo",
+    "viewFullHistoryHelp": "Revisá todas tus conversaciones previas",
+    "fullHistoryTitle": "Historial completo",
+    "noHistoryYet": "No hay historial disponible aún.",
+    "celoNote": "Soledad está registrada en Celo blockchain",
+    "celoContract": "Ver contrato →",
+    "dailyProposals": [
+      "Salí a caminar 15 minutos sin el teléfono 🌿",
+      "Escribí una cosa que salió bien hoy, aunque sea pequeña",
+      "Llamá a alguien que no hablaste hace tiempo",
+      "Tomá agua y respirá profundo 3 veces antes de seguir"
+    ],
+    "achievements": {
+      "primer": { "name": "Primer paso", "desc": "primer check-in" },
+      "racha3": { "name": "3 días seguidos", "desc": "racha de 3" },
+      "semana": { "name": "Una semana entera", "desc": "racha de 7" },
+      "constancia": { "name": "Constancia", "desc": "racha de 14" },
+      "mes": { "name": "Un mes con Soledad", "desc": "racha de 30" },
+      "conv10": { "name": "10 conversaciones", "desc": "10 check-ins totales" },
+      "conv50": { "name": "50 conversaciones", "desc": "50 check-ins totales" }
+    },
     "mock": {
       "userName": "Amigo/a",
       "contactName": "María",
@@ -246,7 +276,12 @@
     "type_professional": "Profesional",
     "current_plan": "Plan actual",
     "days_left": "Días restantes: {{days}}",
-    "change_plan": "Cambiar plan"
+    "change_plan": "Cambiar plan",
+    "cashbackTitle": "Tu cashback DeFi 🌱",
+    "cashbackYield": "Rendimiento generado",
+    "cashbackAvailable": "Cashback disponible",
+    "cashbackValidUntil": "Válido hasta",
+    "cashbackNote": "Se aplica en tu próxima renovación automáticamente."
   },
   "notifications": {
     "title": "Notificaciones",
@@ -266,7 +301,10 @@
     "status_active": "Activo",
     "status_pending": "Pendiente",
     "linked_patient": "Paciente vinculado: {{name}}",
-    "modal_title": "Nuevo contacto"
+    "modal_title": "Nuevo contacto",
+    "emptyTitle": "Todavía no agregaste contactos de confianza",
+    "emptyDesc": "Tu red de apoyo es fundamental. Sumá personas que puedan acompañarte.",
+    "inviteSent": "✅ Invitación enviada a {{email}}"
   },
   "settings": {
     "title": "Configuración",
@@ -279,7 +317,12 @@
     "export_data": "Exportar mis datos",
     "confirm_delete": "¿Estás seguro? Esta acción no se puede deshacer.",
     "freq_immediate": "Inmediata",
-    "freq_daily": "Resumen diario"
+    "freq_daily": "Resumen diario",
+    "reminderTitle": "Recordatorio diario",
+    "reminderDesc": "Soledad te va a recordar hacer tu check-in diario a las {{time}}",
+    "exportPersonal": "Para mí",
+    "exportProfessional": "Para mi profesional",
+    "exportSuccess": "Tus datos fueron descargados"
   },
   "help": {
     "title": "Ayuda y Soporte",
@@ -318,7 +361,53 @@
     "recent_alerts": "Alertas recientes",
     "how_to_help": "Cómo puedo ayudar",
     "tip1": "Escuchá sin juzgar y ofrece tu apoyo incondicional.",
-    "tip2": "Preguntá directamente cómo podés ser útil en este momento."
+    "tip2": "Preguntá directamente cómo podés ser útil en este momento.",
+    "alertTitles": {
+      "green": "Todo tranquilo",
+      "yellow": "Puede necesitar atención",
+      "orange": "Te recomendamos estar cerca",
+      "red": "Necesita apoyo hoy"
+    },
+    "tips": {
+      "green": [
+        "Seguí estando presente sin presionar",
+        "Un mensaje simple como 'Pensé en vos hoy' ayuda",
+        "Celebrá con ella los días que hace check-in"
+      ],
+      "yellow": [
+        "Escribile sin esperar respuesta inmediata",
+        "Preguntá cómo estuvo el día, sin presionar",
+        "Proponé hacer algo juntos, algo simple"
+      ],
+      "orange": [
+        "Escribile sin esperar respuesta inmediata",
+        "Preguntá cómo estuvo el día, sin presionar",
+        "Proponé hacer algo juntos, algo simple"
+      ],
+      "red": [
+        "Comunicate con ella hoy si podés",
+        "Escuchá sin juzgar ni dar consejos",
+        "Si ves riesgo real, llamá al 135 con ella"
+      ]
+    },
+    "notLinkedTitle": "Todavía no estás vinculado/a",
+    "notLinkedDesc": "Para ver el bienestar de alguien cercano, primero necesitás que te agreguen como contacto de confianza.",
+    "howItWorks": "Cómo funciona",
+    "howToLinkTitle": "Cómo vincularse",
+    "howToLinkSteps": [
+      "La persona que usa BRESO debe ir a Contactos en su app.",
+      "Agrega tu email como contacto de confianza.",
+      "Vas a recibir un email de invitación.",
+      "Aceptá la invitación y este panel se activará."
+    ],
+    "headerTitle": "Acompañando a {{name}}",
+    "conversationsPrivate": "Sus conversaciones son privadas",
+    "checkinsThisWeek": "{{count}} check-ins esta semana",
+    "recommendedActionsTitle": "Acciones recomendadas para acompañar",
+    "generating": "Generando...",
+    "exportButton": "Exportar resumen semanal (PDF)",
+    "crisisLines": "Líneas de crisis:",
+    "call135": "Llamar al 135"
   },
   "home": {
     "greeting": "¿Cómo estás hoy, {{name}}?",
@@ -343,6 +432,36 @@
     "pushDismiss": "Ahora no",
     "pushSuccess": "✅ Notificaciones activadas",
     "microcopy": ["Cada conversación cuenta.", "Soledad te está esperando.", "Un momento para vos.", "¿Cómo estás hoy, de verdad?", "Tu bienestar importa.", "Hoy también cuenta.", "Estás haciendo bien en estar acá."]
+  },
+  "payment": {
+    "title": "Resumen de pago",
+    "subtitle": "Estás a un paso de activar tus beneficios.",
+    "back": "Volver",
+    "planSelected": "Plan Seleccionado",
+    "billingNote": "Pagás en USD. Procesamos el pago internamente en USDT sobre Celo blockchain.",
+    "processing": "Procesando...",
+    "activate": "Activar plan — ${{amount}} USD/mes",
+    "defiTitle": "Beneficio DeFi incluido",
+    "defiDesc": "Tu suscripción genera rendimientos automáticos. Recibís hasta un 2% de cashback mensual en tu próxima renovación.",
+    "defiPowered": "Powered by Celo blockchain",
+    "cancelNote": "¿Querés cancelar? Tu acceso continúa hasta el final del período. Luego volvés al plan gratuito.",
+    "cancel": "Cancelar suscripción",
+    "successTitle": "Plan {{plan}} activado",
+    "successCashback": "Cashback DeFi activado — recibís hasta un 2% de cashback mensual en tu próxima renovación",
+    "nextRenewal": "Próxima renovación",
+    "goToAccount": "Ir a mi cuenta",
+    "plans": {
+      "essential": {
+        "name": "Esencial",
+        "price": "$5 USDT / mes",
+        "features": ["Check-ins ilimitados", "Historial completo", "1 contacto de confianza", "Propuestas personalizadas"]
+      },
+      "premium": {
+        "name": "Premium",
+        "price": "$12 USDT / mes",
+        "features": ["Todo lo esencial", "2 contactos de confianza", "Coordinación profesional", "Reporte mensual"]
+      }
+    }
   },
   "professional_dashboard": {
     "title": "Panel Profesional",

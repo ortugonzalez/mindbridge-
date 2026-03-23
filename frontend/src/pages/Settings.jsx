@@ -288,10 +288,10 @@ export default function Settings() {
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium text-textdark dark:text-dm-text">Recordatorio diario</p>
+                <p className="font-medium text-textdark dark:text-dm-text">{t('settings.reminderTitle')}</p>
                 {reminderEnabled && (
                   <p className="text-xs text-textdark/60 dark:text-dm-muted mt-0.5">
-                    Soledad te va a recordar hacer tu check-in diario a las {reminderTime}
+                    {t('settings.reminderDesc', { time: reminderTime })}
                   </p>
                 )}
               </div>
@@ -338,19 +338,19 @@ export default function Settings() {
                   onClick={handleExportPersonal}
                   className="flex-1 rounded-xl border border-sage text-sage text-sm font-semibold py-2 hover:bg-sage hover:text-white transition-colors"
                 >
-                  Para mí
+                  {t('settings.exportPersonal')}
                 </button>
                 <button
                   type="button"
                   onClick={handleExportProfessional}
                   className="flex-1 rounded-xl border border-textdark/20 dark:border-dm-border text-textdark/70 dark:text-dm-muted text-sm font-semibold py-2 hover:bg-softgray dark:hover:bg-dm-border transition-colors"
                 >
-                  Para mi profesional
+                  {t('settings.exportProfessional')}
                 </button>
               </div>
             )}
             {exportMsg && (
-              <p className="text-xs text-sage font-medium">Tus datos fueron descargados</p>
+              <p className="text-xs text-sage font-medium">{t('settings.exportSuccess')}</p>
             )}
           </div>
           <hr className="border-softgray dark:border-dm-border" />

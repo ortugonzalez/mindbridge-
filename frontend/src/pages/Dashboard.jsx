@@ -82,23 +82,18 @@ export default function Dashboard() {
   const totalCheckins = dashboard?.totalCheckins ?? history?.items?.length ?? Math.max(streakDays, 1)
 
   const achievementsList = [
-    { id: 'primer', name: 'Primer paso', desc: 'primer check-in', icon: '🌱', req: { type: 'checkins', val: 1 } },
-    { id: 'racha3', name: '3 días seguidos', desc: 'racha de 3', icon: '🔥', req: { type: 'streak', val: 3 } },
-    { id: 'semana', name: 'Una semana entera', desc: 'racha de 7', icon: '⭐', req: { type: 'streak', val: 7 } },
-    { id: 'constancia', name: 'Constancia', desc: 'racha de 14', icon: '🌙', req: { type: 'streak', val: 14 } },
-    { id: 'mes', name: 'Un mes con Soledad', desc: 'racha de 30', icon: '🏆', req: { type: 'streak', val: 30 } },
-    { id: 'conv10', name: '10 conversaciones', desc: '10 check-ins totales', icon: '💬', req: { type: 'checkins', val: 10 } },
-    { id: 'conv50', name: '50 conversaciones', desc: '50 check-ins totales', icon: '🎯', req: { type: 'checkins', val: 50 } },
+    { id: 'primer', icon: '🌱', req: { type: 'checkins', val: 1 } },
+    { id: 'racha3', icon: '🔥', req: { type: 'streak', val: 3 } },
+    { id: 'semana', icon: '⭐', req: { type: 'streak', val: 7 } },
+    { id: 'constancia', icon: '🌙', req: { type: 'streak', val: 14 } },
+    { id: 'mes', icon: '🏆', req: { type: 'streak', val: 30 } },
+    { id: 'conv10', icon: '💬', req: { type: 'checkins', val: 10 } },
+    { id: 'conv50', icon: '🎯', req: { type: 'checkins', val: 50 } },
   ]
 
-  const dailyProposals = [
-    "Salí a caminar 15 minutos sin el teléfono 🌿",
-    "Escribí una cosa que salió bien hoy, aunque sea pequeña",
-    "Llamá a alguien que no hablaste hace tiempo",
-    "Tomá agua y respirá profundo 3 veces antes de seguir"
-  ]
+  const dailyProposals = t('dashboard.dailyProposals', { returnObjects: true })
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
-  const todaysProposal = dailyProposals[dayOfYear % dailyProposals.length]
+  const todaysProposal = Array.isArray(dailyProposals) ? dailyProposals[dayOfYear % dailyProposals.length] : ''
 
   const handleStart = () => {
     setStartLoading(true)
@@ -140,49 +135,51 @@ export default function Dashboard() {
 
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="rounded-xl border border-softgray bg-whiteish p-4">
-                <div className="text-sm font-semibold text-textdark/70">Racha actual</div>
+                <div className="text-sm font-semibold text-textdark/70">{t('dashboard.streakTitle')}</div>
                 <div className="mt-1 flex items-baseline gap-2 text-textdark">
                   <span className="text-3xl font-bold">{streakDays}</span>
-                  <span className="font-semibold">{streakDays >= 3 ? '🔥 ' : ''}días seguidos con Soledad</span>
+                  <span className="font-semibold">{streakDays >= 3 ? '🔥 ' : ''}{t('dashboard.streakSubtitle')}</span>
                 </div>
                 <div className="mt-4 w-full bg-softgray/40 rounded-full h-2 overflow-hidden">
                   <div className="bg-sage h-full rounded-full transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }} />
                 </div>
                 <div className="mt-2 text-xs font-semibold text-textdark/50 text-right">
-                  Siguiente hito: {nextMilestone} días
+                  {t('dashboard.nextMilestone', { days: nextMilestone })}
                 </div>
               </div>
 
               <div className="rounded-xl border border-softgray bg-whiteish p-4 flex flex-col justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-textdark/70">Puntos generados</div>
+                  <div className="text-sm font-semibold text-textdark/70">{t('dashboard.pointsTitle')}</div>
                   <div className="mt-1 flex items-baseline gap-2 text-textdark">
                     <span className="text-3xl font-bold">{totalCheckins * 10}</span>
-                    <span className="font-semibold">puntos acumulados</span>
+                    <span className="font-semibold">{t('dashboard.pointsSubtitle')}</span>
                   </div>
                 </div>
                 <div className="mt-3 text-xs font-semibold text-sage bg-sage/10 rounded-lg px-3 py-2 inline-block self-start">
-                  Ganás 10 puntos por cada check-in
+                  {t('dashboard.pointsNote')}
                 </div>
               </div>
             </div>
 
             <div className="mt-6">
-              <div className="text-sm font-semibold text-textdark/70 mb-3">Tus logros</div>
+              <div className="text-sm font-semibold text-textdark/70 mb-3">{t('dashboard.achievementsTitle')}</div>
               <div className="grid grid-cols-2 gap-3">
                 {achievementsList.map((ach) => {
                   const unlocked = ach.req.type === 'streak' ? streakDays >= ach.req.val : totalCheckins >= ach.req.val
+                  const achName = t(`dashboard.achievements.${ach.id}.name`)
+                  const achDesc = t(`dashboard.achievements.${ach.id}.desc`)
                   return (
                     <div
                       key={ach.id}
                       onClick={() => {
-                        if (unlocked) alert(`Logro "${ach.name}" desbloqueado el ${new Date().toLocaleDateString()}`)
+                        if (unlocked) alert(t('dashboard.achievementUnlocked', { name: achName, date: new Date().toLocaleDateString() }))
                       }}
                       className={`flex flex-col items-center justify-center p-4 rounded-[16px] border text-center ${unlocked ? 'bg-sage border-sage/20 text-white shadow-soft cursor-pointer hover:opacity-90 transition' : 'bg-softgray/20 border-softgray opacity-40'}`}
                     >
                       <span className="text-3xl mb-2">{ach.icon}</span>
-                      <span className="text-sm font-bold leading-snug mb-1">{unlocked ? ach.name : '???'}</span>
-                      {unlocked && <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">{ach.desc}</span>}
+                      <span className="text-sm font-bold leading-snug mb-1">{unlocked ? achName : '???'}</span>
+                      {unlocked && <span className="text-[10px] font-medium opacity-80 uppercase tracking-widest">{achDesc}</span>}
                     </div>
                   )
                 })}
@@ -197,7 +194,7 @@ export default function Dashboard() {
 
               {showHistoryDetails ? (
                 <div className="mt-4 rounded-xl border border-softgray bg-softgray/40 p-4 space-y-3">
-                  <div className="text-sm font-semibold text-textdark/80">Historial completo</div>
+                  <div className="text-sm font-semibold text-textdark/80">{t('dashboard.fullHistoryTitle')}</div>
                   <div className="space-y-2">
                     {history?.items?.length ? (
                       history.items.map((item, i) => (
@@ -219,7 +216,7 @@ export default function Dashboard() {
                         </div>
                       ))
                     ) : (
-                      <p className="text-sm text-textdark/50 italic">No hay historial disponible aún.</p>
+                      <p className="text-sm text-textdark/50 italic">{t('dashboard.noHistoryYet')}</p>
                     )}
                   </div>
                 </div>
@@ -228,7 +225,7 @@ export default function Dashboard() {
           </section>
 
           <section className="rounded-[16px] bg-[#EAF0E9] p-5 shadow-sm border border-[#C5D9C2]">
-            <div className="text-sm font-semibold text-sage/80 mb-2 uppercase tracking-wide">Propuesta de Soledad para hoy</div>
+            <div className="text-sm font-semibold text-sage/80 mb-2 uppercase tracking-wide">{t('dashboard.todaysProposalTitle')}</div>
             <div className="text-lg font-bold text-textdark/90 leading-tight">{todaysProposal}</div>
           </section>
 
@@ -237,8 +234,8 @@ export default function Dashboard() {
             onClick={() => setShowHistoryDetails((v) => !v)}
             className="w-full rounded-full border border-softgray bg-whiteish px-6 py-3 text-left shadow-soft transition hover:bg-softgray disabled:cursor-not-allowed disabled:opacity-70"
           >
-            <div className="text-sm font-semibold text-textdark">Ver historial completo</div>
-            <div className="mt-0.5 text-xs font-semibold text-textdark/70">Revisá todas tus conversaciones previas</div>
+            <div className="text-sm font-semibold text-textdark">{t('dashboard.viewFullHistory')}</div>
+            <div className="mt-0.5 text-xs font-semibold text-textdark/70">{t('dashboard.viewFullHistoryHelp')}</div>
           </button>
         </>
       ) : null}
@@ -272,7 +269,7 @@ export default function Dashboard() {
       {/* Powered by Celo */}
       <div className="mt-8 rounded-xl bg-[#F0F7F0] dark:bg-sage/10 border border-sage/20 p-4 text-center">
         <p className="text-xs text-textdark/50 dark:text-dm-muted mb-1">
-          Soledad está registrada en Celo blockchain
+          {t('dashboard.celoNote')}
         </p>
         <a
           href="https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa"
@@ -280,7 +277,7 @@ export default function Dashboard() {
           rel="noreferrer"
           className="text-[11px] font-medium text-sage hover:underline"
         >
-          Ver contrato →
+          {t('dashboard.celoContract')}
         </a>
       </div>
     </div>

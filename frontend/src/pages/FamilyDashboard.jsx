@@ -1,49 +1,16 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getFamilyPatientStatus, getFamilyWeeklyReport, notifyPatient } from '../services/api'
 
-const TIPS = {
-  green: [
-    'Seguí estando presente sin presionar',
-    "Un mensaje simple como 'Pensé en vos hoy' ayuda",
-    'Celebrá con ella los días que hace check-in',
-  ],
-  yellow: [
-    'Escribile sin esperar respuesta inmediata',
-    'Preguntá cómo estuvo el día, sin presionar',
-    'Proponé hacer algo juntos, algo simple',
-  ],
-  orange: [
-    'Escribile sin esperar respuesta inmediata',
-    'Preguntá cómo estuvo el día, sin presionar',
-    'Proponé hacer algo juntos, algo simple',
-  ],
-  red: [
-    'Comunicate con ella hoy si podés',
-    'Escuchá sin juzgar ni dar consejos',
-    'Si ves riesgo real, llamá al 135 con ella',
-  ],
-}
-
 const ALERT_UI = {
-  green: {
-    bg: 'bg-[#F0FDF4]', text: 'text-[#166534]',
-    icon: '🌱', title: 'Todo tranquilo',
-  },
-  yellow: {
-    bg: 'bg-[#FEFCE8]', text: 'text-[#854D0E]',
-    icon: '🌼', title: 'Puede necesitar atención',
-  },
-  orange: {
-    bg: 'bg-[#FFF7ED]', text: 'text-[#9A3412]',
-    icon: '🍂', title: 'Te recomendamos estar cerca',
-  },
-  red: {
-    bg: 'bg-[#FEF2F2]', text: 'text-[#991B1B]',
-    icon: '❤️', title: 'Necesita apoyo hoy',
-  },
+  green:  { bg: 'bg-[#F0FDF4]', text: 'text-[#166534]', icon: '🌱' },
+  yellow: { bg: 'bg-[#FEFCE8]', text: 'text-[#854D0E]', icon: '🌼' },
+  orange: { bg: 'bg-[#FFF7ED]', text: 'text-[#9A3412]', icon: '🍂' },
+  red:    { bg: 'bg-[#FEF2F2]', text: 'text-[#991B1B]', icon: '❤️' },
 }
 
 export default function FamilyDashboard() {
+  const { t } = useTranslation()
   const [helpOpen, setHelpOpen] = useState(false)
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -92,7 +59,7 @@ export default function FamilyDashboard() {
       <div className="animate-fade-in-page flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="h-8 w-8 rounded-full border-2 border-sage border-t-transparent animate-spin" />
-          <p className="text-textdark/50 dark:text-dm-muted text-sm">Cargando...</p>
+          <p className="text-textdark/50 dark:text-dm-muted text-sm">{t('common.loading')}</p>
         </div>
       </div>
     )
@@ -100,34 +67,32 @@ export default function FamilyDashboard() {
 
   // ── Not linked ───────────────────────────────────────────
   if (!status || status.linked === false) {
+    const steps = t('family_dashboard.howToLinkSteps', { returnObjects: true })
     return (
       <div className="animate-fade-in-page flex flex-col items-center justify-center min-h-[70vh] px-6 text-center gap-6">
         <span className="text-6xl">🤝</span>
         <h2 className="text-xl font-bold text-textdark dark:text-dm-text">
-          Todavía no estás vinculado/a
+          {t('family_dashboard.notLinkedTitle')}
         </h2>
         <p className="text-sm text-textdark/60 dark:text-dm-muted leading-relaxed max-w-xs">
-          Para ver el bienestar de alguien cercano, primero necesitás que te agreguen como contacto de confianza.
+          {t('family_dashboard.notLinkedDesc')}
         </p>
         <button
           onClick={() => setHelpOpen(true)}
           className="bg-sage text-white font-bold py-3 px-6 rounded-xl shadow-md hover:bg-sage/90 active:scale-[0.98] transition"
         >
-          Cómo funciona
+          {t('family_dashboard.howItWorks')}
         </button>
 
         {helpOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
             <div className="bg-white dark:bg-dm-elevated w-full max-w-sm rounded-[20px] p-6 shadow-xl">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-lg text-textdark dark:text-dm-text">Cómo vincularse</h3>
+                <h3 className="font-bold text-lg text-textdark dark:text-dm-text">{t('family_dashboard.howToLinkTitle')}</h3>
                 <button onClick={() => setHelpOpen(false)} className="text-textdark/50 dark:text-dm-muted">✕</button>
               </div>
               <ol className="space-y-3 text-sm text-textdark/80 dark:text-dm-muted list-decimal list-inside leading-relaxed">
-                <li>La persona que usás BRESO debe ir a <strong>Contactos</strong> en su app.</li>
-                <li>Agrega tu email como contacto de confianza.</li>
-                <li>Vas a recibir un email de invitación.</li>
-                <li>Aceptá la invitación y este panel se activará.</li>
+                {Array.isArray(steps) && steps.map((step, i) => <li key={i}>{step}</li>)}
               </ol>
             </div>
           </div>
@@ -139,7 +104,7 @@ export default function FamilyDashboard() {
   // ── Linked ───────────────────────────────────────────────
   const level = status.alert_level || 'green'
   const alertUI = ALERT_UI[level] || ALERT_UI.green
-  const tips = TIPS[level] || TIPS.green
+  const tips = t(`family_dashboard.tips.${level}`, { returnObjects: true }) || []
   const patientName = status.patient_name || 'tu ser querido'
   const summary = status.weekly_summary || status.summary || 'Sin datos esta semana.'
 
@@ -149,12 +114,12 @@ export default function FamilyDashboard() {
       {/* Header */}
       <div className="mb-2">
         <h1 className="text-2xl font-bold text-textdark dark:text-dm-text">
-          Acompañando a {patientName}
+          {t('family_dashboard.headerTitle', { name: patientName })}
         </h1>
         <div className="flex items-center gap-1.5 mt-1">
           <span className="text-base leading-none opacity-60">🔒</span>
           <p className="text-xs text-textdark/55 dark:text-dm-muted font-medium">
-            Sus conversaciones son privadas
+            {t('family_dashboard.conversationsPrivate')}
           </p>
         </div>
       </div>
@@ -164,7 +129,7 @@ export default function FamilyDashboard() {
         <div className="flex flex-col items-center text-center gap-2">
           <div className="text-4xl mb-1">{alertUI.icon}</div>
           <h2 className={`text-xl font-bold tracking-tight ${alertUI.text}`}>
-            {alertUI.title}
+            {t(`family_dashboard.alertTitles.${level}`)}
           </h2>
           <p className={`text-sm font-medium ${alertUI.text} opacity-80`}>
             {summary}
@@ -174,7 +139,7 @@ export default function FamilyDashboard() {
               href="tel:135"
               className="mt-3 bg-red-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-md hover:bg-red-700 active:scale-[0.98] transition text-sm"
             >
-              Llamar al 135
+              {t('family_dashboard.call135')}
             </a>
           )}
         </div>
@@ -183,14 +148,14 @@ export default function FamilyDashboard() {
       {/* Stats Row */}
       <div className="grid grid-cols-1 gap-2">
         <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
-          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.checkins_this_week ?? '0'} check-ins esta semana</p>
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{t('family_dashboard.checkinsThisWeek', { count: status.checkins_this_week ?? '0' })}</p>
         </div>
       </div>
 
       {/* Recommended Actions */}
       <div className="space-y-3 pt-1">
         <h3 className="font-bold text-lg text-textdark dark:text-dm-text px-1">
-          Acciones recomendadas para acompañar
+          {t('family_dashboard.recommendedActionsTitle')}
         </h3>
         <div className="flex flex-col gap-2">
           {tips.map((tip, i) => (
@@ -211,14 +176,14 @@ export default function FamilyDashboard() {
           disabled={exportLoading}
           className="w-full bg-white dark:bg-dm-surface border-2 border-sage text-sage font-bold py-3.5 rounded-xl hover:bg-sage/5 transition active:scale-[0.98] flex justify-center items-center gap-2 disabled:opacity-60"
         >
-          <span>📄</span> {exportLoading ? 'Generando...' : 'Exportar resumen semanal (PDF)'}
+          <span>📄</span> {exportLoading ? t('family_dashboard.generating') : t('family_dashboard.exportButton')}
         </button>
       </div>
 
       {/* Crisis Footer */}
       <div className="fixed bottom-16 sm:bottom-0 sm:pb-4 p-3 left-0 right-0 max-w-md mx-auto z-30 pointer-events-none">
         <div className="bg-white/90 dark:bg-dm-elevated/90 backdrop-blur-md rounded-full shadow-lg border border-red-200 dark:border-red-900/50 p-2.5 px-4 pointer-events-auto flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs font-bold text-red-600 dark:text-red-400">
-          <span className="text-[10px] uppercase opacity-60">Líneas de crisis:</span>
+          <span className="text-[10px] uppercase opacity-60">{t('family_dashboard.crisisLines')}</span>
           <span>🇦🇷 135</span><span className="opacity-40">•</span>
           <span>🇲🇽 800-290</span><span className="opacity-40">•</span>
           <span>🇨🇴 106</span><span className="opacity-40">•</span>

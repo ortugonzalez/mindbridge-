@@ -308,6 +308,7 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
     suggestion: data.suggestion || null,
     crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
     memoryExists: !!(data.memory || data.has_memory || data.memoryExists),
+    memoryPreview: data.memory_preview || null,
   }
 }
 

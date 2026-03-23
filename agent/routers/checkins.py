@@ -442,6 +442,11 @@ async def respond_to_checkin(
     """
     user_id: str = current_user.id
     logger.info({"event": "checkins.respond.received", "user_id": user_id, "message_preview": body.message[:50], "history_len": len(body.history), "language": body.language})
+
+    # Trial expiry guard
+    if _check_trial_expired(user_id):
+        raise HTTPException(status_code=402, detail={"trial_expired": True, "message": "Tu período de prueba ha terminado. Activá un plan para continuar."})
+
     supabase = get_supabase()
     now_utc = datetime.now(timezone.utc)
 

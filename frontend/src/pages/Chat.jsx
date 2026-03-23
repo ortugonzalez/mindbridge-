@@ -22,9 +22,13 @@ export default function Chat() {
   const [messages, setMessages] = useState([])
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [historyLimit, setHistoryLimit] = useState(20)
+  const [loadingHistory, setLoadingHistory] = useState(false)
 
   const [crisisDetected, setCrisisDetected] = useState(false)
   const [memoryExists, setMemoryExists] = useState(false)
+  const [memoryPreview, setMemoryPreview] = useState('')
+  const [memoryExpanded, setMemoryExpanded] = useState(false)
   const [showStreakBanner, setShowStreakBanner] = useState(false)
   const [streakDays, setStreakDays] = useState(0)
 
@@ -126,6 +130,31 @@ export default function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language])
 
+  const handleLoadOlder = async () => {
+    if (loadingHistory) return
+    setLoadingHistory(true)
+    try {
+      const newLimit = historyLimit + 20
+      const history = await getConversationHistory(newLimit)
+      const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
+      const newHistoricMessages = [...items].reverse().flatMap((item) => {
+        const msgs = []
+        if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message, timestamp: item.scheduled_at || new Date().toISOString() })
+        if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response, timestamp: item.scheduled_at || new Date().toISOString() })
+        return msgs
+      })
+      
+      setHistoryLimit(newLimit)
+      
+      setMessages(prev => {
+        const existingTexts = new Set(prev.map(m => m.text))
+        const toAdd = newHistoricMessages.filter(m => !existingTexts.has(m.text))
+        return [...toAdd, ...prev]
+      })
+    } catch {}
+    setLoadingHistory(false)
+  }
+
   const handleSend = async (text) => {
     const trimmed = String(text || '').trim()
     if (!trimmed || sending) return
@@ -144,7 +173,10 @@ export default function Chat() {
       setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, suggestion: reply.suggestion, timestamp: new Date().toISOString() }])
 
       if (reply.crisisDetected) setCrisisDetected(true)
-      if (reply.memoryExists) setMemoryExists(true)
+      if (reply.memoryExists) {
+        setMemoryExists(true)
+        if (reply.memoryPreview) setMemoryPreview(reply.memoryPreview)
+      }
     } catch (err) {
       console.error('[Chat] handleSend failed:', err?.message || err)
       setSendError(t('chat.errorReply'))
@@ -184,11 +216,29 @@ export default function Chat() {
         </div>
       </div>
 
+      {/* Memory Banner */}
+      {memoryExists && memoryPreview && (
+        <div className="mx-4 mb-3 border border-sage/30 bg-sage/5 rounded-xl px-4 py-2 flex flex-col transition-all cursor-pointer shadow-sm animate-fade-in-page" onClick={() => setMemoryExpanded(!memoryExpanded)}>
+          <div className="flex items-center gap-2">
+            <span className="text-sm">🌱</span>
+            <span className="text-sm font-bold text-sage flex-1">Soledad te recuerda</span>
+            <span className="text-xs text-sage/60">{memoryExpanded ? '▲' : '▼'}</span>
+          </div>
+          {memoryExpanded && (
+            <p className="mt-2 text-sm text-textdark/80 dark:text-dm-text/80 italic animate-fade-in-page">
+              "{memoryPreview}"
+            </p>
+          )}
+        </div>
+      )}
+
       <BresoChat
         messages={messages}
         onSend={handleSend}
         isSending={sending}
         error={sendError}
+        onLoadOlder={handleLoadOlder}
+        loadingHistory={loadingHistory}
       />
     </div>
   )

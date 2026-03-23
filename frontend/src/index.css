@@ -161,3 +161,14 @@ textarea::placeholder {
     background: #1A1F1A;
   }
 }
+
+@keyframes thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.thinking-text {
+  animation: thinking 1.5s ease infinite;
+  color: #7C9A7E;
+  font-size: 13px;
+  font-style: italic;
+}
