@@ -43,6 +43,26 @@ def _today_utc_range() -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
+def _get_days_since_last_checkin(user_id: str) -> int:
+    """Return how many days ago the user last had a check-in. 0 means today."""
+    try:
+        supabase = get_supabase()
+        last = (
+            supabase.table("check_ins")
+            .select("created_at")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if not last.data:
+            return 0
+        last_time = datetime.fromisoformat(last.data[0]["created_at"].replace("Z", "+00:00"))
+        return (datetime.now(timezone.utc) - last_time).days
+    except Exception:  # noqa: BLE001
+        return 0
+
+
 def _get_user_profile(user_id: str) -> dict:
     """Fetch the personalization profile for a user (returns empty dict if missing)."""
     try:
@@ -419,14 +439,24 @@ async def respond_to_checkin(
     # --- FEATURE 1: Load persistent memory ---
     memory = llm_client.get_user_memory(user_id)
 
+    # --- Proactive gap context ---
+    days_away = _get_days_since_last_checkin(user_id)
+    if days_away == 0:
+        gap_context = ""
+    elif days_away == 1:
+        gap_context = "El usuario no habló ayer. Podés mencionarlo naturalmente."
+    elif days_away <= 3:
+        gap_context = f"El usuario no habló hace {days_away} días. Mencionalo con calidez, sin reproches."
+    else:
+        gap_context = f"El usuario estuvo ausente {days_away} días. Recibirlo con calidez genuina, sin presión."
+
     # --- FEATURE 3: Keyword-based pattern detection ---
     pattern_result = pattern_analyzer.analyze_message(body.message, conversation_history, language)
     pattern_level = pattern_result.get("level", "green")
 
-    # Tone analysis (LLM-based, for baseline)
-    tone_result = llm_client.analyze_tone(body.message)
-    tone_score: float = tone_result.get("tone_score", 0.0)
-    contains_crisis: bool = tone_result.get("contains_crisis_keywords", False) or pattern_level == "red"
+    # Tone score — fast keyword-based calculation (no LLM call)
+    tone_score: float = pattern_analyzer.calculate_tone_score(body.message)
+    contains_crisis: bool = pattern_level == "red"
 
     # Profile update extraction
     current_profile = _get_user_profile(user_id)
@@ -442,6 +472,7 @@ async def respond_to_checkin(
             profile=current_profile,
             conversation_history=conversation_history,
             memory=memory,
+            gap_context=gap_context,
         )
     except Exception as exc:
         logger.error({"event": "checkins.respond.llm_error", "user_id": user_id, "error_type": type(exc).__name__, "error": str(exc)})

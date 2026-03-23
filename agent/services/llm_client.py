@@ -334,6 +334,7 @@ def generate_response(
     profile: dict,
     conversation_history: list[dict] | None = None,
     memory: str = "",
+    gap_context: str = "",
 ) -> str:
     """
     Generate Soledad's conversational reply to a user message.
@@ -348,6 +349,9 @@ def generate_response(
 
     if memory:
         base_system = f"Lo que recordás de esta persona:\n{memory}\n\n{base_system}"
+
+    if gap_context:
+        base_system = f"{base_system}\n\nContexto de presencia: {gap_context}"
 
     system_prompt: str = (
         f"{base_system}\n\n{mode_instructions}".strip()

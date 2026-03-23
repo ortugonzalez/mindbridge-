@@ -140,6 +140,33 @@ async def get_semantic_risk_score(message: str, history: list) -> float:
         return 0.5
 
 
+def calculate_tone_score(message: str) -> float:
+    """
+    Lightweight keyword-based tone score in [0.0, 1.0].
+    0.0 = fully negative, 1.0 = fully positive, 0.5 = neutral / unknown.
+    """
+    positive_words = {
+        "bien", "genial", "feliz", "contento", "alegre", "tranquilo",
+        "mejor", "excelente", "bueno", "positivo", "animado", "esperanza",
+        "good", "great", "happy", "fine", "better", "amazing", "calm",
+        "peaceful", "hopeful", "wonderful", "fantastic",
+    }
+    negative_words = {
+        "mal", "terrible", "horrible", "triste", "solo", "sola",
+        "cansado", "cansada", "agotado", "agotada", "ansioso", "ansiosa",
+        "preocupado", "preocupada", "peor", "desesperado", "desesperada",
+        "bad", "terrible", "sad", "alone", "tired", "anxious",
+        "angry", "stressed", "awful", "hopeless", "depressed", "worthless",
+    }
+    words = message.lower().split()
+    pos = sum(1 for w in words if w in positive_words)
+    neg = sum(1 for w in words if w in negative_words)
+    total = pos + neg
+    if total == 0:
+        return 0.5
+    return round(pos / total, 2)
+
+
 def analyze_message(message: str, history: list, language: str = "es") -> dict:
     """Module-level convenience wrapper for PatternAnalyzer.analyze_message."""
     return _analyzer.analyze_message(message, history, language)
