@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { addContact, registerUser } from '../services/api'
+import { addContact, registerUser, saveProfile } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 const USER_PHONE_KEY = 'breso_user_phone'
@@ -70,6 +70,12 @@ export default function Onboarding() {
       }
       const demoEmail = `${slugifyName(userName)}@breso.dev`
       await registerUser({ name: userName.trim(), email: demoEmail, password: 'breso-demo' })
+      await saveProfile({
+        display_name: userName.trim(),
+        phone_number: userPhone.trim() ? phoneCountry + userPhone.trim() : undefined,
+        plan: 'free_trial',
+        user_type: 'patient',
+      }).catch(() => {})
       if (!skipContact && contactName.trim()) {
         await addContact({ name: contactName.trim(), email: contactEmail.trim(), relation: contactRelation })
       }

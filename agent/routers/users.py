@@ -142,6 +142,31 @@ async def get_profile(current_user=Depends(get_current_user)) -> dict:
         raise HTTPException(status_code=500, detail="Failed to fetch profile") from exc
 
 
+@router.patch("/me/profile")
+async def update_profile(body: dict = Body(...), current_user=Depends(get_current_user)) -> dict:
+    """Update display_name, phone_number, plan, user_type, or language."""
+    allowed_fields = {"display_name", "phone_number", "plan", "user_type", "language"}
+    update_data = {k: v for k, v in body.items() if k in allowed_fields and v is not None}
+    if not update_data:
+        raise HTTPException(
+            status_code=422,
+            detail=f"No updatable fields provided. Allowed: {sorted(allowed_fields)}",
+        )
+    supabase = get_supabase()
+    try:
+        resp = (
+            supabase.table("users")
+            .update(update_data)
+            .eq("id", current_user.id)
+            .execute()
+        )
+        logger.info({"event": "users.update_profile.success", "user_id": current_user.id, "fields": list(update_data.keys())})
+        return resp.data[0] if resp.data else {}
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "users.update_profile.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to update profile") from exc
+
+
 @router.get("/me/baseline")
 async def get_baseline(current_user=Depends(get_current_user)) -> dict:
     """Return the latest behavioral baseline for the authenticated user."""

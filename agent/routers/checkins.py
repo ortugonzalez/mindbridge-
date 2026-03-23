@@ -610,10 +610,12 @@ async def respond_to_checkin(
         "baseline_updated": baseline_updated,
     })
 
+    memory_preview = memory[:60].strip() if memory else ""
     return {
         "response": breso_response,
         "is_crisis": pattern_level == "red",
         "has_memory": bool(memory),
+        "memory_preview": memory_preview,
     }
 
 

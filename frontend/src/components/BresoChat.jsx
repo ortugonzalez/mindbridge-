@@ -5,6 +5,19 @@ function formatTime(date) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+function getDateLabel(date) {
+  const today = new Date()
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+
+  if (date.toDateString() === today.toDateString()) return 'Hoy'
+  if (date.toDateString() === yesterday.toDateString()) return 'Ayer'
+  
+  const formatted = date.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'short' })
+  // Capitalize first letter
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1)
+}
+
 function TypingDots() {
   return (
     <div className="flex items-center gap-1 px-4 py-3">
@@ -31,10 +44,15 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
 
   const messagesWithTime = useMemo(() => {
     const total = messages.length
-    return messages.map((m, i) => ({
-      ...m,
-      time: formatTime(new Date(baseTime.current - (total - 1 - i) * 90000)),
-    }))
+    return messages.map((m, i) => {
+      const dateObj = new Date(m.timestamp || (baseTime.current - (total - 1 - i) * 60000))
+      return {
+        ...m,
+        dateObj,
+        time: formatTime(dateObj),
+        dateLabel: getDateLabel(dateObj)
+      }
+    })
   }, [messages])
 
   useEffect(() => {
@@ -58,29 +76,43 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
           {messagesWithTime.map((m, idx) => {
             const fromSoledad = m.from === 'breso'
             const isOpeningMsg = messagesWithTime.length <= 2 && fromSoledad
-            return (
-              <div
-                key={idx}
-                className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}
-              >
-                {fromSoledad && <SoledadAvatar large={isOpeningMsg} />}
+            
+            let showDivider = false
+            if (idx === 0) {
+              showDivider = true
+            } else {
+              const prev = messagesWithTime[idx - 1]
+              if (prev.dateLabel !== m.dateLabel) showDivider = true
+            }
 
-                <div className={['flex flex-col', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
-                  <div
-                    className={[
-                      'leading-relaxed shadow-soft animate-fade-up',
-                      isOpeningMsg ? 'px-5 py-4 text-base sm:text-lg font-medium' : 'px-4 py-2.5 text-sm',
-                      fromSoledad
-                        ? 'bg-[#7C9A7E] text-white rounded-[18px] rounded-bl-[4px]'
-                        : 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text border border-softgray dark:border-dm-border rounded-[18px] rounded-br-[4px]',
-                    ].join(' ')}
-                  >
-                    {m.textKey ? t(m.textKey) : m.text}
+            return (
+              <div key={idx} className="space-y-4">
+                {showDivider && (
+                  <div className="flex items-center justify-center my-6 gap-3">
+                    <div className="flex-1 h-px bg-softgray dark:bg-dm-border"></div>
+                    <span className="text-xs font-medium text-textdark/50 dark:text-dm-muted px-2 uppercase tracking-widest">{m.dateLabel}</span>
+                    <div className="flex-1 h-px bg-softgray dark:bg-dm-border"></div>
                   </div>
-                  <div
-                    className="text-[10px] text-textdark/40 dark:text-dm-muted/60 mt-1 px-1"
-                  >
-                    {m.time}
+                )}
+                
+                <div className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}>
+                  {fromSoledad && <SoledadAvatar large={isOpeningMsg} />}
+
+                  <div className={['flex flex-col', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
+                    <div
+                      className={[
+                        'leading-relaxed shadow-sm animate-fade-up',
+                        isOpeningMsg ? 'px-5 py-4 text-base sm:text-lg font-medium' : 'px-4 py-2.5 text-sm',
+                        fromSoledad
+                          ? 'bg-sage text-white rounded-[20px] rounded-bl-[4px]'
+                          : 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text border border-softgray dark:border-dm-border rounded-[20px] rounded-br-[4px]',
+                      ].join(' ')}
+                    >
+                      {m.textKey ? t(m.textKey) : m.text}
+                    </div>
+                    <div className="text-[10px] text-textdark/40 dark:text-dm-muted/60 mt-1 px-1">
+                      {m.time}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -89,7 +121,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
 
           {/* Typing indicator */}
           {isSending && (
-            <div className="flex items-end gap-2">
+            <div className="flex items-end gap-2 mt-4">
               <SoledadAvatar />
               <div className="rounded-2xl rounded-bl-sm bg-sage">
                 <TypingDots />

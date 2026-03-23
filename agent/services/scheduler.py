@@ -6,7 +6,7 @@ from datetime import datetime, timedelta, timezone
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from integrations.email_client import send_alert_email, send_checkin_reminder
+from integrations.email_client import send_alert_email, send_checkin_reminder, send_streak_celebration
 from integrations.supabase_client import get_supabase
 
 logger = logging.getLogger("breso.scheduler")
@@ -298,6 +298,66 @@ def check_48h_family_alert() -> None:
         logger.error({"event": "scheduler.48h_alert_failed", "error": str(exc)})
 
 
+STREAK_MILESTONES = [3, 7, 14, 30, 60, 100]
+
+
+def celebrate_streaks() -> None:
+    """
+    Runs daily at 10:00 UTC.
+    Finds users who hit a streak milestone today and sends a celebration email.
+    """
+    try:
+        supabase = get_supabase()
+
+        users_res = (
+            supabase.table("users")
+            .select("id, display_name, email")
+            .eq("user_type", "patient")
+            .execute()
+        )
+        if not users_res.data:
+            return
+
+        for user in users_res.data:
+            try:
+                if not user.get("email"):
+                    continue
+
+                streak_res = (
+                    supabase.table("user_streaks")
+                    .select("current_streak")
+                    .eq("user_id", user["id"])
+                    .limit(1)
+                    .execute()
+                )
+                if not streak_res.data:
+                    continue
+
+                streak = streak_res.data[0].get("current_streak", 0)
+                if streak not in STREAK_MILESTONES:
+                    continue
+
+                send_streak_celebration(
+                    to_email=user["email"],
+                    user_name=user.get("display_name") or "amigo/a",
+                    streak=streak,
+                )
+                logger.info({
+                    "event": "scheduler.streak_celebrated",
+                    "user_id": user["id"],
+                    "streak": streak,
+                })
+            except Exception as exc:  # noqa: BLE001
+                logger.error({
+                    "event": "scheduler.streak_celebration_user_error",
+                    "user_id": user["id"],
+                    "error": str(exc),
+                })
+
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "scheduler.celebrate_streaks_failed", "error": str(exc)})
+
+
 def start() -> None:
     """Start the scheduler. Called from main.py lifespan."""
     scheduler.add_job(
@@ -320,6 +380,14 @@ def start() -> None:
         "interval",
         hours=1,
         id="check_48h_family_alert",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        celebrate_streaks,
+        "cron",
+        hour=10,
+        minute=0,
+        id="celebrate_streaks",
         replace_existing=True,
     )
     scheduler.start()

@@ -149,6 +149,35 @@ def get_user_memory(user_id: str) -> str:
         return ""
 
 
+def analyze_writing_style(messages: list[dict]) -> str:
+    """
+    Analyze the writing style of a user from their messages.
+    Requires at least 3 user messages. Returns a short style description or ''.
+    """
+    user_texts = [m.get("content", "") for m in messages if m.get("role") == "user" and m.get("content")]
+    if len(user_texts) < 3:
+        return ""
+    try:
+        sample = "\n".join(user_texts[-6:])
+        client = _get_client()
+        response = client.messages.create(
+            model=ANTHROPIC_MODEL,
+            max_tokens=80,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "Describe en máximo 15 palabras el estilo de escritura de esta persona "
+                    "(tono, longitud, vocabulario, idioma). Solo la descripción, sin intro:\n\n"
+                    + sample
+                ),
+            }],
+        )
+        return response.content[0].text.strip()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "llm.writing_style_failed", "error": str(exc)})
+        return ""
+
+
 def update_user_memory(user_id: str, conversation: list[dict]) -> None:
     """
     Extract key insights from the recent conversation and upsert to user_memory.
@@ -181,6 +210,11 @@ def update_user_memory(user_id: str, conversation: list[dict]) -> None:
         new_memory = response.content[0].text.strip()
         if not new_memory:
             return
+
+        # Append writing style if detectable
+        style = analyze_writing_style(conversation)
+        if style:
+            new_memory = f"{new_memory}\nEstilo de escritura: {style}"
 
         supabase = get_supabase()
         existing = supabase.table("user_memory").select("id").eq("user_id", user_id).execute()

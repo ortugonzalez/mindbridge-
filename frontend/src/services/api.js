@@ -411,6 +411,19 @@ export async function getVapidPublicKey() {
   )
 }
 
+export async function saveProfile({ display_name, phone_number, plan, user_type, language }) {
+  const payload = {}
+  if (display_name) payload.display_name = display_name
+  if (phone_number) payload.phone_number = phone_number
+  if (plan) payload.plan = plan
+  if (user_type) payload.user_type = user_type
+  if (language) payload.language = language
+  return requestWithMock(
+    () => axiosClient.patch('/users/me/profile', payload).then((res) => res.data),
+    () => ({ ok: true, fromMock: true })
+  )
+}
+
 export async function savePushSubscription(subscription) {
   return requestWithMock(
     () => axiosClient.post('/users/me/push-subscription', { subscription }).then((res) => res.data),

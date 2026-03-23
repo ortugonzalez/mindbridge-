@@ -9,9 +9,6 @@ export default function Settings() {
   const { theme, toggleTheme } = useTheme()
   const [lang, setLang] = useState(i18n.language || 'es')
 
-  const [emailNotifs, setEmailNotifs] = useState(true)
-  const [alertFreq, setAlertFreq] = useState('immediate') // 'immediate' | 'daily'
-
   // FIX 10: daily reminder state
   const [reminderEnabled, setReminderEnabled] = useState(() => {
     try {
@@ -269,35 +266,7 @@ export default function Settings() {
           </div>
         </div>
 
-        {/* Notifications */}
-        <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-5">
-          {/* Email Notifs */}
-          <div className="flex items-center justify-between">
-            <p className="font-medium text-textdark dark:text-dm-text">{t('settings.notifications_email')}</p>
-            <button
-              type="button"
-              onClick={() => setEmailNotifs(!emailNotifs)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${emailNotifs ? 'bg-sage' : 'bg-softgray dark:bg-dm-border'}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${emailNotifs ? 'translate-x-6' : 'translate-x-1'}`} />
-            </button>
-          </div>
 
-          <hr className="border-softgray dark:border-dm-border" />
-
-          {/* Alert Frequency */}
-          <div className="flex items-center justify-between">
-            <p className="font-medium text-textdark dark:text-dm-text">{t('settings.notifications_frequency')}</p>
-            <select
-              value={alertFreq}
-              onChange={(e) => setAlertFreq(e.target.value)}
-              className="bg-transparent text-sm font-medium text-textdark/80 dark:text-dm-text/80 outline-none cursor-pointer"
-            >
-              <option value="immediate">{t('settings.freq_immediate')}</option>
-              <option value="daily">{t('settings.freq_daily')}</option>
-            </select>
-          </div>
-        </div>
 
         {/* Danger Zone */}
         <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">

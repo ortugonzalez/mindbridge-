@@ -222,6 +222,62 @@ def send_checkin_reminder(to_email: str, user_name: str) -> None:
         logger.warning({"event": "email.reminder.failed", "error": str(exc), "to": to_email})
 
 
+def send_streak_celebration(to_email: str, user_name: str, streak: int, custom_message: str = "") -> None:
+    """Send a streak milestone celebration email."""
+    milestone_messages = {
+        3:  "Tres días seguidos. No es poco — es una decisión que repetiste tres veces.",
+        7:  "Una semana entera. Eso ya es un hábito.",
+        14: "Dos semanas. Soledad te conoce cada vez mejor.",
+        30: "Un mes. Muy pocas personas llegan hasta acá. Vos llegaste.",
+        60: "Dos meses de conversaciones. Eso es mucho coraje.",
+        100: "100 días. Eso es extraordinario.",
+    }
+    body = custom_message or milestone_messages.get(streak, f"{streak} días seguidos con Soledad.")
+    html_content = f"""
+    <div style="font-family: Inter, sans-serif;
+                max-width: 600px; margin: 0 auto;
+                padding: 40px 20px; text-align: center;">
+      <span style="font-size: 48px;">🔥</span>
+      <h1 style="color: #7C9A7E; font-weight: 400;
+                 font-size: 24px; margin: 16px 0 8px;">
+        {streak} días con Soledad
+      </h1>
+      <p style="color: #2D2D2D; font-size: 16px;
+                line-height: 1.7; margin: 0 0 24px;">
+        Hola {user_name},
+      </p>
+      <p style="color: #2D2D2D; font-size: 18px;
+                line-height: 1.7; margin: 0 0 32px;
+                font-style: italic;">
+        "{body}"
+      </p>
+      <div style="text-align: center;">
+        <a href="https://mindbridge-theta.vercel.app/chat"
+           style="background: #7C9A7E; color: white;
+                  padding: 16px 32px; border-radius: 8px;
+                  text-decoration: none; font-size: 16px;
+                  display: inline-block;">
+          Seguir con Soledad
+        </a>
+      </div>
+      <p style="color: #9CA3AF; font-size: 12px;
+                text-align: center; margin-top: 32px;">
+        — Soledad, por BRESO
+      </p>
+    </div>
+    """
+    try:
+        resend.Emails.send({
+            "from": "Soledad <soledad@breso.app>",
+            "to": [to_email],
+            "subject": f"🔥 {streak} días seguidos — {user_name}, esto es real",
+            "html": html_content,
+        })
+        logger.info({"event": "email.streak_celebration.sent", "to": to_email, "streak": streak})
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "email.streak_celebration.failed", "error": str(exc), "to": to_email})
+
+
 def send_welcome_email(to_email: str, user_name: str) -> None:
     """Send a welcome email from Soledad on first registration."""
     html_content = f"""
