@@ -39,6 +39,15 @@ BRESO es un agente de IA de bienestar emocional impulsado por **Soledad**, una a
 - **Emails:** Resend
 - **PWA:** Service Worker con push notifications
 
+## Agent Registry
+
+| | |
+|---|---|
+| **AgentScan** | https://agentscan.info |
+| **Contract** | `0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa` |
+| **Standard** | ERC-8004 |
+| **Network** | Celo Sepolia |
+
 ## Demo en vivo
 - **App:** https://mindbridge-theta.vercel.app
 - **API:** https://mindbridge-production-c766.up.railway.app/docs
