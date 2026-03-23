@@ -10,16 +10,16 @@ export default function Notifications() {
     {
       id: 1,
       type: 'alert',
-      message: 'Soledad envió un mensaje a tu contacto María.',
-      date: 'Hoy, 14:30',
+      message: t('notifications.mock_1_message', 'Soledad envió un mensaje a tu contacto María.'),
+      date: t('notifications.mock_1_date', 'Hoy, 14:30'),
       read: false,
       icon: '🔔'
     },
     {
       id: 2,
       type: 'system',
-      message: 'Tu reporte mensual ya está disponible.',
-      date: 'Ayer, 09:00',
+      message: t('notifications.mock_2_message', 'Tu reporte mensual ya está disponible.'),
+      date: t('notifications.mock_2_date', 'Ayer, 09:00'),
       read: true,
       icon: '📊'
     }

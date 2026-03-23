@@ -316,7 +316,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
             <div className="flex items-end gap-2 mt-4 animate-fade-in-page">
               <SoledadAvatar />
               <div className="rounded-[20px] rounded-bl-[4px] bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border px-4 py-2.5 shadow-sm">
-                <span className="thinking-text font-medium">Soledad está pensando...</span>
+                <span className="thinking-text font-medium">{t('chat.typing')}</span>
               </div>
             </div>
           )}
@@ -362,7 +362,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder="Escribí acá..."
+            placeholder={t('chat.placeholder')}
             className="min-h-[44px] max-h-32 flex-1 resize-none rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text placeholder-textdark/30 dark:placeholder-dm-muted/50 px-4 py-2.5 text-sm outline-none focus:border-sage transition"
             rows={1}
             disabled={isSending}

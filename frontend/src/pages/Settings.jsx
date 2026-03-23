@@ -235,7 +235,7 @@ export default function Settings() {
   }
 
   const handleDelete = () => {
-    const input = window.prompt('Para confirmar, escribí la palabra ELIMINAR:')
+    const input = window.prompt(t('settings.delete_confirm'))
     if (input === 'ELIMINAR') {
       alert('Account marked for deletion')
     }
@@ -288,9 +288,9 @@ export default function Settings() {
           {/* Daily reminder toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-textdark dark:text-dm-text">Recordatorio diario</p>
+              <p className="font-medium text-textdark dark:text-dm-text">{t('settings.reminder')}</p>
               <p className="text-xs text-textdark/60 dark:text-dm-muted mt-0.5">
-                Soledad te recordará a las {reminderTime}
+                {t('settings.reminder_text')} {reminderTime}
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -315,21 +315,21 @@ export default function Settings() {
         {/* Export Data */}
         <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">
           <div>
-            <p className="font-medium text-textdark dark:text-dm-text mb-3">Exportar historial</p>
+            <p className="font-medium text-textdark dark:text-dm-text mb-3">{t('settings.export_title')}</p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={handleExportPersonal}
                 className="flex-1 rounded-xl border-2 border-sage text-sage text-sm font-semibold py-2.5 hover:bg-sage hover:text-white transition-colors"
               >
-                Uso personal
+                {t('settings.export_personal')}
               </button>
               <button
                 type="button"
                 onClick={handleExportProfessional}
                 className="flex-1 rounded-xl border-2 border-textdark/20 dark:border-dm-border text-textdark/70 dark:text-dm-muted text-sm font-semibold py-2.5 hover:border-textdark/40 dark:hover:border-dm-muted transition-colors"
               >
-                Uso clínico
+                {t('settings.export_professional')}
               </button>
             </div>
             {exportMsg && <p className="text-xs text-sage font-medium mt-3">{t('settings.exportSuccess')}</p>}
@@ -343,7 +343,7 @@ export default function Settings() {
             onClick={handleDelete}
             className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
           >
-            Eliminar mi cuenta
+            {t('settings.delete_account')}
           </button>
         </div>
 

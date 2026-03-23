@@ -15,9 +15,9 @@ function urlBase64ToUint8Array(base64String) {
 
 function getGreetingKey() {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'dashboard.greeting_morning';
-  if (hour >= 12 && hour < 20) return 'dashboard.greeting_afternoon';
-  return 'dashboard.greeting_evening';
+  if (hour >= 5 && hour < 12) return 'home.greeting_morning';
+  if (hour >= 12 && hour < 20) return 'home.greeting_afternoon';
+  return 'home.greeting_evening';
 }
 
 function getTimeColor() {
@@ -71,9 +71,9 @@ export default function Home() {
   }, []);
 
   const renderStreakText = () => {
-    if (streak === 0) return t('home.streakStart');
-    if (streak === 1) return t('home.streakFirst');
-    return t('home.streakDays', { days: streak });
+    if (streak === 0) return t('home.start_streak');
+    if (streak === 1) return t('home.first_day');
+    return `${streak} ${t('home.streak_days')}`;
   }
 
   // Check if push banner should show
@@ -198,7 +198,7 @@ export default function Home() {
             onClick={() => navigate('/chat')}
             className="w-full bg-[#7C9A7E] text-white rounded-2xl py-4 px-4 font-bold shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg active:scale-95 text-lg"
           >
-            Hablar con Soledad
+            {t('home.cta')}
           </button>
         </div>
         <p className="text-center text-xs font-medium text-textdark/50 dark:text-dm-muted mt-4">
@@ -254,9 +254,9 @@ export default function Home() {
       {/* Footer Powered By Celo */}
       <div style={{ textAlign: 'center', padding: '16px', borderTop: '1px solid #E5E7EB', marginTop: '32px' }}>
         <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
-          Powered by Celo blockchain · ERC-8004 · x402
+          {t('home.powered_by')} · ERC-8004 · x402
         </p>
-        <a 
+        <a  
           href="https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa"
           target="_blank"
           rel="noreferrer"
