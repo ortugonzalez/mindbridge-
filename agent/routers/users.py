@@ -473,6 +473,75 @@ def _get_linked_patient(family_user_id: str) -> dict | None:
         return None
 
 
+@family_router.post("/generate-invite")
+async def generate_invite(current_user=Depends(get_current_user)) -> dict:
+    """Generate a new family invite token for the authenticated patient."""
+    import secrets
+    supabase = get_supabase()
+    user_id = str(current_user.id)
+
+    token = secrets.token_urlsafe(16)
+    invite_url = f"https://brenso-ai.vercel.app/accept-invite/{token}"
+
+    supabase.table("user_relationships").insert({
+        "patient_id": user_id,
+        "related_user_id": None,
+        "relationship_type": "family",
+        "status": "pending",
+        "invite_token": token,
+    }).execute()
+
+    logger.info({"event": "family.invite.generated", "user_id": user_id, "token": token})
+    return {
+        "token": token,
+        "invite_url": invite_url,
+        "message": "Compartí este link con tu familiar",
+    }
+
+
+@family_router.get("/my-invite")
+async def get_my_invite(current_user=Depends(get_current_user)) -> dict:
+    """Return the existing pending invite or create a new one."""
+    import secrets
+    supabase = get_supabase()
+    user_id = str(current_user.id)
+
+    # Look for existing pending invite
+    existing = (
+        supabase.table("user_relationships")
+        .select("invite_token")
+        .eq("patient_id", user_id)
+        .eq("status", "pending")
+        .limit(1)
+        .execute()
+    )
+    if existing.data:
+        token = existing.data[0]["invite_token"]
+        return {
+            "token": token,
+            "invite_url": f"https://brenso-ai.vercel.app/accept-invite/{token}",
+            "message": "Compartí este link con tu familiar",
+        }
+
+    # Create new invite
+    token = secrets.token_urlsafe(16)
+    invite_url = f"https://brenso-ai.vercel.app/accept-invite/{token}"
+    supabase.table("user_relationships").insert({
+        "patient_id": user_id,
+        "related_user_id": None,
+        "relationship_type": "family",
+        "status": "pending",
+        "invite_token": token,
+    }).execute()
+
+    logger.info({"event": "family.invite.created", "user_id": user_id})
+    return {
+        "token": token,
+        "invite_url": invite_url,
+        "message": "Compartí este link con tu familiar",
+    }
+
+
 @family_router.get("/patient-status")
 async def get_patient_status(current_user=Depends(get_current_user)) -> dict:
     """Return a privacy-safe status summary of the linked patient."""

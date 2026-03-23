@@ -108,30 +108,38 @@ export default function SignIn() {
     setLoading(true)
     setError('')
 
-    const { data, error } = await supabase.auth.signUp({
+    // First try signing in — account might already exist
+    const { data: existingData, error: existingError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password: password,
     })
-
-    if (error) {
-      setError(error.message)
-      setLoading(false)
+    if (!existingError && existingData.session) {
+      const token = existingData.session.access_token
+      if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+      navigate('/onboarding')
       return
     }
 
-    // User created — sign in immediately (email confirmation OFF)
+    // Create account
+    const { error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password,
+      options: { emailRedirectTo: window.location.origin },
+    })
+    if (error) { setError(error.message); setLoading(false); return }
+
+    // Immediately sign in after signup
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password: password,
     })
-
-    if (signInError) {
-      setError('Cuenta creada. Iniciá sesión con tu contraseña.')
-      setTab('password')
-    } else {
+    if (!signInError) {
       const token = signInData.session?.access_token
       if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
       navigate('/onboarding')
+    } else {
+      setError('Cuenta creada. Iniciá sesión.')
+      setTab('password')
     }
     setLoading(false)
   }
