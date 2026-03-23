@@ -1,4 +1,10 @@
 {
+  "headers": [
+    {
+      "source": "/manifest.json",
+      "headers": [{"key": "Cache-Control", "value": "public"}]
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]

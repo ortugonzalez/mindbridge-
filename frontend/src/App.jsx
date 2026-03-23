@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { ThemeProvider } from './contexts/ThemeContext'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 import { useSession } from './hooks/useSession'
 import AuthGuard from './components/AuthGuard'
 import LanguageToggle from './components/LanguageToggle'
