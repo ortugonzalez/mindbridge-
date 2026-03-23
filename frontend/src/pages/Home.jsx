@@ -187,14 +187,20 @@ export default function Home() {
       {/* Main Card */}
       <div className="bg-white dark:bg-[#3D4F3D] rounded-[24px] p-6 shadow-sm border border-softgray/50 dark:border-dm-border mx-2">
         <h2 className="text-xl font-bold text-center text-textdark dark:text-dm-text mb-6">
-          {t('home.greeting', { name: userName })}
+          {streak === 0 ? (
+            <>¡Bienvenido/a a BRESO, {userName}! 🌱<br/>Soledad está lista para escucharte.</>
+          ) : (
+            <>Hola de nuevo, {userName} 👋<br/>Llevas {streak} {streak === 1 ? 'día' : 'días'} con Soledad.</>
+          )}
         </h2>
-        <button
-          onClick={() => navigate('/chat')}
-          className="w-full bg-[#7C9A7E] text-white rounded-xl py-3.5 px-4 font-semibold shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg active:scale-95 text-[15px]"
-        >
-          {t('home.talkButton')}
-        </button>
+        <div className="animate-[pulse_3s_ease-in-out_infinite]">
+          <button
+            onClick={() => navigate('/chat')}
+            className="w-full bg-[#7C9A7E] text-white rounded-2xl py-4 px-4 font-bold shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg active:scale-95 text-lg"
+          >
+            Hablar con Soledad
+          </button>
+        </div>
         <p className="text-center text-xs font-medium text-textdark/50 dark:text-dm-muted mt-4">
           {getDailyMicrocopy()}
         </p>
@@ -243,6 +249,21 @@ export default function Home() {
             <span className="text-[13px] font-semibold text-textdark/80 dark:text-dm-text text-center leading-tight">{t('home.help')}</span>
           </button>
         </div>
+      </div>
+
+      {/* Footer Powered By Celo */}
+      <div style={{ textAlign: 'center', padding: '16px', borderTop: '1px solid #E5E7EB', marginTop: '32px' }}>
+        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+          Powered by Celo blockchain · ERC-8004 · x402
+        </p>
+        <a 
+          href="https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa"
+          target="_blank"
+          rel="noreferrer"
+          style={{ fontSize: 11, color: '#7C9A7E' }}
+        >
+          Ver contrato →
+        </a>
       </div>
     </div>
   );

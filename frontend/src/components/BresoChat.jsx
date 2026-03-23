@@ -152,14 +152,8 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
     } catch {}
   }
   
-  // Mood Selector hook logic
-  const todayStr = new Date().toDateString()
-  const [needsMood, setNeedsMood] = useState(
-    () => {
-      try { return localStorage.getItem('breso_last_checkin_date') !== todayStr } 
-      catch { return false }
-    }
-  )
+  // Mood Selector hook logic disabled for instant Demo loading 
+  const [needsMood, setNeedsMood] = useState(false)
 
   const [flashError, setFlashError] = useState(false)
   useEffect(() => {
@@ -368,7 +362,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={t('chat.inputPlaceholder')}
+            placeholder="Escribí acá..."
             className="min-h-[44px] max-h-32 flex-1 resize-none rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text placeholder-textdark/30 dark:placeholder-dm-muted/50 px-4 py-2.5 text-sm outline-none focus:border-sage transition"
             rows={1}
             disabled={isSending}
@@ -385,12 +379,12 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
             disabled={!canSend || isSending}
             aria-label={t('common.send')}
             className={[
-              'h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-all duration-300',
+              'h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-all duration-300 bg-sage text-white',
               flashError ? 'bg-red-500 text-white' :
-              isSending ? 'bg-sage text-white cursor-not-allowed' :
+              isSending ? 'cursor-not-allowed' :
               canSend
-                ? 'bg-sage text-white hover:opacity-90'
-                : 'bg-softgray dark:bg-dm-border text-[#9CA3AF] opacity-40',
+                ? 'hover:opacity-90 shadow-md'
+                : 'opacity-50',
             ].join(' ')}
           >
             {isSending ? <Spinner /> : (

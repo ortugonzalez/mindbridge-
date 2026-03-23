@@ -267,17 +267,17 @@ export default function Dashboard() {
       ) : null}
 
       {/* Powered by Celo */}
-      <div className="mt-8 rounded-xl bg-[#F0F7F0] dark:bg-sage/10 border border-sage/20 p-4 text-center">
-        <p className="text-xs text-textdark/50 dark:text-dm-muted mb-1">
-          {t('dashboard.celoNote')}
+      <div style={{ textAlign: 'center', padding: '16px', borderTop: '1px solid #E5E7EB', marginTop: '32px' }}>
+        <p style={{ fontSize: 11, color: '#9CA3AF', margin: 0 }}>
+          Powered by Celo blockchain · ERC-8004 · x402
         </p>
-        <a
+        <a 
           href="https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa"
           target="_blank"
           rel="noreferrer"
-          className="text-[11px] font-medium text-sage hover:underline"
+          style={{ fontSize: 11, color: '#7C9A7E' }}
         >
-          {t('dashboard.celoContract')}
+          Ver contrato →
         </a>
       </div>
     </div>

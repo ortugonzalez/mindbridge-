@@ -68,6 +68,15 @@ export default function SignIn() {
     else navigate('/chat', { replace: true })
   }
 
+  const translateError = (err) => {
+    const msg = err?.message?.toLowerCase() || ''
+    if (msg.includes('invalid login credentials')) return 'Contraseña incorrecta o cuenta no encontrada'
+    if (msg.includes('password')) return 'Contraseña incorrecta'
+    if (msg.includes('email')) return 'Revisá el email ingresado'
+    if (msg.includes('not found')) return 'No encontramos esa cuenta'
+    return 'Ocurrió un error. Intentalo de nuevo.'
+  }
+
   const handleSignIn = async (e) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
@@ -83,7 +92,7 @@ export default function SignIn() {
       if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
       afterLogin(data.user)
     } catch (err) {
-      setError(err?.message || t('errors.auth'))
+      setError(translateError(err))
     } finally {
       setLoading(false)
     }
@@ -104,7 +113,6 @@ export default function SignIn() {
         },
       })
       if (err) throw err
-      // If session is returned immediately (email confirmation disabled), log in
       if (data.session) {
         const token = data.session.access_token
         if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
@@ -113,12 +121,11 @@ export default function SignIn() {
         if (userTypeParam === 'family') navigate('/family-onboarding', { replace: true })
         else navigate('/onboarding', { replace: true })
       } else {
-        // Email confirmation required — show magic-style sent screen
         setMagicSent(true)
         startCountdown()
       }
     } catch (err) {
-      setError(err?.message || t('errors.auth'))
+      setError(translateError(err))
     } finally {
       setLoading(false)
     }
@@ -141,7 +148,7 @@ export default function SignIn() {
       setMagicSent(true)
       startCountdown()
     } catch (err) {
-      setError(err?.message || t('errors.auth'))
+      setError(translateError(err))
     } finally {
       setLoading(false)
     }
@@ -162,7 +169,7 @@ export default function SignIn() {
       if (err) throw err
       startCountdown()
     } catch (err) {
-      setError(err?.message || t('errors.auth'))
+      setError(translateError(err))
     } finally {
       setLoading(false)
     }
@@ -196,6 +203,30 @@ export default function SignIn() {
       </div>
 
       <div className="w-full rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-soft space-y-5">
+        
+        {/* ── Tabs ── */}
+        {!magicSent && (
+          <div className="flex w-full mb-2 border-b border-softgray dark:border-dm-border">
+            <button
+              onClick={() => { setTab('magic'); setError('') }}
+              className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'magic' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
+            >
+              Enlace mágico
+            </button>
+            <button
+              onClick={() => { setTab('password'); setError('') }}
+              className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'password' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
+            >
+              Contraseña
+            </button>
+            <button
+              onClick={() => { setTab('register'); setError('') }}
+              className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'register' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
+            >
+              Crear cuenta
+            </button>
+          </div>
+        )}
 
         {/* ── Magic link form ── */}
         {tab === 'magic' && !magicSent && (
@@ -213,33 +244,8 @@ export default function SignIn() {
             {error && <p className="text-sm text-red-500">{error}</p>}
             
             <button type="submit" disabled={loading || !email.trim()} className={btnCls}>
-              {loading ? t('common.loading') : 'Recibir enlace mágico'}
+              {loading ? t('common.loading') : 'Enviar enlace'}
             </button>
-
-            <div className="relative flex items-center gap-3 py-2">
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => { setTab('password'); setError('') }}
-                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
-              >
-                Ingresar con contraseña
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => { setTab('register'); setError('') }}
-                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
-              >
-                Crear cuenta con contraseña
-              </button>
-            </div>
           </form>
         )}
 
@@ -269,31 +275,6 @@ export default function SignIn() {
             <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
               {loading ? t('common.loading') : 'Iniciar sesión'}
             </button>
-
-            <div className="relative flex items-center gap-3 py-2">
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => { setTab('register'); setError('') }}
-                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
-              >
-                Crear cuenta con contraseña
-              </button>
-              <button
-                type="button"
-                disabled={loading}
-                onClick={() => { setTab('magic'); setError('') }}
-                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
-              >
-                Recibir enlace mágico
-              </button>
-            </div>
           </form>
         )}
 
@@ -332,21 +313,6 @@ export default function SignIn() {
 
             <button type="submit" disabled={loading || !email.trim() || !password.trim() || !confirmPassword.trim()} className={btnCls}>
               {loading ? t('common.loading') : 'Crear cuenta'}
-            </button>
-
-            <div className="relative flex items-center gap-3 py-2">
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-            </div>
-
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => { setTab('password'); setError('') }}
-              className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-2"
-            >
-              Ya tengo cuenta
             </button>
           </form>
         )}

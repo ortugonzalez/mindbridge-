@@ -33,7 +33,8 @@ export default function Chat() {
         }
       }
     } catch {}
-    return []
+    historyLoaded.current = true
+    return [] // Handled in useEffect to use 't'
   })
   const [isReturning] = useState(() => {
     try {
@@ -85,6 +86,8 @@ export default function Chat() {
   // Load conversation history on mount
   useEffect(() => {
     let mounted = true
+    if (messages.length === 0) setMessages(buildOpening())
+    
       ; (async () => {
         try {
           const history = await getConversationHistory(20)
@@ -105,11 +108,6 @@ export default function Chat() {
             return
           }
         } catch { }
-        // Fallback to localStorage if backend returned nothing
-        if (mounted && !historyLoaded.current) {
-          // Already handled synchronously on mount
-        }
-        // No history anywhere → Opening message is triggered handled via mood selector logic
       })()
     return () => { mounted = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -239,12 +237,12 @@ export default function Chat() {
           <div className="text-base font-semibold text-textdark dark:text-dm-text flex items-center gap-2">
             Soledad
             {memoryExists && (
-              <span className="text-[10px] font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full border border-sage/20">{t('chat.memoryBadge')}</span>
+              <span className="text-[10px] font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full border border-sage/20">Te recuerda 🌱</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
-            <span className="text-xs text-textdark/55 dark:text-dm-muted">{t('chat.online')}</span>
+            <span className="text-xs text-textdark/55 dark:text-dm-muted">en línea</span>
           </div>
         </div>
       </div>
