@@ -48,15 +48,15 @@ export default function Landing() {
         />
 
         <h1 className="text-[24px] font-[400] text-[#2D2D2D] dark:text-dm-text mb-6">
-          Tu acompañante de bienestar emocional
+          {t('landing.tagline')}
         </h1>
 
         <p className="text-[16px] italic text-[#6B7280] dark:text-[#9CAF9C] max-w-[320px] mx-auto mb-8 font-serif leading-relaxed">
-          "A todos nos hubiese gustado que nos ayudaran a entender lo que pasaba a nuestro alrededor."
+          "{t('landing.origin_quote')}"
         </p>
 
         <p className="text-[15px] text-[#4B5563] dark:text-[#E8EDE8]/80 max-w-sm mx-auto leading-[1.7] px-4 font-medium">
-          BRESO es un espacio seguro donde Soledad, tu acompañante de IA, te escucha todos los días, detecta cómo estás y coordina apoyo cuando lo necesitás.
+          {t('landing.description')}
         </p>
       </div>
 
@@ -84,8 +84,8 @@ export default function Landing() {
                 }`}
               >
                 <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🌱</div>
-                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Para mí</h3>
-                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Hablá con Soledad cada día</p>
+                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">{t('landing.card_patient_title')}</h3>
+                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">{t('landing.card_patient_subtitle')}</p>
               </button>
 
               {/* Card Right: Para alguien que quiero */}
@@ -98,8 +98,8 @@ export default function Landing() {
                 }`}
               >
                 <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🤝</div>
-                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Para alguien que quiero</h3>
-                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Acompañá el bienestar de alguien cercano</p>
+                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">{t('landing.card_family_title')}</h3>
+                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">{t('landing.card_family_subtitle')}</p>
               </button>
             </div>
           </>
@@ -142,8 +142,18 @@ export default function Landing() {
               !selected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#6b866c] hover:scale-[1.02] active:scale-95'
             }`}
           >
-            Continuar
+            {t('landing.continue')}
           </button>
+          <p className="text-center text-xs text-textdark/50 dark:text-dm-muted mt-4">
+            {t('landing.have_account')}{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/signin')}
+              className="text-sage font-semibold hover:underline"
+            >
+              {t('landing.signin')}
+            </button>
+          </p>
         </div>
       </div>
     </div>

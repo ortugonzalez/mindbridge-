@@ -15,9 +15,10 @@ export default function SignIn() {
   const userTypeParam = searchParams.get('type') || 'patient'
   const { theme } = useTheme()
 
-  const [tab, setTab] = useState('magic') // 'magic' | 'password'
+  const [tab, setTab] = useState('magic') // 'magic' | 'password' | 'register'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [magicSent, setMagicSent] = useState(false)
@@ -91,6 +92,7 @@ export default function SignIn() {
   const handleRegister = async (e) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
+    if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
     setLoading(true)
     setError('')
     try {
@@ -98,7 +100,7 @@ export default function SignIn() {
         email: email.trim(),
         password,
         options: {
-          emailRedirectTo: window.location.origin + '/landing',
+          emailRedirectTo: window.location.origin,
         },
       })
       if (err) throw err
@@ -131,7 +133,8 @@ export default function SignIn() {
       const { error: err } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: window.location.origin + '/landing',
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       })
       if (err) throw err
@@ -152,7 +155,8 @@ export default function SignIn() {
       const { error: err } = await supabase.auth.signInWithOtp({
         email: email.trim(),
         options: {
-          emailRedirectTo: window.location.origin + '/landing',
+          shouldCreateUser: true,
+          emailRedirectTo: `${window.location.origin}/`,
         },
       })
       if (err) throw err
@@ -218,18 +222,28 @@ export default function SignIn() {
               <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
             </div>
 
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => { setTab('password'); setError('') }}
-              className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-2"
-            >
-              Ingresar con contraseña
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => { setTab('password'); setError('') }}
+                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
+              >
+                Ingresar con contraseña
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => { setTab('register'); setError('') }}
+                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
+              >
+                Crear cuenta con contraseña
+              </button>
+            </div>
           </form>
         )}
 
-        {/* ── Password form ── */}
+        {/* ── Password / sign-in form ── */}
         {tab === 'password' && !magicSent && (
           <form onSubmit={handleSignIn} className="space-y-4">
             <input
@@ -251,9 +265,73 @@ export default function SignIn() {
               disabled={loading}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
-            
+
             <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
-              {loading ? t('common.loading') : 'Continuar'}
+              {loading ? t('common.loading') : 'Iniciar sesión'}
+            </button>
+
+            <div className="relative flex items-center gap-3 py-2">
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => { setTab('register'); setError('') }}
+                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
+              >
+                Crear cuenta con contraseña
+              </button>
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => { setTab('magic'); setError('') }}
+                className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-1"
+              >
+                Recibir enlace mágico
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Register form ── */}
+        {tab === 'register' && !magicSent && (
+          <form onSubmit={handleRegister} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              className={inputCls}
+              autoComplete="email"
+              autoFocus
+              disabled={loading}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              className={inputCls}
+              autoComplete="new-password"
+              disabled={loading}
+            />
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirmar contraseña"
+              className={inputCls}
+              autoComplete="new-password"
+              disabled={loading}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <button type="submit" disabled={loading || !email.trim() || !password.trim() || !confirmPassword.trim()} className={btnCls}>
+              {loading ? t('common.loading') : 'Crear cuenta'}
             </button>
 
             <div className="relative flex items-center gap-3 py-2">
@@ -265,10 +343,10 @@ export default function SignIn() {
             <button
               type="button"
               disabled={loading}
-              onClick={() => { setTab('magic'); setError('') }}
+              onClick={() => { setTab('password'); setError('') }}
               className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-2"
             >
-              Recibir enlace mágico
+              Ya tengo cuenta
             </button>
           </form>
         )}

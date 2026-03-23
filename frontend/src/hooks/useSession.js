@@ -36,6 +36,33 @@ export function useSession() {
   const [session, setSession] = useState(undefined) // undefined = loading
   const [loading, setLoading] = useState(true)
 
+  // PKCE: exchange ?code= param for session on redirect from magic link
+  useEffect(() => {
+    const handlePKCECallback = async () => {
+      const params = new URLSearchParams(window.location.search)
+      const code = params.get('code')
+      if (!code) return
+      const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href)
+      if (error) return
+      if (data.session) {
+        const token = data.session.access_token
+        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        window.history.replaceState({}, '', '/')
+        const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
+        const name = getStoredName()
+        if (!name) {
+          navigate(userType === 'family' ? '/family-onboarding' : '/onboarding', { replace: true })
+        } else if (userType === 'family') {
+          navigate('/family-dashboard', { replace: true })
+        } else {
+          navigate('/chat', { replace: true })
+        }
+      }
+    }
+    handlePKCECallback()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     // FIX 1: On mount, if already logged in and on auth page → redirect
     supabase.auth.getSession().then(({ data: { session: s } }) => {
