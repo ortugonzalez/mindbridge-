@@ -4,7 +4,7 @@ import { getFamilyPatientStatus, getFamilyWeeklyReport, notifyPatient } from '..
 const TIPS = {
   green: [
     'Seguí estando presente sin presionar',
-    'Un mensaje simple como "Pensé en vos hoy" ayuda',
+    "Un mensaje simple como 'Pensé en vos hoy' ayuda",
     'Celebrá con ella los días que hace check-in',
   ],
   yellow: [
@@ -44,13 +44,9 @@ const ALERT_UI = {
 }
 
 export default function FamilyDashboard() {
-  const [modalOpen, setModalOpen] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
-  const [customMsg, setCustomMsg] = useState('')
   const [status, setStatus] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [sendingMsg, setSendingMsg] = useState(false)
-  const [msgSent, setMsgSent] = useState(false)
   const [exportLoading, setExportLoading] = useState(false)
 
   useEffect(() => {
@@ -59,25 +55,6 @@ export default function FamilyDashboard() {
       .catch(() => setStatus(null))
       .finally(() => setLoading(false))
   }, [])
-
-  const presetMessages = [
-    'Estoy acá si necesitás',
-    'Pensé en vos hoy',
-    '¿Querés hablar?',
-  ]
-
-  const handleSendMessage = async () => {
-    if (!customMsg.trim()) return
-    setSendingMsg(true)
-    try {
-      await notifyPatient({ message: customMsg.trim() })
-      setMsgSent(true)
-      setTimeout(() => setMsgSent(false), 3000)
-    } catch { /* silent */ }
-    setModalOpen(false)
-    setCustomMsg('')
-    setSendingMsg(false)
-  }
 
   const handleExport = async () => {
     setExportLoading(true)
@@ -204,17 +181,16 @@ export default function FamilyDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-3 gap-2">
-        {[
-          { label: 'Check-ins', value: `${status.checkins_this_week ?? '—'}/7` },
-          { label: 'Racha', value: `${status.streak ?? '—'} días` },
-          { label: 'Último', value: status.last_checkin || '—' },
-        ].map(({ label, value }) => (
-          <div key={label} className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-3 rounded-xl flex flex-col items-center text-center justify-center shadow-sm">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-textdark/50 dark:text-dm-muted mb-1">{label}</p>
-            <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{value}</p>
-          </div>
-        ))}
+      <div className="grid grid-cols-1 gap-2">
+        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.checkins_this_week ?? '0'}/7 check-ins esta semana</p>
+        </div>
+        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{status.streak ?? '0'} días seguidos</p>
+        </div>
+        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight w-full truncate">Último: {status.last_checkin || 'Sin datos'}</p>
+        </div>
       </div>
 
       {/* Recommended Actions */}
@@ -237,12 +213,6 @@ export default function FamilyDashboard() {
       {/* Action Buttons */}
       <div className="flex flex-col gap-3 pt-2">
         <button
-          onClick={() => setModalOpen(true)}
-          className="w-full bg-sage text-white font-bold py-3.5 rounded-xl shadow-md hover:bg-sage/90 active:scale-[0.98] transition flex justify-center items-center gap-2"
-        >
-          <span>💬</span> Enviar mensaje de apoyo
-        </button>
-        <button
           onClick={handleExport}
           disabled={exportLoading}
           className="w-full bg-white dark:bg-dm-surface border-2 border-sage text-sage font-bold py-3.5 rounded-xl hover:bg-sage/5 transition active:scale-[0.98] flex justify-center items-center gap-2 disabled:opacity-60"
@@ -250,46 +220,6 @@ export default function FamilyDashboard() {
           <span>📄</span> {exportLoading ? 'Generando...' : 'Exportar resumen semanal (PDF)'}
         </button>
       </div>
-
-      {/* Message Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-dm-elevated w-full max-w-sm rounded-[20px] p-6 shadow-xl flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg text-textdark dark:text-dm-text">Enviar apoyo</h3>
-              <button onClick={() => setModalOpen(false)} className="text-textdark/50 dark:text-dm-muted hover:text-textdark transition">✕</button>
-            </div>
-            <p className="text-sm font-medium text-textdark/70 dark:text-dm-muted mb-3">Opciones rápidas:</p>
-            <div className="flex flex-col gap-2 mb-4">
-              {presetMessages.map((msg, i) => (
-                <button
-                  key={i}
-                  className="bg-softgray/30 dark:bg-dm-surface text-textdark dark:text-dm-text p-3 rounded-lg text-sm text-left hover:bg-sage hover:text-white transition font-medium"
-                  onClick={() => setCustomMsg(msg)}
-                >
-                  "{msg}"
-                </button>
-              ))}
-            </div>
-            <p className="text-sm font-medium text-textdark/70 dark:text-dm-muted mb-2">Mensaje personalizado:</p>
-            <textarea
-              value={customMsg}
-              onChange={(e) => setCustomMsg(e.target.value)}
-              placeholder="Escribe algo lindo..."
-              className="w-full bg-softgray/10 dark:bg-dm-surface border border-softgray dark:border-dm-border rounded-xl p-3 text-sm text-textdark dark:text-dm-text focus:outline-none focus:border-sage resize-none"
-              rows={3}
-            />
-            {msgSent && <p className="mt-3 text-xs text-sage font-medium text-center">Mensaje enviado</p>}
-            <button
-              onClick={handleSendMessage}
-              disabled={!customMsg.trim() || sendingMsg}
-              className="mt-5 w-full bg-sage text-white font-bold py-3 rounded-xl hover:bg-sage/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {sendingMsg ? 'Enviando...' : 'Enviar'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Crisis Footer */}
       <div className="fixed bottom-16 sm:bottom-0 sm:pb-4 p-3 left-0 right-0 max-w-md mx-auto z-30 pointer-events-none">
