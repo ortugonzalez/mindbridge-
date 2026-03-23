@@ -192,7 +192,7 @@ export default function Profile() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.name || '—'}</span>
-                  {showSavedName && <span className="text-xs font-bold text-sage animate-fade-in">✅ Guardado</span>}
+                  {showSavedName && <span className="text-xs font-bold text-sage animate-fade-in">{t('profile.saved')}</span>}
                 </div>
                 <button type="button" onClick={() => setEditingName(true)} className="p-1.5 rounded-lg text-textdark/50 hover:text-sage hover:bg-sage/10 transition-colors">
                   ✏️
@@ -248,7 +248,7 @@ export default function Profile() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.phone || '—'}</span>
-                  {showSavedPhone && <span className="text-xs font-bold text-sage animate-fade-in">✅ Guardado</span>}
+                  {showSavedPhone && <span className="text-xs font-bold text-sage animate-fade-in">{t('profile.saved')}</span>}
                 </div>
                 <button type="button" onClick={() => setEditingPhone(true)} className="p-1.5 rounded-lg text-textdark/50 hover:text-sage hover:bg-sage/10 transition-colors">
                   ✏️
@@ -261,7 +261,7 @@ export default function Profile() {
 
       <div className="rounded-2xl border-2 border-sage overflow-hidden shadow-soft">
         <div className="bg-sage px-5 py-4">
-          <h3 className="text-lg font-bold text-white mb-1">Tu plan actual</h3>
+          <h3 className="text-lg font-bold text-white mb-1">{t('profile.subscription')}</h3>
           <p className="text-white/90 text-sm capitalize">{profile.plan === 'free_trial' || profile.plan === 'free' ? 'Prueba gratuita' : profile.plan}</p>
         </div>
         <div className="bg-white dark:bg-dm-surface p-5 space-y-4">
@@ -304,7 +304,7 @@ export default function Profile() {
           <div className="flex items-center gap-4">
             <span className="text-3xl">✅</span>
             <div>
-              <p className="text-base font-bold text-textdark dark:text-dm-text">Identidad verificada</p>
+              <p className="text-base font-bold text-textdark dark:text-dm-text">{t('profile.verification_done')}</p>
               <p className="text-sm text-textdark/70 dark:text-dm-muted">Verificado con Self Protocol</p>
             </div>
           </div>
@@ -312,7 +312,7 @@ export default function Profile() {
           <div>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">🔐</span>
-              <p className="text-base font-bold text-textdark dark:text-dm-text">Verificá tu identidad</p>
+              <p className="text-base font-bold text-textdark dark:text-dm-text">{t('profile.verify_identity')}</p>
             </div>
             <p className="text-sm text-textdark/70 dark:text-dm-muted leading-relaxed mb-4">
               Usamos Self Protocol para verificar que sos una persona real, sin exponer tus datos.
@@ -321,7 +321,7 @@ export default function Profile() {
               onClick={() => navigate('/verify-identity')}
               className="w-full py-2.5 rounded-xl bg-sage text-white font-bold hover:bg-sage/90 transition-colors shadow-sm"
             >
-              Verificar con Self Protocol
+              {t('profile.verification_pending')}
             </button>
           </div>
         )}
