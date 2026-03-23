@@ -126,7 +126,7 @@ function PaymentCard() {
   )
 }
 
-export default function BresoChat({ messages = [], onSend, onMoodSelected, isSending = false, error, onLoadOlder, loadingHistory }) {
+export default function BresoChat({ messages = [], onSend, onMoodSelected, isSending = false, error, onLoadOlder, loadingHistory, isDemo }) {
   const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -362,10 +362,10 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            placeholder={t('chat.placeholder')}
+            placeholder={isDemo ? 'Live demo' : t('chat.placeholder')}
             className="min-h-[44px] max-h-32 flex-1 resize-none rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text placeholder-textdark/30 dark:placeholder-dm-muted/50 px-4 py-2.5 text-sm outline-none focus:border-sage transition"
             rows={1}
-            disabled={isSending}
+            disabled={isSending || isDemo}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault()

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { getFamilyPatientStatus, getFamilyWeeklyReport, notifyPatient } from '../services/api'
 
 const ALERT_UI = {
@@ -16,12 +17,27 @@ export default function FamilyDashboard() {
   const [loading, setLoading] = useState(true)
   const [exportLoading, setExportLoading] = useState(false)
 
+  const [searchParams] = useSearchParams()
+  const isDemo = searchParams.get('demo') === 'true'
+
   useEffect(() => {
+    if (isDemo) {
+      const DEMO_FAMILY_DATA = {
+        linked: true, patient_name: "María", alert_level: "yellow",
+        streak: 4, last_checkin: "hace 3 horas", checkins_this_week: 4,
+        total_checkins: 23, weekly_summary: "María had some ups and downs this week. A message of support can make a difference.",
+        needs_attention: true
+      }
+      setStatus(DEMO_FAMILY_DATA)
+      setLoading(false)
+      return
+    }
+
     getFamilyPatientStatus()
       .then(res => setStatus(res.data || res))
       .catch(() => setStatus(null))
       .finally(() => setLoading(false))
-  }, [])
+  }, [isDemo])
 
   const handleExport = async () => {
     setExportLoading(true)
@@ -104,9 +120,13 @@ export default function FamilyDashboard() {
   // ── Linked ───────────────────────────────────────────────
   const level = status.alert_level || 'green'
   const alertUI = ALERT_UI[level] || ALERT_UI.green
-  const tips = t(`family_dashboard.tips.${level}`, { returnObjects: true }) || []
+  const tips = isDemo ? [
+    "Send a simple message without expecting an immediate reply",
+    "Ask how her day was, without pressure",
+    "Suggest doing something simple together"
+  ] : (t(`family_dashboard.tips.${level}`, { returnObjects: true }) || [])
   const patientName = status.patient_name || 'tu ser querido'
-  const summary = status.weekly_summary || status.summary || 'Sin datos esta semana.'
+  const summary = isDemo ? status.weekly_summary : (status.weekly_summary || status.summary || 'Sin datos esta semana.')
 
   return (
     <div className="animate-fade-in-page space-y-6 pb-28 max-w-lg mx-auto">
@@ -129,9 +149,9 @@ export default function FamilyDashboard() {
         <div className="flex flex-col items-center text-center gap-2">
           <div className="text-4xl mb-1">{alertUI.icon}</div>
           <h2 className={`text-xl font-bold tracking-tight ${alertUI.text}`}>
-            {t(`family_dashboard.alertTitles.${level}`)}
+            {isDemo ? "May need attention" : t(`family_dashboard.alertTitles.${level}`)}
           </h2>
-          <p className={`text-sm font-medium ${alertUI.text} opacity-80`}>
+          <p className={`text-xs font-medium ${alertUI.text} opacity-80 whitespace-pre-wrap`}>
             {summary}
           </p>
           {level === 'red' && (
@@ -146,10 +166,20 @@ export default function FamilyDashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 gap-2">
-        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center shadow-sm">
-          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{t('family_dashboard.checkinsThisWeek', { count: status.checkins_this_week ?? '0' })}</p>
+      <div className={`grid ${isDemo ? 'grid-cols-3' : 'grid-cols-1'} gap-2`}>
+        <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center justify-center shadow-sm text-center">
+          <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">{isDemo ? '4/7 check-ins this week' : t('family_dashboard.checkinsThisWeek', { count: status.checkins_this_week ?? '0' })}</p>
         </div>
+        {isDemo && (
+          <>
+          <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center justify-center shadow-sm text-center">
+            <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">4 day streak</p>
+          </div>
+          <div className="bg-white dark:bg-dm-surface border border-softgray dark:border-dm-border p-4 rounded-xl flex items-center justify-center shadow-sm text-center">
+            <p className="text-sm font-bold text-textdark dark:text-dm-text leading-tight">3 hours ago</p>
+          </div>
+          </>
+        )}
       </div>
 
       {/* Recommended Actions */}

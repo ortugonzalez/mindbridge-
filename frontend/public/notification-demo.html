@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BRENSO Notification Demo</title>
+    <title>BRENSO Demo Notifications</title>
     <style>
         body {
             margin: 0;
@@ -21,26 +21,28 @@
 
         .notification-container {
             width: 100%;
+            position: absolute;
+            top: 60px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding-top: 50px;
             gap: 12px;
             z-index: 10;
         }
 
         .notification {
-            width: 340px;
-            background: rgba(30, 30, 30, 0.95);
+            width: 350px;
+            background: rgba(28, 28, 30, 0.95);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border-radius: 16px;
             padding: 14px 16px;
             box-sizing: border-box;
             opacity: 0;
-            transform: translateY(-40px) scale(0.95);
-            animation: sprintIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+            transform: translateY(-120px);
+            animation: slideInSpring 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+                       fadeSlightly 2s ease forwards 13s;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
         }
 
         .header {
@@ -55,13 +57,20 @@
             align-items: center;
             gap: 6px;
             font-size: 13px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+            color: rgba(255, 255, 255, 1);
             letter-spacing: 0.3px;
         }
 
-        .icon {
-            font-size: 14px;
+        .icon-wrapper {
+            background-color: #7C9A7E;
+            width: 18px;
+            height: 18px;
+            border-radius: 4px; /* classic iOS icon style slightly rounded */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
         }
 
         .time {
@@ -74,17 +83,18 @@
             font-size: 15px;
             font-weight: 500;
             line-height: 1.35;
-            color: rgba(255, 255, 255, 1);
+            color: rgba(255, 255, 255, 0.95);
         }
 
-        .notif-1 { animation-delay: 1s; }
-        .notif-2 { animation-delay: 3s; }
-        .notif-3 { animation-delay: 5s; }
+        .notif-1 { animation-delay: 1.5s, 13s; }
+        .notif-2 { animation-delay: 4s, 13s; }
+        .notif-3 { animation-delay: 7s, 13s; }
+        .notif-4 { animation-delay: 10s, 13s; }
 
-        @keyframes sprintIn {
+        @keyframes slideInSpring {
             0% {
                 opacity: 0;
-                transform: translateY(-40px) scale(0.95);
+                transform: translateY(-120px) scale(0.9);
             }
             100% {
                 opacity: 1;
@@ -92,23 +102,46 @@
             }
         }
 
-        .footer-logo {
+        @keyframes fadeSlightly {
+            0% { opacity: 1; filter: blur(0); }
+            100% { opacity: 0.15; filter: blur(5px); }
+        }
+
+        .closing-text-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             width: 100%;
             text-align: center;
-            font-size: 16px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 1);
-            opacity: 0;
-            animation: fadeInText 2.5s ease-in-out forwards;
-            animation-delay: 8s;
-            letter-spacing: 0.5px;
+            z-index: 20;
         }
 
-        @keyframes fadeInText {
+        .closing-text {
+            color: #ffffff;
+            opacity: 0;
+        }
+
+        .ct-1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; animation: fadeIn 2s ease forwards 13s; }
+        .ct-2 { font-size: 16px; font-weight: 500; color: rgba(255,255,255,0.7); margin-bottom: 24px; animation: fadeIn 2s ease forwards 13.5s; }
+        .ct-3 { font-size: 14px; font-weight: 500; color: #7C9A7E; animation: fadeIn 2s ease forwards 14s; }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .black-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #000;
+            opacity: 0;
+            z-index: 100;
+            pointer-events: none;
+            animation: fadeToBlack 1s ease forwards 15s;
+        }
+
+        @keyframes fadeToBlack {
             0% { opacity: 0; }
             100% { opacity: 1; }
         }
@@ -120,10 +153,10 @@
         <div class="notification notif-1">
             <div class="header">
                 <div class="app-name">
-                    <span class="icon">🌱</span>
+                    <div class="icon-wrapper">🌱</div>
                     <span>Soledad</span>
                 </div>
-                <div class="time">ahora</div>
+                <div class="time">now</div>
             </div>
             <div class="content">
                 Hi. I'm Soledad.<br>I'll be here every day.
@@ -134,10 +167,10 @@
         <div class="notification notif-2">
             <div class="header">
                 <div class="app-name">
-                    <span class="icon">🌱</span>
+                    <div class="icon-wrapper">🌱</div>
                     <span>Soledad</span>
                 </div>
-                <div class="time">ahora</div>
+                <div class="time">now</div>
             </div>
             <div class="content">
                 How are you feeling today?
@@ -148,20 +181,37 @@
         <div class="notification notif-3">
             <div class="header">
                 <div class="app-name">
-                    <span class="icon">🌱</span>
+                    <div class="icon-wrapper">🌱</div>
                     <span>Soledad</span>
                 </div>
-                <div class="time">ahora</div>
+                <div class="time">now</div>
             </div>
             <div class="content">
                 I noticed you haven't checked in.<br>Everything okay?
             </div>
         </div>
+
+        <!-- Notification 4 -->
+        <div class="notification notif-4">
+            <div class="header">
+                <div class="app-name">
+                    <div class="icon-wrapper" style="background: #E53E3E;">🚨</div>
+                    <span>BRENSO — Family Alert</span>
+                </div>
+                <div class="time">now</div>
+            </div>
+            <div class="content">
+                María may need your support today.
+            </div>
+        </div>
     </div>
 
-    <!-- Final Text -->
-    <div class="footer-logo">
-        BRENSO — Built on Celo blockchain 🌱
+    <div class="closing-text-container">
+        <div class="closing-text ct-1">BRENSO — Soledad</div>
+        <div class="closing-text ct-2">An AI agent that never stops caring.</div>
+        <div class="closing-text ct-3">Built on Celo blockchain 🌱</div>
     </div>
+
+    <div class="black-overlay"></div>
 </body>
 </html>

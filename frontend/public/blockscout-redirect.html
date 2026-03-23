@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to Blockscout...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        .logo {
+            width: 180px;
+            animation: pulseFade 1s infinite alternate;
+        }
+        @keyframes pulseFade {
+            0% { opacity: 0.6; transform: scale(0.98); }
+            100% { opacity: 1; transform: scale(1.02); }
+        }
+    </style>
+</head>
+<body>
+    <img src="/logo.svg" alt="BRENSO" class="logo" />
+    <script>
+        setTimeout(() => {
+            window.location.href = "https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa";
+        }, 1000);
+    </script>
+</body>
+</html>

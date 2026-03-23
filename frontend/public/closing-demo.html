@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRENSO Closing Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            font-family: system-ui, -apple-system, sans-serif;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        .text-line {
+            font-size: 28px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.95);
+            margin: 10px 0;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .line-1 { animation: slowFadeIn 2s ease forwards 1s, slowFadeOut 2s ease forwards 8s; }
+        .line-2 { animation: slowFadeIn 2s ease forwards 3s, slowFadeOut 2s ease forwards 8s; }
+        .line-3 { animation: slowFadeIn 2s ease forwards 5s, slowFadeOut 2s ease forwards 8s; }
+
+        @keyframes slowFadeIn {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slowFadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .logo-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0;
+            animation: slowFadeIn 3s ease forwards 10s;
+        }
+
+        .logo {
+            width: 140px;
+            height: auto;
+            margin-bottom: 12px;
+            /* Filter to make logo white */
+            filter: brightness(0) invert(1);
+        }
+
+        .brand-name {
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            margin-bottom: 24px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,0.6);
+        }
+
+        .url-text {
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            font-family: monospace;
+            padding-bottom: 20px;
+        }
+
+        .celo-text {
+            font-size: 12px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 0.5px;
+            opacity: 0;
+            animation: slowFadeIn 2s ease forwards 13s;
+        }
+
+    </style>
+</head>
+<body>
+    <div style="position: relative; width: 100%; height: 100%;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%; z-index: 1;">
+            <div class="text-line line-1">800 million people have a mental health condition.</div>
+            <div class="text-line line-2">Most never receive help.</div>
+            <div class="text-line line-3">We believe that can change.</div>
+        </div>
+
+        <div class="logo-container">
+            <!-- Using SVG or IMG directly from public -->
+            <img src="/logo.svg" alt="BRENSO" class="logo" />
+            <div class="brand-name">Soledad</div>
+            <div class="url-text">brenso-ai.vercel.app</div>
+            <div class="celo-text">Built on Celo · ERC-8004 · x402 · USDT</div>
+        </div>
+    </div>
+</body>
+</html>

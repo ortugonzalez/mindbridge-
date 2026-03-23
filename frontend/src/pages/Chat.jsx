@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
 import CrisisOverlay from '../components/CrisisOverlay'
@@ -16,6 +16,9 @@ function safeGet(key) {
 export default function Chat() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isDemo = searchParams.get('demo') === 'true'
+
   const hasUserReplied = useRef(false)
   const historyLoaded = useRef(false)
 
@@ -86,6 +89,13 @@ export default function Chat() {
   // Load conversation history on mount
   useEffect(() => {
     let mounted = true
+    if (isDemo) {
+      setMessages([])
+      setMemoryExists(true)
+      historyLoaded.current = true
+      return
+    }
+
     if (messages.length === 0) setMessages(buildOpening())
     
       ; (async () => {
@@ -111,7 +121,47 @@ export default function Chat() {
       })()
     return () => { mounted = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isDemo])
+
+  // Demo injection sequence
+  useEffect(() => {
+    if (!isDemo) return
+
+    const DEMO_CONVERSATION = [
+      { role: 'soledad', text: "Hi again. Last week you told me you were having trouble sleeping. How has that been?", delay: 0, showMemory: true },
+      { role: 'user', text: "Still the same... I can't turn my mind off", delay: 3500 },
+      { role: 'soledad', text: "That sounds exhausting. When you say you can't turn your mind off, what kind of thoughts keep coming up?", delay: 6000 },
+      { role: 'user', text: 'Work mostly. I feel like nothing is ever enough.', delay: 10000 },
+      { role: 'soledad', text: "That feeling of never being enough is really heavy to carry. How long have you been feeling this way?", delay: 13000 },
+      { role: 'user', text: 'About two months now.', delay: 17000 },
+      { role: 'soledad', text: "Two months is a long time. I'm glad you're naming it — that takes courage. Is there anyone in your life you feel safe talking to about this?", delay: 20000 },
+      { role: 'user', text: "Not really... that's kind of why I'm here", delay: 25000 },
+      { role: 'soledad', text: "Then I'm glad you came. You don't have to figure this out alone. I'll be here tomorrow too.", delay: 28000 }
+    ]
+
+    let timeouts = []
+
+    DEMO_CONVERSATION.forEach((msg, idx) => {
+      if (msg.role === 'soledad' && msg.delay > 2000) {
+        // Show typing indicator
+        timeouts.push(setTimeout(() => {
+          setSending(true)
+        }, msg.delay - 2000))
+      }
+
+      timeouts.push(setTimeout(() => {
+        setSending(false)
+        setMessages(prev => [...prev, { 
+          from: msg.role === 'soledad' ? 'breso' : 'user', 
+          role: msg.role, 
+          text: msg.text,
+          timestamp: new Date().toISOString()
+        }])
+      }, msg.delay))
+    })
+
+    return () => timeouts.forEach(clearTimeout)
+  }, [isDemo])
 
   // Fetch current mode from dashboard
   useEffect(() => {
@@ -277,6 +327,7 @@ export default function Chat() {
         error={sendError}
         onLoadOlder={handleLoadOlder}
         loadingHistory={loadingHistory}
+        isDemo={isDemo}
       />
     </div>
   )
