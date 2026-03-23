@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRENSO Notification Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .notification-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 50px;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .notification {
+            width: 340px;
+            background: rgba(30, 30, 30, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 14px 16px;
+            box-sizing: border-box;
+            opacity: 0;
+            transform: translateY(-40px) scale(0.95);
+            animation: sprintIn 1s cubic-bezier(0.175, 0.885, 0.32, 1.2) forwards;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .app-name {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
+            letter-spacing: 0.3px;
+        }
+
+        .icon {
+            font-size: 14px;
+        }
+
+        .time {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+        }
+
+        .content {
+            font-size: 15px;
+            font-weight: 500;
+            line-height: 1.35;
+            color: rgba(255, 255, 255, 1);
+        }
+
+        .notif-1 { animation-delay: 1s; }
+        .notif-2 { animation-delay: 3s; }
+        .notif-3 { animation-delay: 5s; }
+
+        @keyframes sprintIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-40px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .footer-logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 1);
+            opacity: 0;
+            animation: fadeInText 2.5s ease-in-out forwards;
+            animation-delay: 8s;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInText {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-container">
+        <!-- Notification 1 -->
+        <div class="notification notif-1">
+            <div class="header">
+                <div class="app-name">
+                    <span class="icon">🌱</span>
+                    <span>Soledad</span>
+                </div>
+                <div class="time">ahora</div>
+            </div>
+            <div class="content">
+                Hi. I'm Soledad.<br>I'll be here every day.
+            </div>
+        </div>
+
+        <!-- Notification 2 -->
+        <div class="notification notif-2">
+            <div class="header">
+                <div class="app-name">
+                    <span class="icon">🌱</span>
+                    <span>Soledad</span>
+                </div>
+                <div class="time">ahora</div>
+            </div>
+            <div class="content">
+                How are you feeling today?
+            </div>
+        </div>
+
+        <!-- Notification 3 -->
+        <div class="notification notif-3">
+            <div class="header">
+                <div class="app-name">
+                    <span class="icon">🌱</span>
+                    <span>Soledad</span>
+                </div>
+                <div class="time">ahora</div>
+            </div>
+            <div class="content">
+                I noticed you haven't checked in.<br>Everything okay?
+            </div>
+        </div>
+    </div>
+
+    <!-- Final Text -->
+    <div class="footer-logo">
+        BRENSO — Built on Celo blockchain 🌱
+    </div>
+</body>
+</html>
