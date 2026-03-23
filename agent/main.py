@@ -93,7 +93,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        "https://brenso-ai.vercel.app",
         "https://mindbridge-theta.vercel.app",
+        "https://brenso-ortugonzalezz-5077s-projects.vercel.app",
         "https://frontend-eta-pearl.vercel.app",
         "http://localhost:5173",
         "http://localhost:3000",
