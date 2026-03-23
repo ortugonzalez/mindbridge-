@@ -92,9 +92,43 @@ export default function Onboarding() {
   const btnPrimary = 'flex-1 rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40'
   const btnSecondary = 'flex-1 rounded-full border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface px-5 py-3 text-sm font-semibold text-textdark dark:text-dm-text transition hover:bg-softgray dark:hover:bg-dm-border'
 
+  const totalSteps = 4
+  const progressPct = Math.min(100, ((step - 1) / (totalSteps - 1)) * 100)
+
   return (
     <div className="space-y-4 animate-fade-up">
+      {/* Progress bar */}
+      <div className="px-1 pt-1">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-xs font-semibold text-textdark/50 dark:text-dm-muted">
+            Paso {Math.min(step, totalSteps)} de {totalSteps}
+          </span>
+          {step > 1 && step < 4 && (
+            <button
+              type="button"
+              onClick={() => setStep(s => Math.max(1, s - 1))}
+              className="text-xs font-medium text-textdark/40 dark:text-dm-muted hover:text-sage transition"
+            >
+              ← Volver
+            </button>
+          )}
+        </div>
+        <div className="h-1.5 w-full bg-softgray dark:bg-dm-border rounded-full overflow-hidden">
+          <div
+            className="h-full bg-sage rounded-full transition-all duration-500"
+            style={{ width: `${progressPct}%` }}
+          />
+        </div>
+      </div>
+
       <section className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-5 shadow-soft">
+        {/* Soledad avatar row */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white text-xs font-bold">
+            S
+          </div>
+          <span className="text-xs font-semibold text-textdark/60 dark:text-dm-muted">Soledad</span>
+        </div>
         <div className="space-y-5">
 
           {/* STEP 1 — Name */}

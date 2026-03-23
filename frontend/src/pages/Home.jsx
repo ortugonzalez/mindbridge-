@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { getVapidPublicKey, savePushSubscription } from '../services/api';
+import { getVapidPublicKey, savePushSubscription, getDashboard } from '../services/api';
 
 const DISMISS_KEY = 'breso_push_dismissed_until';
 
@@ -19,10 +19,43 @@ function getGreeting() {
   return 'Buenas noches';
 }
 
+function getTimeColor() {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'text-amber-600 dark:text-yellow-500' // morning
+  if (hour >= 12 && hour < 20) return 'text-[#7C9A7E]' // afternoon
+  return 'text-[#4A5E4A] dark:text-[#9CAF9C]' // night
+}
+
+function getTimeTint() {
+  const hour = new Date().getHours()
+  if (hour >= 6 && hour < 12) return 'bg-amber-50/50 dark:bg-amber-900/5'
+  if (hour >= 12 && hour < 20) return 'bg-[#F0F7F0]/60 dark:bg-sage/5'
+  return 'bg-[#1A2A1A]/5 dark:bg-[#0D1A0D]/20'
+}
+
+const MICRO_COPIES = [
+  "Cada conversación cuenta.",
+  "Soledad te está esperando.",
+  "Un momento para vos.",
+  "Cómo estás hoy, de verdad?",
+  "Tu bienestar importa.",
+  "Hoy también cuenta.",
+  "Estás haciendo bien en estar acá."
+]
+
+function getDailyMicrocopy() {
+  const start = new Date(new Date().getFullYear(), 0, 0);
+  const diff = (new Date() - start) + ((start.getTimezoneOffset() - new Date().getTimezoneOffset()) * 60 * 1000);
+  const oneDay = 1000 * 60 * 60 * 24;
+  const day = Math.floor(diff / oneDay);
+  return MICRO_COPIES[day % 7];
+}
+
 export default function Home() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
+  const [streak, setStreak] = useState(0);
   const [showPushBanner, setShowPushBanner] = useState(false);
   const [pushState, setPushState] = useState('idle'); // idle | loading | success | error
 
@@ -33,7 +66,24 @@ export default function Home() {
     } catch {
       setUserName('Usuario');
     }
+
+    let active = true;
+    (async () => {
+      try {
+        const dash = await getDashboard();
+        if (active && dash.data) {
+          setStreak(Number(dash.data.streakDaysConsecutive) || 0);
+        }
+      } catch {}
+    })();
+    return () => { active = false };
   }, []);
+
+  const renderStreakText = () => {
+    if (streak === 0) return 'Empezá tu racha hoy';
+    if (streak === 1) return 'Primer día ✨';
+    return `🔥 ${streak} días seguidos`;
+  }
 
   // Check if push banner should show
   useEffect(() => {
@@ -87,7 +137,7 @@ export default function Home() {
   const greeting = getGreeting();
 
   return (
-    <div className="animate-fade-in-page space-y-8 pb-32">
+    <div className={`animate-fade-in-page space-y-8 pb-32 min-h-screen transition-colors duration-700 ${getTimeTint()}`}>
 
       {/* Push Notification Banner */}
       {showPushBanner && (
@@ -130,7 +180,7 @@ export default function Home() {
 
       {/* Top Section */}
       <div className="flex flex-col items-center pt-8 fade-in-page">
-        <h1 className="text-xl font-medium text-textdark/80 dark:text-dm-text/90 mb-6">
+        <h1 className={`text-xl font-medium mb-6 ${getTimeColor()}`}>
           {greeting}, {userName}
         </h1>
 
@@ -154,14 +204,18 @@ export default function Home() {
         >
           Hablar con Soledad
         </button>
+        <p className="text-center text-xs font-medium text-textdark/50 dark:text-dm-muted mt-4">
+          {getDailyMicrocopy()}
+        </p>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-3 gap-3 px-2">
         <div className="bg-white dark:bg-[#3D4F3D] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-softgray/50 dark:border-dm-border">
-          <span className="text-xl mb-1">🔥</span>
-          <span className="text-xs text-textdark/50 dark:text-dm-muted font-medium uppercase tracking-wide mb-0.5">Racha</span>
-          <span className="text-sm font-bold text-textdark dark:text-dm-text">4 días</span>
+          <span className="text-xs text-textdark/50 dark:text-dm-muted font-medium uppercase tracking-wide mb-1">Racha</span>
+          <span className={`text-[13px] font-bold ${streak > 0 ? 'text-[#C4962A] dark:text-yellow-500' : 'text-textdark dark:text-dm-text'}`}>
+            {renderStreakText()}
+          </span>
         </div>
         <div className="bg-white dark:bg-[#3D4F3D] rounded-2xl p-4 flex flex-col items-center justify-center text-center shadow-sm border border-softgray/50 dark:border-dm-border">
           <span className="text-xl mb-1">📅</span>

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -154,16 +155,46 @@ app.include_router(dashboard_router)
 
 
 @app.get("/health", tags=["meta"])
-async def health() -> dict:
-    """Public health check — verifies Supabase connection."""
-    supabase_status = "connected"
-    try:
-        get_supabase()
-    except Exception as exc:  # noqa: BLE001
-        logger.error({"event": "health.supabase_error", "error": str(exc)})
-        supabase_status = "unavailable"
+async def health_check() -> dict:
+    """Enhanced health check — verifies all external dependencies."""
+    from datetime import datetime, timezone
+    checks: dict[str, str] = {}
 
-    return {"status": "ok", "version": "1.0.0", "supabase": supabase_status}
+    # Check Supabase
+    try:
+        sb = get_supabase()
+        sb.table("users").select("id").limit(1).execute()
+        checks["supabase"] = "ok"
+    except Exception as exc:  # noqa: BLE001
+        checks["supabase"] = f"error: {str(exc)[:50]}"
+
+    # Check Anthropic key
+    try:
+        key = os.getenv("ANTHROPIC_API_KEY", "")
+        checks["anthropic"] = "ok" if key.startswith("sk-ant") else "missing key"
+    except Exception:  # noqa: BLE001
+        checks["anthropic"] = "error"
+
+    # Check Resend key
+    try:
+        key = os.getenv("RESEND_API_KEY", "")
+        checks["resend"] = "ok" if key.startswith("re_") else "missing key"
+    except Exception:  # noqa: BLE001
+        checks["resend"] = "error"
+
+    all_ok = all(v == "ok" for v in checks.values())
+
+    return {
+        "status": "healthy" if all_ok else "degraded",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "version": "2.0.0",
+        "checks": checks,
+        "agent": {
+            "name": "Soledad por BRESO",
+            "contract": "0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
+            "network": "Celo Sepolia",
+        },
+    }
 
 
 CRISIS_NUMBERS: dict[str, dict[str, str]] = {
