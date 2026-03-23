@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext'
 
 const USER_NAME_KEY = 'breso_user_name'
 const RESEND_COOLDOWN = 60 // seconds
-const isValidEmail = (email) => email.includes('@') && email.includes('.')
+const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 
 export default function SignIn() {
   const { t } = useTranslation()
