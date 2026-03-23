@@ -22,6 +22,8 @@ import Payment from './pages/Payment'
 import FamilyDashboard from './pages/FamilyDashboard'
 import ProfessionalDashboard from './pages/ProfessionalDashboard'
 import Home from './pages/Home'
+import FamilyOnboarding from './pages/FamilyOnboarding'
+import AcceptInvite from './pages/AcceptInvite'
 import InstallPWA from './components/InstallPWA'
 
 function App() {
@@ -70,6 +72,8 @@ function AppRoutes() {
           <Route path="/family-dashboard" element={<AuthGuard><FamilyDashboard /></AuthGuard>} />
           <Route path="/professional-dashboard" element={<AuthGuard><ProfessionalDashboard /></AuthGuard>} />
           <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
+          <Route path="/family-onboarding" element={<AuthGuard><FamilyOnboarding /></AuthGuard>} />
+          <Route path="/accept-invite/:token" element={<AuthGuard><AcceptInvite /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

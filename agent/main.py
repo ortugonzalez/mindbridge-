@@ -194,6 +194,28 @@ async def health_check() -> dict:
             "contract": "0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
             "network": "Celo Sepolia",
         },
+        "onchain_contract": "0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
+        "blockscout": "https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa",
+    }
+
+
+@app.get("/agent/onchain-stats", tags=["meta"])
+async def get_onchain_stats() -> dict:
+    """Return BRESO agent identity and on-chain stats from Blockscout."""
+    from integrations.onchain_client import get_agent_stats
+    stats = await get_agent_stats()
+    return {
+        "agent": "Soledad por BRESO",
+        "description": "AI mental wellness agent for Latin America",
+        "standard": "ERC-8004",
+        "payment_protocol": "x402 via Thirdweb",
+        "onchain": stats,
+        "capabilities": [
+            "Daily emotional check-ins",
+            "Crisis detection and alerting",
+            "Family network coordination",
+            "Subscription payments in USDT",
+        ],
     }
 
 
