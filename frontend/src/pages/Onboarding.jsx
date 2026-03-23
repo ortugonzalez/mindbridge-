@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { addContact, registerUser, saveProfile } from '../services/api'
 
@@ -17,31 +16,7 @@ function slugifyName(s) {
   return String(s || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
-function Bubble({ from, text }) {
-  const fromSoledad = from === 'breso'
-  return (
-    <div className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}>
-      {fromSoledad && (
-        <div className="h-7 w-7 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white text-xs font-bold">
-          S
-        </div>
-      )}
-      <div
-        className={[
-          'max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed',
-          fromSoledad
-            ? 'bg-sage text-white rounded-bl-sm'
-            : 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text border border-softgray dark:border-dm-border rounded-br-sm',
-        ].join(' ')}
-      >
-        {text}
-      </div>
-    </div>
-  )
-}
-
 export default function Onboarding() {
-  const { t } = useTranslation()
   const navigate = useNavigate()
 
   const [step, setStep] = useState(1)
@@ -55,240 +30,227 @@ export default function Onboarding() {
   const [finalizing, setFinalizing] = useState(false)
   const [error, setError] = useState('')
 
-  const relationOptions = t('onboarding.relationOptions', { returnObjects: true }) || []
-
   const finalize = async ({ skipContact }) => {
     setFinalizing(true)
     setError('')
     try {
       safeSet(USER_NAME_KEY, userName.trim())
       if (userPhone.trim()) safeSet(USER_PHONE_KEY, phoneCountry + userPhone.trim())
+      
       if (!skipContact && contactName.trim()) {
         safeSet(CONTACT_NAME_KEY, contactName.trim())
         safeSet(CONTACT_REL_KEY, contactRelation)
         if (contactPhone.trim()) safeSet(CONTACT_PHONE_KEY, contactPhone.trim())
       }
+
       const demoEmail = `${slugifyName(userName)}@breso.dev`
       await registerUser({ name: userName.trim(), email: demoEmail, password: 'breso-demo' })
+      
       await saveProfile({
         display_name: userName.trim(),
         phone_number: userPhone.trim() ? phoneCountry + userPhone.trim() : undefined,
         plan: 'free_trial',
         user_type: 'patient',
       }).catch(() => {})
+
       if (!skipContact && contactName.trim()) {
         await addContact({ name: contactName.trim(), email: contactEmail.trim(), relation: contactRelation })
       }
-    } catch {
-      setError(t('common.error'))
-    } finally {
+      
       setStep(4)
+    } catch {
+      setError('Ocurrió un error al guardar tu perfil. Intentá de nuevo.')
+    } finally {
       setFinalizing(false)
     }
   }
 
-  const inputCls = 'w-full rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-4 py-3 text-base outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50'
-  const inputSmCls = 'w-full rounded-xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface text-textdark dark:text-dm-text px-4 py-2.5 text-sm outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50'
-  const btnPrimary = 'flex-1 rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40'
-  const btnSecondary = 'flex-1 rounded-full border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface px-5 py-3 text-sm font-semibold text-textdark dark:text-dm-text transition hover:bg-softgray dark:hover:bg-dm-border'
+  const renderProgressBar = () => (
+    <div className="flex gap-2 w-full mb-8">
+      {[1, 2, 3, 4].map(s => (
+        <div key={s} className="h-1.5 flex-1 rounded-full bg-softgray/50 dark:bg-dm-border overflow-hidden">
+           <div className={`h-full bg-sage transition-all duration-700 ease-out ${step >= s ? 'w-full' : 'w-0'}`} />
+        </div>
+      ))}
+    </div>
+  )
 
-  const totalSteps = 4
-  const progressPct = Math.min(100, ((step - 1) / (totalSteps - 1)) * 100)
+  const renderSoledadPrompt = (text) => (
+    <div className="flex items-start gap-4 mb-8">
+      <div className="h-10 w-10 flex-shrink-0 rounded-full bg-[#7C9A7E] flex items-center justify-center text-white text-base font-bold shadow-soft">
+        S
+      </div>
+      <div className="bg-[#F0F7F0] dark:bg-sage/10 rounded-2xl rounded-tl-sm px-5 py-4 text-textdark dark:text-dm-text text-base font-medium leading-relaxed border border-[#7C9A7E]/20 shadow-sm relative">
+        {text}
+      </div>
+    </div>
+  )
+
+  const inputCls = 'w-full rounded-xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface text-textdark dark:text-dm-text px-4 py-3.5 text-base outline-none focus:border-sage transition placeholder-textdark/40 dark:placeholder-dm-muted/50 shadow-sm'
+  const btnPrimary = 'w-full flex justify-center rounded-xl bg-[#7C9A7E] px-6 py-4 text-base font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-50 disabled:pointer-events-none'
+  const btnSecondary = 'w-full flex justify-center rounded-xl border-2 border-[#7C9A7E] px-6 py-3.5 text-base font-bold text-[#7C9A7E] transition hover:bg-[#7C9A7E]/5 disabled:opacity-50 disabled:pointer-events-none'
 
   return (
-    <div className="space-y-4 animate-fade-up">
-      {/* Progress bar */}
-      <div className="px-1 pt-1">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-semibold text-textdark/50 dark:text-dm-muted">
-            Paso {Math.min(step, totalSteps)} de {totalSteps}
-          </span>
-          {step > 1 && step < 4 && (
-            <button
-              type="button"
-              onClick={() => setStep(s => Math.max(1, s - 1))}
-              className="text-xs font-medium text-textdark/40 dark:text-dm-muted hover:text-sage transition"
-            >
-              ← Volver
-            </button>
-          )}
-        </div>
-        <div className="h-1.5 w-full bg-softgray dark:bg-dm-border rounded-full overflow-hidden">
-          <div
-            className="h-full bg-sage rounded-full transition-all duration-500"
-            style={{ width: `${progressPct}%` }}
-          />
-        </div>
+    <div className="min-h-[90vh] flex flex-col pt-10 px-4 max-w-[480px] mx-auto animate-fade-in-page">
+      {renderProgressBar()}
+
+      <div className="flex items-center justify-between mb-8">
+        <span className="text-xs font-black text-textdark/50 dark:text-dm-muted tracking-[0.15em] uppercase">
+          Paso {step} de 4
+        </span>
+        {step > 1 && step < 4 && (
+          <button type="button" onClick={() => setStep(step - 1)} className="text-sm font-semibold text-sage hover:underline">
+            ← Volver
+          </button>
+        )}
       </div>
 
-      <section className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-5 shadow-soft">
-        {/* Soledad avatar row */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="h-7 w-7 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white text-xs font-bold">
-            S
+      <div className="flex-1 flex flex-col">
+        {step === 1 && (
+          <div className="animate-fade-up flex-1 flex flex-col">
+            {renderSoledadPrompt('Para empezar, ¿cómo te llamás?')}
+            <div className="mt-auto space-y-4 pb-8">
+              <input
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                className={inputCls}
+                type="text"
+                placeholder="Tu nombre o apodo"
+                autoComplete="given-name"
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter' && userName.trim()) setStep(2) }}
+              />
+              <button
+                type="button"
+                disabled={!userName.trim()}
+                onClick={() => setStep(2)}
+                className={btnPrimary}
+              >
+                Continuar
+              </button>
+            </div>
           </div>
-          <span className="text-xs font-semibold text-textdark/60 dark:text-dm-muted">Soledad</span>
-        </div>
-        <div className="space-y-5">
+        )}
 
-          {/* STEP 1 — Name */}
-          {step >= 1 && (
-            <>
-              <Bubble from="breso" text={t('onboarding.step1Prompt')} />
-              {step === 1 ? (
-                <div className="space-y-3">
-                  <input
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className={inputCls}
-                    type="text"
-                    placeholder={t('onboarding.namePlaceholder')}
-                    autoComplete="given-name"
-                    autoFocus
-                    disabled={finalizing}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && userName.trim()) setStep(2) }}
-                  />
-                  <button
-                    type="button"
-                    disabled={!userName.trim()}
-                    onClick={() => setStep(2)}
-                    className="w-full rounded-full bg-sage px-6 py-3 text-sm font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40"
-                  >
-                    {t('onboarding.continue')}
-                  </button>
-                </div>
-              ) : (
-                <Bubble from="user" text={userName} />
-              )}
-            </>
-          )}
+        {step === 2 && (
+          <div className="animate-fade-up flex-1 flex flex-col">
+            {renderSoledadPrompt('Para poder avisarte si algo importante pasa, me gustaría tener tu número. Solo lo uso para alertas.')}
+            <div className="mt-auto space-y-4 pb-8">
+              <div className="flex gap-2">
+                <select
+                  value={phoneCountry}
+                  onChange={(e) => setPhoneCountry(e.target.value)}
+                  className="rounded-xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface text-textdark dark:text-dm-text px-3 py-3.5 text-sm font-medium outline-none focus:border-sage transition flex-shrink-0 shadow-sm"
+                >
+                  <option value="+54">🇦🇷 +54</option>
+                  <option value="+52">🇲🇽 +52</option>
+                  <option value="+57">🇨🇴 +57</option>
+                  <option value="+56">🇨🇱 +56</option>
+                  <option value="+51">🇵🇪 +51</option>
+                  <option value="+598">🇺🇾 +598</option>
+                  <option value="+595">🇵🇾 +595</option>
+                  <option value="+1">🇺🇸 +1</option>
+                  <option value="+34">🇪🇸 +34</option>
+                </select>
+                <input
+                  value={userPhone}
+                  onChange={(e) => setUserPhone(e.target.value)}
+                  className={inputCls}
+                  type="tel"
+                  placeholder="Tu número"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter' && userPhone.trim()) setStep(3) }}
+                />
+              </div>
+              <button type="button" disabled={!userPhone.trim()} onClick={() => setStep(3)} className={btnPrimary}>
+                Continuar
+              </button>
+            </div>
+          </div>
+        )}
 
-          {/* STEP 2 — User's own phone number */}
-          {step >= 2 && (
-            <>
-              <Bubble from="breso" text={t('onboarding.step2Prompt')} />
-              {step === 2 ? (
-                <div className="space-y-3">
-                  {/* Title */}
-                  <div className="rounded-xl bg-softgray/60 dark:bg-dm-bg px-4 py-3">
-                    <p className="text-sm font-semibold text-textdark dark:text-dm-text">{t('onboarding.step2Title')}</p>
-                    <p className="mt-1 text-xs text-textdark/55 dark:text-dm-muted leading-relaxed">{t('onboarding.step2Subtitle')}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <select
-                      value={phoneCountry}
-                      onChange={(e) => setPhoneCountry(e.target.value)}
-                      className="rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-3 py-3 text-sm outline-none focus:border-sage transition flex-shrink-0"
-                    >
-                      <option value="+54">🇦🇷 +54</option>
-                      <option value="+52">🇲🇽 +52</option>
-                      <option value="+57">🇨🇴 +57</option>
-                      <option value="+56">🇨🇱 +56</option>
-                      <option value="+51">🇵🇪 +51</option>
-                      <option value="+598">🇺🇾 +598</option>
-                      <option value="+595">🇵🇾 +595</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+34">🇪🇸 +34</option>
-                    </select>
-                    <input
-                      value={userPhone}
-                      onChange={(e) => setUserPhone(e.target.value)}
-                      className="flex-1 rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg text-textdark dark:text-dm-text px-4 py-3 text-base outline-none focus:border-sage transition placeholder-textdark/30 dark:placeholder-dm-muted/50"
-                      type="tel"
-                      placeholder={t('onboarding.phonePlaceholder')}
-                      disabled={finalizing}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" disabled={!userPhone.trim()} onClick={() => setStep(3)} className={btnPrimary}>
-                      {t('onboarding.continue')}
-                    </button>
-                    <button type="button" onClick={() => setStep(3)} className={btnSecondary}>
-                      {t('onboarding.skip')}
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                step > 2 && userPhone.trim() && <Bubble from="user" text={`${phoneCountry} ${userPhone}`} />
-              )}
-            </>
-          )}
+        {step === 3 && (
+          <div className="animate-fade-up flex-1 flex flex-col">
+            {renderSoledadPrompt('¿Hay alguien de confianza que quieras agregar? No es obligatorio.')}
+            <div className="mt-8 space-y-3 pb-8">
+              <input
+                value={contactName}
+                onChange={(e) => setContactName(e.target.value)}
+                className={inputCls}
+                type="text"
+                placeholder="Nombre de tu contacto"
+                disabled={finalizing}
+              />
+              <select
+                value={contactRelation}
+                onChange={(e) => setContactRelation(e.target.value)}
+                className={inputCls}
+                disabled={finalizing}
+              >
+                <option value="">Relación (opcional)</option>
+                <option value="parent">Padre/Madre</option>
+                <option value="sibling">Hermano/a</option>
+                <option value="partner">Pareja</option>
+                <option value="friend">Amigo/a</option>
+                <option value="other">Otro</option>
+              </select>
+              <input
+                value={contactPhone}
+                onChange={(e) => setContactPhone(e.target.value)}
+                className={inputCls}
+                type="tel"
+                placeholder="Teléfono (opcional)"
+                disabled={finalizing}
+              />
+              <input
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                className={inputCls}
+                type="email"
+                placeholder="Email (opcional)"
+                disabled={finalizing}
+              />
+              <div className="pt-4 space-y-3">
+                <button type="button" disabled={finalizing || !contactName.trim()} onClick={() => finalize({ skipContact: false })} className={btnPrimary}>
+                  {finalizing ? 'Guardando...' : 'Agregar contacto'}
+                </button>
+                <button type="button" disabled={finalizing} onClick={() => finalize({ skipContact: true })} className={btnSecondary}>
+                  Omitir paso
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
-          {/* STEP 3 — Trusted contact */}
-          {step >= 3 && (
-            <>
-              <Bubble from="breso" text={t('onboarding.step3Prompt')} />
-              {step === 3 ? (
-                <div className="space-y-3 rounded-xl border border-softgray dark:border-dm-border bg-[#FAF8F5] dark:bg-dm-bg p-4">
-                  {/* Contact note */}
-                  <p className="text-xs text-textdark/55 dark:text-dm-muted leading-relaxed">{t('onboarding.step3ContactNote')}</p>
-                  <input
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                    className={inputSmCls}
-                    type="text"
-                    placeholder={t('onboarding.contactName')}
-                    disabled={finalizing}
-                  />
-                  <select
-                    value={contactRelation}
-                    onChange={(e) => setContactRelation(e.target.value)}
-                    className={inputSmCls}
-                    disabled={finalizing}
-                  >
-                    <option value="">{t('onboarding.contactRelationPlaceholder')}</option>
-                    {Array.isArray(relationOptions) && relationOptions.map((r) => (
-                      <option key={r.value} value={r.value}>{r.label}</option>
-                    ))}
-                  </select>
-                  <input
-                    value={contactPhone}
-                    onChange={(e) => setContactPhone(e.target.value)}
-                    className={inputSmCls}
-                    type="tel"
-                    placeholder={t('onboarding.contactPhone')}
-                    disabled={finalizing}
-                  />
-                  <input
-                    value={contactEmail}
-                    onChange={(e) => setContactEmail(e.target.value)}
-                    className={inputSmCls}
-                    type="email"
-                    placeholder={t('onboarding.contactEmail')}
-                    disabled={finalizing}
-                  />
-                  <div className="flex gap-2 pt-1">
-                    <button type="button" disabled={finalizing || !contactName.trim()} onClick={() => finalize({ skipContact: false })} className={btnPrimary}>
-                      {t('onboarding.addContact')}
-                    </button>
-                    <button type="button" disabled={finalizing} onClick={() => finalize({ skipContact: true })} className={btnSecondary}>
-                      {t('onboarding.skip')}
-                    </button>
-                  </div>
-                </div>
-              ) : null}
-            </>
-          )}
-
-          {/* STEP 4 — Done */}
-          {step === 4 && (
-            <>
-              <Bubble from="breso" text={t('onboarding.step4Done', { name: userName.trim() })} />
-              {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
-              )}
+        {step === 4 && (
+          <div className="animate-fade-up flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col justify-center items-center pb-12">
+               <div className="h-24 w-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 shadow-sm animate-bounce-short">
+                <span className="text-5xl">✅</span>
+              </div>
+              <h2 className="text-2xl font-bold text-center text-textdark dark:text-dm-text mb-4">
+                Todo listo, {userName}.
+              </h2>
+              <p className="text-center text-textdark/70 dark:text-dm-muted text-base">
+                Empecemos cuando quieras.
+              </p>
+            </div>
+            {error && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-4 mb-4 text-sm text-red-700 font-medium">{error}</div>
+            )}
+            <div className="pb-8">
               <button
                 type="button"
                 disabled={finalizing}
                 onClick={() => navigate('/chat')}
-                className="w-full rounded-full bg-sage px-6 py-4 text-base font-semibold text-white shadow-soft transition hover:opacity-90 disabled:opacity-40"
+                className={btnPrimary}
               >
-                {t('onboarding.start')}
+                Continuar a BRESO
               </button>
-            </>
-          )}
-        </div>
-      </section>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
