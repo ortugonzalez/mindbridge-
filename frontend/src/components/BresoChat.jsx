@@ -28,6 +28,13 @@ function TypingDots() {
   )
 }
 
+const Spinner = () => (
+  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+)
+
 function SoledadAvatar({ large }) {
   return (
     <div className={`${large ? 'h-10 w-10 text-base' : 'h-7 w-7 text-xs'} flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white font-bold self-end`}>
@@ -96,7 +103,7 @@ function ReactionMenu({ messageText, onReact }) {
   )
 }
 
-export default function BresoChat({ messages = [], onSend, isSending = false, error, onLoadOlder, loadingHistory }) {
+export default function BresoChat({ messages = [], onSend, onMoodSelected, isSending = false, error, onLoadOlder, loadingHistory }) {
   const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -131,13 +138,22 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
     }
   )
 
+  const [flashError, setFlashError] = useState(false)
+  useEffect(() => {
+    if (error) {
+      setFlashError(true)
+      const t = setTimeout(() => setFlashError(false), 800)
+      return () => clearTimeout(t)
+    }
+  }, [error])
+
   const handleMoodSelect = async (emoji, textValue) => {
     try {
       localStorage.setItem('breso_last_checkin_date', todayStr)
       localStorage.setItem('breso_today_mood', emoji)
     } catch {}
     setNeedsMood(false)
-    if (onSend) await onSend(textValue)
+    if (onMoodSelected) onMoodSelected(textValue)
   }
 
   const bottomRef = useRef(null)
@@ -225,9 +241,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
               <div key={idx} className="space-y-4">
                 {showDivider && (
                   <div className="flex items-center justify-center my-6 gap-3">
-                    <div className="flex-1 h-px bg-softgray dark:bg-dm-border"></div>
-                    <span className="text-xs font-medium text-textdark/50 dark:text-dm-muted px-2 uppercase tracking-widest">{m.dateLabel}</span>
-                    <div className="flex-1 h-px bg-softgray dark:bg-dm-border"></div>
+                    <span className="text-xs font-semibold text-[#9CA3AF] px-2 uppercase tracking-widest">─── {m.dateLabel} ───</span>
                   </div>
                 )}
                 
@@ -256,7 +270,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
                       )}
                     </div>
                     {m.suggestion && <SuggestionCard suggestion={m.suggestion} />}
-                    <div className="text-[10px] text-textdark/40 dark:text-dm-muted/60 mt-1 px-1">
+                    <div className="text-[10px] text-[#9CA3AF] mt-1 px-1 font-medium">
                       {m.time}
                     </div>
                   </div>
@@ -287,7 +301,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
           </div>
         )}
 
-        {needsMood && messages.length > 0 && !isSending && (
+        {needsMood && !isSending && (
           <div className="rounded-2xl border border-sage/30 bg-sage/5 p-4 shadow-soft animate-fade-in-page">
             <p className="text-center font-bold text-sage mb-3 text-sm">¿Cómo llegás hoy?</p>
             <div className="flex justify-center gap-2 sm:gap-4">
@@ -310,7 +324,8 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
           </div>
         )}
 
-        <div className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-3 shadow-soft">
+        {!needsMood && (
+        <div className="rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-3 shadow-soft animate-fade-up">
           <div className="flex items-end gap-2">
           <textarea
             value={text}
@@ -329,19 +344,22 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={!canSend}
+            disabled={!canSend || isSending}
             aria-label={t('common.send')}
             className={[
-              'h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center transition',
+              'h-10 w-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-all duration-300',
+              flashError ? 'bg-red-500 text-white' :
+              isSending ? 'bg-sage text-white cursor-not-allowed' :
               canSend
                 ? 'bg-sage text-white hover:opacity-90'
-                : 'bg-softgray dark:bg-dm-border text-textdark/30 dark:text-dm-muted/40',
+                : 'bg-softgray dark:bg-dm-border text-[#9CA3AF] opacity-40',
             ].join(' ')}
           >
-            {/* Send arrow icon */}
+            {isSending ? <Spinner /> : (
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
               <path d="M3.105 2.288a.75.75 0 00-.826.95l1.414 4.926A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086l-1.414 4.926a.75.75 0 00.826.95 28.897 28.897 0 0015.293-7.156.75.75 0 000-1.114A28.897 28.897 0 003.105 2.288z" />
             </svg>
+            )}
           </button>
           <button
             type="button"
@@ -356,6 +374,7 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
           </button>
         </div>
       </div>
+      )}
       </div>
     </div>
   )

@@ -19,7 +19,31 @@ export default function Chat() {
 
   const [userName] = useState(safeGet(USER_NAME_KEY))
   const [mode, setMode] = useState('listening')
-  const [messages, setMessages] = useState([])
+  const [messages, setMessages] = useState(() => {
+    try {
+      const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          hasUserReplied.current = true
+          historyLoaded.current = true
+          return parsed.slice(-10) // Mid-conversation: Load last 10 messages immediately
+        }
+      }
+    } catch {}
+    return []
+  })
+  const [isReturning] = useState(() => {
+    try {
+      const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        return Array.isArray(parsed) && parsed.length > 0
+      }
+    } catch {}
+    return false
+  })
+
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [historyLimit, setHistoryLimit] = useState(20)
@@ -81,21 +105,9 @@ export default function Chat() {
         } catch { }
         // Fallback to localStorage if backend returned nothing
         if (mounted && !historyLoaded.current) {
-          try {
-            const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
-            if (stored) {
-              const parsed = JSON.parse(stored)
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                historyLoaded.current = true
-                hasUserReplied.current = true
-                setMessages(parsed.slice(-20))
-                return
-              }
-            }
-          } catch { }
+          // Already handled synchronously on mount
         }
-        // No history anywhere → show opening messages
-        if (mounted && !hasUserReplied.current) setMessages(buildOpening())
+        // No history anywhere → Opening message is triggered handled via mood selector logic
       })()
     return () => { mounted = false }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -125,8 +137,7 @@ export default function Chat() {
 
   // Rebuild opening messages on language change (only if user hasn't replied and no history)
   useEffect(() => {
-    if (hasUserReplied.current || historyLoaded.current) return
-    setMessages(buildOpening())
+    // Disabled rebuilding opening dynamically to avoid overriding mood selector workflow
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language])
 
@@ -153,6 +164,13 @@ export default function Chat() {
       })
     } catch {}
     setLoadingHistory(false)
+  }
+
+  const handleMoodSelected = (moodText) => {
+    const userMsg = { from: 'user', role: 'user', text: moodText, timestamp: new Date().toISOString() }
+    const openingMsg = buildOpening()[0]
+    hasUserReplied.current = true
+    setMessages(prev => [...prev, userMsg, openingMsg])
   }
 
   const handleSend = async (text) => {
@@ -232,9 +250,16 @@ export default function Chat() {
         </div>
       )}
 
+      {isReturning && (
+        <div className="flex justify-center mb-2 animate-fade-in-page">
+          <span className="text-xs font-semibold text-sage bg-sage/10 px-3 py-1 rounded-full border border-sage/20">Soledad está aquí 🌱</span>
+        </div>
+      )}
+
       <BresoChat
         messages={messages}
         onSend={handleSend}
+        onMoodSelected={handleMoodSelected}
         isSending={sending}
         error={sendError}
         onLoadOlder={handleLoadOlder}
