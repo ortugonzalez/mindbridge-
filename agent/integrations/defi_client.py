@@ -41,7 +41,7 @@ class DeFiCashback:
         In production: deposit to Mento yield vault
         For hackathon: calculate and store cashback promise
         """
-        from agent.integrations.supabase_client import get_supabase
+        from integrations.supabase_client import get_supabase
 
         supabase = get_supabase()
         cashback_info = self.calculate_cashback(amount_usd)

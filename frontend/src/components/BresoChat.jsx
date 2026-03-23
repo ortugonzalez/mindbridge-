@@ -15,9 +15,9 @@ function TypingDots() {
   )
 }
 
-function SoledadAvatar() {
+function SoledadAvatar({ large }) {
   return (
-    <div className="h-7 w-7 flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white text-xs font-bold self-end">
+    <div className={`${large ? 'h-10 w-10 text-base' : 'h-7 w-7 text-xs'} flex-shrink-0 rounded-full bg-sage flex items-center justify-center text-white font-bold self-end`}>
       S
     </div>
   )
@@ -57,17 +57,19 @@ export default function BresoChat({ messages = [], onSend, isSending = false, er
         <div className="space-y-4">
           {messagesWithTime.map((m, idx) => {
             const fromSoledad = m.from === 'breso'
+            const isOpeningMsg = messagesWithTime.length <= 2 && fromSoledad
             return (
               <div
                 key={idx}
                 className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}
               >
-                {fromSoledad && <SoledadAvatar />}
+                {fromSoledad && <SoledadAvatar large={isOpeningMsg} />}
 
-                <div className={['max-w-[78%] flex flex-col', fromSoledad ? 'items-start' : 'items-end'].join(' ')}>
+                <div className={['flex flex-col', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
                   <div
                     className={[
-                      'px-4 py-2.5 text-sm leading-relaxed shadow-soft animate-fade-up',
+                      'leading-relaxed shadow-soft animate-fade-up',
+                      isOpeningMsg ? 'px-5 py-4 text-base sm:text-lg font-medium' : 'px-4 py-2.5 text-sm',
                       fromSoledad
                         ? 'bg-[#7C9A7E] text-white rounded-[18px] rounded-bl-[4px]'
                         : 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text border border-softgray dark:border-dm-border rounded-[18px] rounded-br-[4px]',

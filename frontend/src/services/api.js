@@ -1,13 +1,13 @@
 import axios from 'axios'
 import i18n from '../i18n'
+import { supabase } from '../lib/supabase'
 
-// Use env var for Vercel; empty string means "no backend" → always use mock
-const API_BASE = import.meta.env.VITE_API_BASE_URL || ''
+// PRIORITY 1: Always connect to Railway backend; env var overrides for other environments
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://mindbridge-production-c766.up.railway.app'
 
 const axiosClient = axios.create({
   baseURL: API_BASE,
-  // Short timeout so fallback to mock is fast when backend is unreachable
-  timeout: 3000,
+  timeout: 30000,
   withCredentials: true,
 })
 
@@ -16,7 +16,7 @@ axiosClient.interceptors.request.use((config) => {
   try {
     const token = localStorage.getItem('breso_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
-  } catch {}
+  } catch { }
   return config
 })
 
@@ -186,7 +186,7 @@ export async function signIn({ email, password }) {
     () =>
       axiosClient.post('/auth/signin', { email, password }).then((res) => {
         const token = res.data?.access_token || res.data?.token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
         return res.data
       }),
     () => ({ access_token: 'mock-token', user_id: 'mock-user', fromMock: true })
@@ -226,17 +226,107 @@ export async function registerUser({ name, email, password }) {
     () =>
       axiosClient.post('/auth/register', { name, email, password, preferred_language: lang }).then((res) => {
         const token = res.data?.token || res.data?.access_token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
+        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
         return res.data
       }),
     () => ({ ok: true, fromMock: true })
   )
 }
 
+// ---------------------------------------------------------------------------
+// PRIORITY 1: Direct Railway backend chat function
+// ---------------------------------------------------------------------------
+
+const ES_MOCKS = [
+  "Lo que describís suena agotador. No es solo un mal día, ¿verdad? ¿Hace cuánto venís sintiéndote así?",
+  "Eso que decís me queda dando vueltas. ¿Podés contarme un poco más?",
+  "A veces 'estoy bien' viene solo, casi por inercia. ¿Cómo venís siendo honestamente esta semana?",
+  "Lo raro es difícil de explicar justamente porque no encontrás la palabra. ¿Hay algo que pasó últimamente?",
+]
+const EN_MOCKS = [
+  "What you're describing sounds exhausting. It's not just a bad day, is it? How long have you been feeling this way?",
+  "What you said stays with me. Can you tell me a bit more?",
+  "Sometimes 'I'm fine' just comes out automatically. How have you honestly been this week?",
+]
+
+export async function sendMessageToSoledad(message, history = [], language = 'es') {
+  // Bug B fix: ONLY use Supabase session token — no localStorage fallback
+  const { data: { session } } = await supabase.auth.getSession()
+  const token = session?.access_token
+
+  console.log('[Soledad] token source:', token ? 'supabase_session' : 'NONE')
+
+  if (!token) {
+    console.error('[Soledad] No auth session — user must be signed in via Supabase')
+    throw new Error('No auth session')
+  }
+
+  // Bug C fix: resolve textKey to actual text, then filter empty entries
+  const historyPayload = history
+    .slice(-10)
+    .map(m => ({
+      role: (m.role === 'soledad' || m.from === 'breso') ? 'assistant' : 'user',
+      content: m.text || (m.textKey ? i18n.t(m.textKey) : ''),
+    }))
+    .filter(m => m.content)
+
+  const BASE_URL = API_BASE
+  console.log('[Soledad] POST to:', BASE_URL + '/checkins/respond')
+  console.log('[Soledad] history length:', historyPayload.length)
+
+  const response = await fetch(`${BASE_URL}/checkins/respond`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message, language, history: historyPayload }),
+    signal: AbortSignal.timeout(30000),
+  })
+
+  console.log('[Soledad] response status:', response.status)
+
+  // Bug A fix: never swallow errors silently — surface the full details
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => '')
+    console.error('[Soledad] Backend error', response.status, errorBody)
+    // Only fall back to mock when there is no backend URL at all
+    if (!API_BASE) {
+      const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
+      return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
+    }
+    throw new Error(`Backend ${response.status}: ${errorBody}`)
+  }
+
+  const data = await response.json()
+  console.log('[Soledad] response data:', JSON.stringify(data).slice(0, 200))
+
+  const text = data.response || data.message || data.breso_message || data.reply
+  return {
+    text,
+    crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
+    memoryExists: !!(data.memory || data.has_memory || data.memoryExists),
+  }
+}
+
 export async function addContact({ name, email, relation }) {
   return requestWithMock(
     () => axiosClient.post('/contacts', { name, email, relation }).then((res) => res.data),
     () => ({ ok: true, fromMock: true })
+  )
+}
+
+export async function inviteContact({ email, name, relationship }) {
+  return requestWithMock(
+    () => axiosClient.post('/relationships/invite', { email, name, relationship }).then((res) => res.data),
+    () => ({ ok: true, fromMock: true })
+  )
+}
+
+export async function getSupportNetwork() {
+  return requestWithMock(
+    () => axiosClient.get('/relationships/my-support-network').then((res) => res.data),
+    () => []
   )
 }
 
@@ -286,6 +376,34 @@ export async function submitCheckinResponse({ checkinId, response, mode }) {
  * postCheckin — legacy alias used by Chat.jsx.
  * Maps to submitCheckinResponse internally.
  */
+export async function getDailySummaries() {
+  return requestWithMock(
+    () => axiosClient.get('/checkins/daily-summaries').then((res) => res.data),
+    () => []
+  )
+}
+
+export async function getFamilyPatientStatus() {
+  return requestWithMock(
+    () => axiosClient.get('/family/patient-status').then((res) => res.data),
+    () => ({ alert_level: 'green', streak: 0, last_checkin: 'Sin datos', checkins_this_week: 0, weekly_summary: '', needs_attention: false })
+  )
+}
+
+export async function getFamilyWeeklyReport() {
+  return requestWithMock(
+    () => axiosClient.get('/family/weekly-report').then((res) => res.data),
+    () => ({ week: '', summary: '', alert_level: 'green', recommendation: '' })
+  )
+}
+
+export async function notifyPatient({ message }) {
+  return requestWithMock(
+    () => axiosClient.post('/family/notify-patient', { message }).then((res) => res.data),
+    () => ({ ok: true, fromMock: true })
+  )
+}
+
 export async function postCheckin({ message, mode }) {
   const result = await submitCheckinResponse({ checkinId: 'today', response: message, mode })
   // Return shape Chat.jsx expects: { data: { replyText, nextMode } }

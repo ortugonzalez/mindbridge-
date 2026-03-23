@@ -16,10 +16,11 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from agent.integrations.agentscan import register_on_agentscan
-from agent.integrations.supabase_client import get_supabase
-from agent.routers import alerts, auth, bookings, checkins, contacts, family, payments, subscriptions, user_types, users
-from agent.services import scheduler
+from integrations.agentscan import register_on_agentscan
+from integrations.supabase_client import get_supabase
+from routers import alerts, auth, bookings, checkins, contacts, family, payments, subscriptions, user_types, users
+from routers.users import dashboard_router, family_router
+from services import scheduler
 
 # ---------------------------------------------------------------------------
 # Structured JSON logging
@@ -90,9 +91,14 @@ app = FastAPI(
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=[
+        "https://mindbridge-theta.vercel.app",
+        "https://frontend-eta-pearl.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -138,6 +144,8 @@ app.include_router(subscriptions.router)
 app.include_router(payments.router)
 app.include_router(user_types.router)
 app.include_router(family.router)
+app.include_router(family_router)
+app.include_router(dashboard_router)
 
 
 # ---------------------------------------------------------------------------

@@ -8,9 +8,9 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from agent.integrations.email_client import send_invite_email
-from agent.integrations.supabase_client import get_supabase
-from agent.routers.users import get_current_user
+from integrations.email_client import send_invite_email
+from integrations.supabase_client import get_supabase
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/family", tags=["family"])
 logger = logging.getLogger("breso.family")

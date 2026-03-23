@@ -9,10 +9,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 
-from agent.integrations.email_client import send_welcome_email
-from agent.integrations.supabase_client import get_supabase
-from agent.models.types import UserCreate
-from agent.routers.users import get_current_user
+from integrations.email_client import send_welcome_email
+from integrations.supabase_client import get_supabase
+from models.types import UserCreate
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 logger = logging.getLogger("breso.auth")

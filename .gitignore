@@ -52,3 +52,4 @@ Thumbs.db
 # Database (legacy SQLite reference — not used, Supabase is primary)
 *.sqlite
 *.db
+.vercel

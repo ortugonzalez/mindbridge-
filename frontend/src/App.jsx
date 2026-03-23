@@ -21,6 +21,8 @@ import Help from './pages/Help'
 import Payment from './pages/Payment'
 import FamilyDashboard from './pages/FamilyDashboard'
 import ProfessionalDashboard from './pages/ProfessionalDashboard'
+import Home from './pages/Home'
+import InstallPWA from './components/InstallPWA'
 
 function App() {
   const [splashDone, setSplashDone] = useState(false)
@@ -68,9 +70,11 @@ function AppRoutes() {
           <Route path="/payment" element={<AuthGuard><Payment /></AuthGuard>} />
           <Route path="/family-dashboard" element={<AuthGuard><FamilyDashboard /></AuthGuard>} />
           <Route path="/professional-dashboard" element={<AuthGuard><ProfessionalDashboard /></AuthGuard>} />
+          <Route path="/home" element={<AuthGuard><Home /></AuthGuard>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <InstallPWA />
     </div>
   )
 }

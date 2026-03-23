@@ -6,8 +6,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
-from agent.integrations.supabase_client import get_supabase
-from agent.routers.users import get_current_user
+from integrations.supabase_client import get_supabase
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/relationships", tags=["relationships"])
 logger = logging.getLogger("breso.relationships")

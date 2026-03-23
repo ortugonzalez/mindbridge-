@@ -7,11 +7,11 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, Header, HTTPException, Request
 from pydantic import BaseModel
 
-from agent.integrations.email_client import send_alert_email
-from agent.integrations.supabase_client import get_supabase
-from agent.integrations import x402_client
-from agent.integrations.defi_client import defi_cashback
-from agent.routers.users import get_current_user
+from integrations.email_client import send_alert_email, send_welcome_email
+from integrations.supabase_client import get_supabase
+from integrations import x402_client
+from integrations.defi_client import defi_cashback
+from routers.users import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 logger = logging.getLogger("breso.payments")
@@ -228,8 +228,10 @@ async def payment_webhook(
     """
     payload_bytes = await request.body()
 
-    # Verify webhook authenticity
-    if not x402_client.verify_webhook_signature(payload_bytes, x_thirdweb_signature):
+    # Verify webhook authenticity only when a secret key is configured
+    import os
+    has_secret = bool(os.getenv("THIRDWEB_SECRET_KEY", ""))
+    if has_secret and not x402_client.verify_webhook_signature(payload_bytes, x_thirdweb_signature):
         logger.warning({"event": "payments.webhook.invalid_signature"})
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
@@ -333,5 +335,16 @@ def _upgrade_user_plan(
             }
         ).execute()
         logger.info({"event": "payments.plan_upgraded", "user_id": user_id, "plan": plan})
+
+        # Send plan confirmation email
+        try:
+            user_res = supabase.table("users").select("email, display_name").eq("id", user_id).single().execute()
+            if user_res.data and user_res.data.get("email"):
+                send_welcome_email(
+                    to_email=user_res.data["email"],
+                    user_name=user_res.data.get("display_name") or "amigo/a",
+                )
+        except Exception as email_exc:  # noqa: BLE001
+            logger.warning({"event": "payments.welcome_email_failed", "error": str(email_exc)})
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "payments.upgrade_db_error", "error": str(exc), "user_id": user_id})

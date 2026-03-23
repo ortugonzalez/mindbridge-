@@ -169,6 +169,59 @@ def send_invite_email(
         return {"success": False, "error": str(exc)}
 
 
+def send_checkin_reminder(to_email: str, user_name: str) -> None:
+    """Send a proactive daily check-in reminder from Soledad."""
+    html = f"""
+    <div style="font-family: Inter, sans-serif;
+                max-width: 600px; margin: 0 auto;
+                padding: 40px 20px;">
+      <div style="text-align: center; margin-bottom: 32px;">
+        <span style="font-size: 48px;">🌱</span>
+        <h1 style="color: #7C9A7E; font-weight: 400;
+                   font-size: 24px; margin: 8px 0;">
+          Soledad
+        </h1>
+      </div>
+      <p style="color: #2D2D2D; font-size: 18px;
+                line-height: 1.7; margin: 0 0 16px;">
+        Hola {user_name},
+      </p>
+      <p style="color: #2D2D2D; font-size: 16px;
+                line-height: 1.7; margin: 0 0 24px;">
+        Hoy no tuvimos nuestro momento. No pasa nada,
+        los días se complican.
+      </p>
+      <p style="color: #2D2D2D; font-size: 16px;
+                line-height: 1.7; margin: 0 0 32px;">
+        Si tenés unos minutos, estoy acá.
+      </p>
+      <div style="text-align: center;">
+        <a href="https://mindbridge-theta.vercel.app/chat"
+           style="background: #7C9A7E; color: white;
+                  padding: 16px 32px; border-radius: 8px;
+                  text-decoration: none; font-size: 16px;
+                  display: inline-block;">
+          Hablar con Soledad
+        </a>
+      </div>
+      <p style="color: #9CA3AF; font-size: 12px;
+                text-align: center; margin-top: 32px;">
+        — Soledad, por BRESO
+      </p>
+    </div>
+    """
+    try:
+        resend.Emails.send({
+            "from": "Soledad <soledad@breso.app>",
+            "to": [to_email],
+            "subject": f"Hola {user_name}, ¿cómo terminó el día?",
+            "html": html,
+        })
+        logger.info({"event": "email.reminder.sent", "to": to_email})
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "email.reminder.failed", "error": str(exc), "to": to_email})
+
+
 def send_welcome_email(to_email: str, user_name: str) -> None:
     """Send a welcome email from Soledad on first registration."""
     html_content = f"""

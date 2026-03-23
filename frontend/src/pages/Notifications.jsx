@@ -39,8 +39,8 @@ export default function Notifications() {
           {t('notifications.title')}
         </h1>
         {unreadCount > 0 && (
-          <button 
-            type="button" 
+          <button
+            type="button"
             onClick={markAllRead}
             className="text-sm font-medium text-sage hover:underline"
           >
@@ -55,11 +55,10 @@ export default function Notifications() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${
-              filter === f 
-                ? 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text shadow-sm' 
+            className={`flex-1 rounded-lg py-1.5 text-sm font-medium transition-colors ${filter === f
+                ? 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text shadow-sm'
                 : 'text-textdark/60 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'
-            }`}
+              }`}
           >
             {t(`notifications.filter_${f}`)}
           </button>
@@ -69,21 +68,27 @@ export default function Notifications() {
       {/* Notifications List */}
       <div className="space-y-3">
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="h-16 w-16 mb-4 rounded-full bg-sage/10 dark:bg-sage/20 flex items-center justify-center text-3xl">📭</div>
-            <p className="text-textdark/60 dark:text-dm-muted font-medium">
-              {t('notifications.empty')}
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="h-20 w-20 mb-5 rounded-full bg-sage/10 dark:bg-sage/20 flex flex-col items-center justify-center text-sage">
+              <svg className="w-10 h-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0112 21 8.25 8.25 0 016.038 7.048 8.287 8.287 0 009 9.601a8.983 8.983 0 013.361-6.866 8.21 8.21 0 003 2.48z" />
+              </svg>
+            </div>
+            <p className="text-textdark/70 dark:text-dm-text/80 font-medium text-lg">
+              Todo tranquilo por acá
+            </p>
+            <p className="text-textdark/50 dark:text-dm-muted text-sm mt-1">
+              No tenés notificaciones pendientes.
             </p>
           </div>
         ) : (
           filtered.map(notification => (
-            <div 
+            <div
               key={notification.id}
-              className={`flex gap-4 p-4 rounded-2xl border transition-colors ${
-                notification.read 
-                  ? 'bg-white dark:bg-dm-surface border-transparent shadow-soft' 
+              className={`flex gap-4 p-4 rounded-2xl border transition-colors ${notification.read
+                  ? 'bg-white dark:bg-dm-surface border-transparent shadow-soft'
                   : 'bg-sage/5 dark:bg-sage/10 border-sage/20'
-              }`}
+                }`}
             >
               <div className="flex-shrink-0 flex h-10 w-10 items-center justify-center rounded-full bg-softgray dark:bg-dm-border text-lg">
                 {notification.icon}
