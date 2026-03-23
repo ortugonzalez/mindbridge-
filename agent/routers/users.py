@@ -593,28 +593,3 @@ async def notify_patient(
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "family.notify_patient.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to send notification") from exc
-
-
-# ---------------------------------------------------------------------------
-# POST /users/me/push-subscription
-# ---------------------------------------------------------------------------
-
-
-@router.post("/me/push-subscription")
-async def save_push_subscription(
-    subscription: dict,
-    current_user=Depends(get_current_user),
-) -> dict:
-    """Save or update a Web Push subscription for the current user."""
-    supabase = get_supabase()
-    user_id = str(current_user.id)
-
-    try:
-        supabase.table("push_subscriptions").upsert(
-            {"user_id": user_id, "subscription": subscription}
-        ).execute()
-        logger.info({"event": "users.push_subscription.saved", "user_id": user_id})
-        return {"success": True}
-    except Exception as exc:  # noqa: BLE001
-        logger.error({"event": "users.push_subscription.error", "error": str(exc)})
-        raise HTTPException(status_code=500, detail="Failed to save push subscription") from exc
