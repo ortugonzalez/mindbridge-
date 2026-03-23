@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from agent.integrations.email_client import send_alert_email
 from agent.integrations.supabase_client import get_supabase
 from agent.integrations import x402_client
+from agent.integrations.defi_client import defi_cashback
 from agent.routers.users import get_current_user
 
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -17,11 +18,19 @@ logger = logging.getLogger("breso.payments")
 
 VALID_PLANS = {"essential", "premium"}
 
+PLAN_PRICES_USD = {
+    "essential": 5.00,
+    "premium": 12.00,
+}
+
 PLANS_CATALOGUE = [
     {
         "id": "free_trial",
         "name": "Prueba gratuita",
-        "price_usdt": 0,
+        "price_usd": 0.00,
+        "price_usdt": 0.00,
+        "display_price": "Gratis — 15 días",
+        "billing_note": None,
         "trial_days": 15,
         "features": [
             "1 check-in diario",
@@ -32,7 +41,10 @@ PLANS_CATALOGUE = [
     {
         "id": "essential",
         "name": "Esencial",
-        "price_usdt": 5,
+        "price_usd": 5.00,
+        "price_usdt": 5.00,
+        "display_price": "$5 USD / mes",
+        "billing_note": "Procesado en USDT sobre Celo blockchain",
         "trial_days": None,
         "features": [
             "Check-ins ilimitados",
@@ -44,7 +56,10 @@ PLANS_CATALOGUE = [
     {
         "id": "premium",
         "name": "Premium",
-        "price_usdt": 12,
+        "price_usd": 12.00,
+        "price_usdt": 12.00,
+        "display_price": "$12 USD / mes",
+        "billing_note": "Procesado en USDT sobre Celo blockchain",
         "trial_days": None,
         "features": [
             "Todo lo esencial",
@@ -72,8 +87,27 @@ class VerifyPaymentBody(BaseModel):
 
 @router.get("/plans")
 async def get_plans() -> dict:
-    """Return the available subscription plans with prices and features."""
+    """Return the available subscription plans with USD prices and features."""
     return {"plans": PLANS_CATALOGUE}
+
+
+# ---------------------------------------------------------------------------
+# GET /payments/usd-to-usdt
+# ---------------------------------------------------------------------------
+
+
+@router.get("/usd-to-usdt")
+async def usd_to_usdt(amount: float = 1.0) -> dict:
+    """
+    Convert a USD amount to USDT.
+    Uses a fixed 1:1 rate (Mento stablecoin peg).
+    """
+    rate = 1.0
+    return {
+        "usd": round(amount, 2),
+        "usdt": round(amount * rate, 2),
+        "rate": rate,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -86,7 +120,7 @@ async def create_subscription(
     body: CreateSubscriptionBody,
     current_user=Depends(get_current_user),
 ) -> dict:
-    """Create a Thirdweb Pay link for a subscription plan."""
+    """Create a Thirdweb Pay link for a subscription plan and store DeFi cashback promise."""
     if body.plan not in VALID_PLANS:
         raise HTTPException(
             status_code=422,
@@ -104,7 +138,44 @@ async def create_subscription(
         logger.error({"event": "payments.create.error", "error": str(exc)})
         raise HTTPException(status_code=502, detail="Failed to create payment link") from exc
 
-    return result
+    amount_usd = PLAN_PRICES_USD.get(body.plan, 0.0)
+    cashback = await defi_cashback.process_subscription_with_defi(
+        user_id=current_user.id,
+        amount_usd=amount_usd,
+        plan=body.plan,
+    )
+
+    return {**result, "cashback": cashback}
+
+
+# ---------------------------------------------------------------------------
+# GET /payments/my-cashback
+# ---------------------------------------------------------------------------
+
+
+@router.get("/my-cashback")
+async def my_cashback(current_user=Depends(get_current_user)) -> dict:
+    """Return pending cashback for the current user."""
+    supabase = get_supabase()
+    try:
+        resp = (
+            supabase.table("user_cashbacks")
+            .select("*")
+            .eq("user_id", current_user.id)
+            .eq("status", "pending")
+            .order("created_at", desc=True)
+            .execute()
+        )
+        rows = resp.data or []
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "payments.my_cashback.error", "error": str(exc)})
+        raise HTTPException(status_code=500, detail="Failed to fetch cashback") from exc
+
+    total_pending = sum(float(r.get("cashback_amount") or 0) for r in rows)
+    return {
+        "cashbacks": rows,
+        "total_pending_usd": round(total_pending, 4),
+    }
 
 
 # ---------------------------------------------------------------------------
