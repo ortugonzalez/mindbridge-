@@ -30,35 +30,17 @@ export default function Chat() {
 
   const buildOpening = () => {
     const h = new Date().getHours()
-    let timeGreeting = ''
-    let question = ''
+    let key = 'chat.opening_evening'
+    if (h >= 6 && h < 12) key = 'chat.opening_morning'
+    else if (h >= 12 && h < 20) key = 'chat.opening_afternoon'
 
-    if (h >= 6 && h < 12) {
-      timeGreeting = 'Buenos días'
-      question = '¿Cómo empezó el día para vos?'
-    } else if (h >= 12 && h < 20) {
-      timeGreeting = 'Buenas tardes'
-      question = '¿Cómo venís con el día?'
-    } else {
-      timeGreeting = 'Buenas noches'
-      question = '¿Cómo terminó el día?'
-    }
-
+    let text = t(key)
     if (userName) {
-      timeGreeting = `${timeGreeting}, ${userName}`
+      // Insert ", {name}" after the first greeting word cluster (before first period)
+      text = text.replace(/^([^.]+)\./, `$1, ${userName}.`)
     }
 
-    const text = `${timeGreeting}. ${question}`
-    const now = new Date().toISOString()
-
-    return [
-      {
-        from: 'breso',
-        role: 'soledad',
-        text,
-        timestamp: now,
-      },
-    ]
+    return [{ from: 'breso', role: 'soledad', text, timestamp: new Date().toISOString() }]
   }
 
   // Save messages to localStorage whenever they change (only after user interaction)
@@ -176,7 +158,7 @@ export default function Chat() {
       {showStreakBanner && (
         <div className="absolute top-2 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top fade-in duration-500 min-w-max">
           <div className="bg-sage text-white px-4 py-2 rounded-full shadow-md text-sm font-semibold flex items-center gap-2">
-            <span>🔥</span> Llevas {streakDays} días seguidos. Muy bien.
+            <span>🔥</span> {t('chat.streakBanner', { days: streakDays })}
           </div>
         </div>
       )}
@@ -192,7 +174,7 @@ export default function Chat() {
           <div className="text-base font-semibold text-textdark dark:text-dm-text flex items-center gap-2">
             Soledad
             {memoryExists && (
-              <span className="text-[10px] font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full border border-sage/20">Te recuerda 🌱</span>
+              <span className="text-[10px] font-medium text-sage bg-sage/10 px-2 py-0.5 rounded-full border border-sage/20">{t('chat.memoryBadge')}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 mt-0.5">

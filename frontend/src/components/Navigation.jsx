@@ -46,15 +46,15 @@ export default function Navigation() {
   const showBack = !NO_BACK_ROUTES.has(location.pathname)
 
   const links = [
-    { path: '/home', icon: '🏠', label: 'Inicio' },
-    { path: '/chat', icon: '💬', label: 'Hablar con Soledad' },
-    { path: '/dashboard', icon: '📊', label: 'Mi progreso' },
-    { path: '/profile', icon: '👤', label: 'Mi perfil' },
-    { path: '/notifications', icon: '🔔', label: 'Notificaciones' },
-    { path: '/contacts', icon: '🤝', label: 'Contactos de confianza' },
-    { path: '/payment', icon: '💳', label: 'Mi suscripción' },
-    { path: '/settings', icon: '⚙️', label: 'Configuración' },
-    { path: '/help', icon: '❓', label: 'Ayuda' }
+    { path: '/home', icon: '🏠', label: t('nav.home') },
+    { path: '/chat', icon: '💬', label: t('nav.chatSoledad') },
+    { path: '/dashboard', icon: '📊', label: t('nav.progress') },
+    { path: '/profile', icon: '👤', label: t('nav.profile') },
+    { path: '/notifications', icon: '🔔', label: t('nav.notifications') },
+    { path: '/contacts', icon: '🤝', label: t('nav.contacts') },
+    { path: '/payment', icon: '💳', label: t('nav.subscription') },
+    { path: '/settings', icon: '⚙️', label: t('nav.settings') },
+    { path: '/help', icon: '❓', label: t('nav.help') }
   ]
 
   const handleSignOut = async () => {
@@ -182,7 +182,7 @@ export default function Navigation() {
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
           >
             <span className="text-base">🚪</span>
-            <span>Cerrar sesión</span>
+            <span>{t('nav.signout')}</span>
           </button>
         </div>
       </div>
