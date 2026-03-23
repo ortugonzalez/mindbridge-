@@ -235,7 +235,8 @@ export default function Settings() {
   }
 
   const handleDelete = () => {
-    if (window.confirm(t('settings.confirm_delete'))) {
+    const input = window.prompt('Para confirmar, escribí la palabra ELIMINAR:')
+    if (input === 'ELIMINAR') {
       alert('Account marked for deletion')
     }
   }
@@ -284,17 +285,23 @@ export default function Settings() {
 
           <hr className="border-softgray dark:border-dm-border" />
 
-          {/* FIX 10: Daily reminder toggle */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium text-textdark dark:text-dm-text">{t('settings.reminderTitle')}</p>
-                {reminderEnabled && (
-                  <p className="text-xs text-textdark/60 dark:text-dm-muted mt-0.5">
-                    {t('settings.reminderDesc', { time: reminderTime })}
-                  </p>
-                )}
-              </div>
+          {/* Daily reminder toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-medium text-textdark dark:text-dm-text">Recordatorio diario</p>
+              <p className="text-xs text-textdark/60 dark:text-dm-muted mt-0.5">
+                Soledad te recordará a las {reminderTime}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {reminderEnabled && (
+                <input
+                  type="time"
+                  value={reminderTime}
+                  onChange={handleReminderTimeChange}
+                  className="bg-transparent text-sm font-medium text-sage outline-none cursor-pointer"
+                />
+              )}
               <button
                 type="button"
                 onClick={handleReminderToggle}
@@ -303,64 +310,40 @@ export default function Settings() {
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${reminderEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
-            {reminderEnabled && (
-              <div className="flex items-center gap-3">
-                <p className="text-sm text-textdark/70 dark:text-dm-muted">{t('settings.reminders')}</p>
-                <input
-                  type="time"
-                  value={reminderTime}
-                  onChange={handleReminderTimeChange}
-                  className="bg-softgray/50 dark:bg-dm-bg rounded-lg px-2 py-1 text-sm text-textdark dark:text-dm-text border border-softgray dark:border-dm-border outline-none"
-                />
-              </div>
-            )}
+          </div>
+        </div>
+        {/* Export Data */}
+        <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">
+          <div>
+            <p className="font-medium text-textdark dark:text-dm-text mb-3">Exportar historial</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={handleExportPersonal}
+                className="flex-1 rounded-xl border-2 border-sage text-sage text-sm font-semibold py-2.5 hover:bg-sage hover:text-white transition-colors"
+              >
+                Uso personal
+              </button>
+              <button
+                type="button"
+                onClick={handleExportProfessional}
+                className="flex-1 rounded-xl border-2 border-textdark/20 dark:border-dm-border text-textdark/70 dark:text-dm-muted text-sm font-semibold py-2.5 hover:border-textdark/40 dark:hover:border-dm-muted transition-colors"
+              >
+                Uso clínico
+              </button>
+            </div>
+            {exportMsg && <p className="text-xs text-sage font-medium mt-3">{t('settings.exportSuccess')}</p>}
           </div>
         </div>
 
-
-
-        {/* Danger Zone */}
-        <div className="bg-white dark:bg-dm-surface rounded-2xl p-6 shadow-soft space-y-4">
-          {/* PRIORITY 7: Export data with two choices */}
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setShowExportChoice(v => !v)}
-              className="w-full flex justify-between items-center py-2 text-textdark dark:text-dm-text hover:text-sage dark:hover:text-sage transition-colors font-medium"
-            >
-              {t('settings.export_data')}
-              <span>⬇️</span>
-            </button>
-            {showExportChoice && (
-              <div className="flex gap-2 pt-1">
-                <button
-                  type="button"
-                  onClick={handleExportPersonal}
-                  className="flex-1 rounded-xl border border-sage text-sage text-sm font-semibold py-2 hover:bg-sage hover:text-white transition-colors"
-                >
-                  {t('settings.exportPersonal')}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleExportProfessional}
-                  className="flex-1 rounded-xl border border-textdark/20 dark:border-dm-border text-textdark/70 dark:text-dm-muted text-sm font-semibold py-2 hover:bg-softgray dark:hover:bg-dm-border transition-colors"
-                >
-                  {t('settings.exportProfessional')}
-                </button>
-              </div>
-            )}
-            {exportMsg && (
-              <p className="text-xs text-sage font-medium">{t('settings.exportSuccess')}</p>
-            )}
-          </div>
-          <hr className="border-softgray dark:border-dm-border" />
+        {/* Delete Account */}
+        <div className="pt-2 pb-6 flex justify-center">
           <button
             type="button"
             onClick={handleDelete}
-            className="w-full flex justify-between items-center py-2 text-red-500 hover:text-red-700 transition-colors font-medium"
+            className="text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
           >
-            {t('settings.delete_account')}
-            <span>⚠️</span>
+            Eliminar mi cuenta
           </button>
         </div>
 

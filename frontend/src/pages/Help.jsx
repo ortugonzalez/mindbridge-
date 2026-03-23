@@ -32,11 +32,11 @@ export default function Help() {
 
       {/* Prominent Crisis Block */}
       <div className="bg-[#FEF2F2] dark:bg-[#3B1F1F] border-2 border-[#EF4444] rounded-2xl p-6 shadow-md">
-        <h2 className="text-xl font-black text-red-700 dark:text-red-400 mb-2 flex items-center gap-2">
-          <span>🚨</span> {t('help.crisis_main_title')}
+        <h2 className="text-xl font-black text-red-700 dark:text-red-400 mb-2 flex items-center gap-2 tracking-wide uppercase">
+          <span>🚨</span> LÍNEAS DE AYUDA
         </h2>
         <p className="text-sm text-red-800/80 dark:text-red-200/80 font-medium mb-6">
-          {t('help.crisis_subtitle')}
+          Disponibles 24 horas, gratuitas y confidenciales.
         </p>
 
         <div className="space-y-4">

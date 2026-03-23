@@ -34,6 +34,8 @@ export default function Profile() {
   const [phoneVal, setPhoneVal] = useState('')
   const [saving, setSaving] = useState(false)
   const [cashback, setCashback] = useState(null)
+  const [showSavedName, setShowSavedName] = useState(false)
+  const [showSavedPhone, setShowSavedPhone] = useState(false)
 
   useEffect(() => {
     let mounted = true
@@ -97,6 +99,8 @@ export default function Profile() {
     setProfile(p => ({ ...p, name: nameVal.trim() }))
     setSaving(false)
     setEditingName(false)
+    setShowSavedName(true)
+    setTimeout(() => setShowSavedName(false), 2000)
   }
 
   const savePhone = async () => {
@@ -114,6 +118,8 @@ export default function Profile() {
     setProfile(p => ({ ...p, phone: phoneVal.trim() }))
     setSaving(false)
     setEditingPhone(false)
+    setShowSavedPhone(true)
+    setTimeout(() => setShowSavedPhone(false), 2000)
   }
 
   const getTypeBadge = (type) => {
@@ -182,9 +188,12 @@ export default function Profile() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.name || '—'}</span>
-                <button type="button" onClick={() => setEditingName(true)} className="text-sm font-medium text-sage hover:underline">
-                  {t('profile.edit')}
+                <div className="flex items-center gap-2">
+                  <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.name || '—'}</span>
+                  {showSavedName && <span className="text-xs font-bold text-sage animate-fade-in">✅ Guardado</span>}
+                </div>
+                <button type="button" onClick={() => setEditingName(true)} className="p-1.5 rounded-lg text-textdark/50 hover:text-sage hover:bg-sage/10 transition-colors">
+                  ✏️
                 </button>
               </div>
             )}
@@ -235,9 +244,12 @@ export default function Profile() {
               </div>
             ) : (
               <div className="flex items-center justify-between">
-                <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.phone || '—'}</span>
-                <button type="button" onClick={() => setEditingPhone(true)} className="text-sm font-medium text-sage hover:underline">
-                  {t('profile.edit')}
+                <div className="flex items-center gap-2">
+                  <span className="text-base text-textdark dark:text-dm-text font-medium">{profile.phone || '—'}</span>
+                  {showSavedPhone && <span className="text-xs font-bold text-sage animate-fade-in">✅ Guardado</span>}
+                </div>
+                <button type="button" onClick={() => setEditingPhone(true)} className="p-1.5 rounded-lg text-textdark/50 hover:text-sage hover:bg-sage/10 transition-colors">
+                  ✏️
                 </button>
               </div>
             )}
@@ -245,25 +257,41 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Plan Card */}
       <div className="rounded-2xl border-2 border-sage overflow-hidden shadow-soft">
         <div className="bg-sage px-5 py-4">
-          <h3 className="text-lg font-bold text-white mb-1">{t('profile.current_plan')}</h3>
-          <p className="text-white/90 text-sm capitalize">{profile.plan}</p>
+          <h3 className="text-lg font-bold text-white mb-1">Tu plan actual</h3>
+          <p className="text-white/90 text-sm capitalize">{profile.plan === 'free_trial' || profile.plan === 'free' ? 'Prueba gratuita' : profile.plan}</p>
         </div>
         <div className="bg-white dark:bg-dm-surface p-5 space-y-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10 text-sage">⏳</span>
-            <p className="text-sm font-medium text-textdark dark:text-dm-text">
-              {t('profile.days_left', { days: profile.trialDaysRemaining })}
-            </p>
-          </div>
+          {profile.plan === 'free_trial' || profile.plan === 'free' ? (
+            <>
+              <div className="flex items-center gap-3 mb-1">
+                <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10 text-sage text-xl">⏳</span>
+                <p className="text-sm font-medium text-textdark dark:text-dm-text">
+                  Te quedan {profile.trialDaysRemaining} días de prueba
+                </p>
+              </div>
+              <div className="w-full h-2 bg-softgray dark:bg-dm-border rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-sage transition-all duration-700" 
+                  style={{ width: `${Math.min(100, (profile.trialDaysRemaining / 15) * 100)}%` }} 
+                />
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-sage/10 text-sage text-xl">📅</span>
+              <p className="text-sm font-medium text-textdark dark:text-dm-text">
+                Próxima renovación: 14 de Mayo, 2026
+              </p>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => navigate('/landing')}
-            className="w-full py-2.5 rounded-xl border-2 border-sage text-sage font-medium hover:bg-sage hover:text-white transition-colors"
+            className="w-full py-2.5 rounded-xl border-2 border-sage text-sage font-medium hover:bg-sage hover:text-white transition-colors mt-2"
           >
-            {t('profile.change_plan')}
+            Cambiar plan
           </button>
         </div>
       </div>
