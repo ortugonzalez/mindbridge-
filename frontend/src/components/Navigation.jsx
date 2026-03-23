@@ -48,13 +48,14 @@ export default function Navigation() {
   const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
 
   const allLinks = [
-    { path: '/home', icon: '🏠', label: t('nav.home'), roles: ['patient', 'family'] },
+    { path: '/home', icon: '🏠', label: t('nav.home'), roles: ['patient'] },
     { path: '/chat', icon: '💬', label: t('nav.chat'), roles: ['patient'] },
+    { path: '/family-dashboard', icon: '🏠', label: 'Panel de seguimiento', roles: ['family'] },
     { path: '/dashboard', icon: '📊', label: t('nav.progress'), roles: ['patient'] },
-    { path: '/family-dashboard', icon: '📊', label: t('nav.progress'), roles: ['family'] },
     { path: '/profile', icon: '👤', label: t('nav.profile'), roles: ['patient'] },
     { path: '/notifications', icon: '🔔', label: t('nav.notifications'), roles: ['patient'] },
     { path: '/contacts', icon: '🤝', label: t('nav.contacts'), roles: ['patient'] },
+    { path: '/invite-connect', icon: '🔗', label: 'Vincular cuenta', roles: ['patient', 'family'] },
     { path: '/payment', icon: '💳', label: t('nav.subscription'), roles: ['patient'] },
     { path: '/settings', icon: '⚙️', label: t('nav.settings'), roles: ['patient', 'family'] },
     { path: '/help', icon: '❓', label: t('nav.help'), roles: ['patient', 'family'] }

@@ -13,12 +13,6 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
 }
 
-function getGreetingKey() {
-  const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'home.greeting_morning';
-  if (hour >= 12 && hour < 20) return 'home.greeting_afternoon';
-  return 'home.greeting_evening';
-}
 
 function getTimeColor() {
   const hour = new Date().getHours()
@@ -41,7 +35,22 @@ function getDayOfYear() {
 }
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation()
+  const lang = i18n.language
+
+  const getGreeting = () => {
+    const hour = new Date().getHours()
+    if (lang === 'en') {
+      if (hour < 12) return `Good morning`
+      if (hour < 20) return `Good afternoon`
+      return `Good evening`
+    } else {
+      if (hour < 12) return `Buenos días`
+      if (hour < 20) return `Buenas tardes`
+      return `Buenas noches`
+    }
+  }
+
   const microcopy = t('home.microcopy', { returnObjects: true });
   const getDailyMicrocopy = () => Array.isArray(microcopy) ? microcopy[getDayOfYear() % 7] : '';
   const navigate = useNavigate();
@@ -125,7 +134,7 @@ export default function Home() {
     }
   };
 
-  const greeting = t(getGreetingKey());
+  const greeting = getGreeting();
 
   return (
     <div className={`animate-fade-in-page space-y-8 pb-32 min-h-screen transition-colors duration-700 ${getTimeTint()}`}>
