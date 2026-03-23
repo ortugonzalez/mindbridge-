@@ -26,7 +26,7 @@ export default function Splash({ onComplete }) {
     }}>
       <img
         src="/logo.svg"
-        alt="BRESO"
+        alt="BRENSO"
         style={{
           width: 'min(200px, 50vw)',
           height: 'auto',

@@ -190,7 +190,7 @@ export default function SignIn() {
       <div className="text-center space-y-1 mb-4 flex flex-col items-center w-full">
         <img 
           src={theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'} 
-          alt="BRESO" 
+          alt="BRENSO" 
           style={{ width: 120, height: 'auto', margin: '0 auto', display: 'block' }}
         />
         <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase pt-2">por Soledad</p>

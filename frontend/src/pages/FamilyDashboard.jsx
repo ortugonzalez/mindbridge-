@@ -36,14 +36,14 @@ export default function FamilyDashboard() {
           .value { font-size: 16px; margin-bottom: 8px; }
           hr { border: none; border-top: 1px solid #E5E7EB; margin: 20px 0; }
         </style></head><body>
-          <h1>🌱 Informe de bienestar — BRESO</h1>
+          <h1>🌱 Informe de bienestar — BRENSO</h1>
           <p><em>Generado por Soledad para acompañamiento familiar</em></p>
           <div class="label">Semana</div><div class="value">${report.week || '—'}</div>
           <div class="label">Nivel de alerta</div><div class="value">${report.alert_level || 'verde'}</div>
           <div class="label">Resumen</div><div class="value">${report.summary || 'Sin datos disponibles.'}</div>
           <div class="label">Recomendación</div><div class="value">${report.recommendation || '—'}</div>
           <hr/>
-          <p style="color:#9CA3AF;font-size:12px;">Generado por Soledad — BRESO. Este informe no constituye un diagnóstico clínico.</p>
+          <p style="color:#9CA3AF;font-size:12px;">Generado por Soledad — BRENSO. Este informe no constituye un diagnóstico clínico.</p>
         </body></html>`
       const w = window.open('', '_blank')
       w.document.write(content)

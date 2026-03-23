@@ -10,7 +10,7 @@ const DesignSystemPreview = () => {
   return (
     <div className="p-10 space-y-10 min-h-screen bg-[var(--color-background)]">
       <header className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-[var(--color-text)]">BRESO Design System</h1>
+        <h1 className="text-3xl font-bold text-[var(--color-text)]">BRENSO Design System</h1>
         <div className="flex items-center space-x-4">
           <span className="text-sm font-medium text-[var(--color-text-muted)]">Toggle Theme</span>
           <Toggle />

@@ -24,11 +24,11 @@
   <!-- Small heart/sprout at chest -->
   <circle cx="28" cy="38" r="3" fill="#A8C5A0"/>
   
-  <!-- BRESO text -->
+  <!-- BRENSO text -->
   <text x="60" y="38" 
         font-family="system-ui,-apple-system,sans-serif"
         font-size="26" font-weight="700" 
-        fill="#2D2D2D" letter-spacing="2">BRESO</text>
+        fill="#2D2D2D" letter-spacing="2">BRENSO</text>
   <!-- por Soledad tagline -->
   <text x="62" y="56"
         font-family="system-ui,-apple-system,sans-serif"

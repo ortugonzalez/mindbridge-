@@ -43,7 +43,7 @@ export default function Landing() {
       <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#FAF8F5] to-[#F0F5F0] dark:from-[#2D3B2D] dark:to-[#1F2E1F]">
         <img
           src={theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'}
-          alt="BRESO"
+          alt="BRENSO"
           style={{ width: 160, height: 'auto', margin: '0 auto 24px', display: 'block' }}
         />
 
