@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import secrets
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -293,3 +294,84 @@ async def accept_invite(token: str, current_user=Depends(get_current_user)) -> d
         "family_user_name": family_name,
         "message": "Invitación aceptada exitosamente",
     }
+
+
+# ---------------------------------------------------------------------------
+# POST /auth/setup-profile
+# ---------------------------------------------------------------------------
+
+
+@router.post("/setup-profile")
+async def setup_profile(
+    data: dict,
+    current_user=Depends(get_current_user),
+) -> dict:
+    """
+    Called by the frontend after magic-link login completes.
+    Upserts the user row with user_type, display_name, phone_number.
+    Accepts an invite_token to link a family relationship.
+    """
+    supabase = get_supabase()
+    user_id = str(current_user.id)
+    email = getattr(current_user, "email", "") or ""
+
+    user_type = data.get("user_type", "patient")
+    display_name = data.get("display_name", "")
+    phone = data.get("phone_number", "")
+    invite_token = data.get("invite_token", "")
+
+    existing = (
+        supabase.table("users")
+        .select("id, display_name")
+        .eq("id", user_id)
+        .execute()
+    )
+
+    if not existing.data:
+        row: dict = {
+            "id": user_id,
+            "email": email,
+            "user_type": user_type,
+            "plan": "free_trial",
+            "language": "es",
+            "timezone": "America/Argentina/Buenos_Aires",
+            "checkin_time_preference": "09:00",
+            "baseline_ready": False,
+            "trial_start": datetime.now(timezone.utc).isoformat(),
+        }
+        if display_name:
+            row["display_name"] = display_name
+        if phone:
+            row["phone_number"] = phone
+        supabase.table("users").insert(row).execute()
+        logger.info({"event": "auth.setup_profile.created", "user_id": user_id})
+    else:
+        update: dict = {"user_type": user_type}
+        update["display_name"] = display_name or existing.data[0].get("display_name") or ""
+        if phone:
+            update["phone_number"] = phone
+        supabase.table("users").update(update).eq("id", user_id).execute()
+        logger.info({"event": "auth.setup_profile.updated", "user_id": user_id})
+
+    if invite_token:
+        try:
+            rel = (
+                supabase.table("user_relationships")
+                .select("id, related_user_id")
+                .eq("invite_token", invite_token)
+                .execute()
+            )
+            if rel.data:
+                supabase.table("user_relationships").update(
+                    {"patient_id": user_id, "status": "active"}
+                ).eq("id", rel.data[0]["id"]).execute()
+                logger.info({
+                    "event": "auth.setup_profile.invite_accepted",
+                    "user_id": user_id,
+                    "family_user_id": rel.data[0]["related_user_id"],
+                })
+                return {"success": True, "linked": True, "message": "Cuenta vinculada exitosamente"}
+        except Exception as exc:  # noqa: BLE001
+            logger.error({"event": "auth.setup_profile.invite_error", "error": str(exc)})
+
+    return {"success": True, "linked": False}

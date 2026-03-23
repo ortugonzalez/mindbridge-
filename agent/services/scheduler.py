@@ -358,6 +358,112 @@ def celebrate_streaks() -> None:
         logger.error({"event": "scheduler.celebrate_streaks_failed", "error": str(exc)})
 
 
+def send_weekly_family_summary() -> None:
+    """
+    Runs every Monday at 09:00 UTC.
+    Sends a weekly wellness summary to all active family contacts.
+    """
+    try:
+        supabase = get_supabase()
+
+        relationships_res = (
+            supabase.table("user_relationships")
+            .select("patient_id, related_user_id")
+            .eq("status", "active")
+            .eq("relationship_type", "family")
+            .execute()
+        )
+        if not relationships_res.data:
+            return
+
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+
+        for rel in relationships_res.data:
+            try:
+                patient_id = rel.get("patient_id")
+                family_id = rel.get("related_user_id")
+                if not patient_id or not family_id:
+                    continue
+
+                patient_res = (
+                    supabase.table("users")
+                    .select("display_name")
+                    .eq("id", patient_id)
+                    .execute()
+                )
+                family_res = (
+                    supabase.table("users")
+                    .select("display_name, email")
+                    .eq("id", family_id)
+                    .execute()
+                )
+                if not patient_res.data or not family_res.data:
+                    continue
+
+                patient_name = patient_res.data[0].get("display_name") or "tu ser querido"
+                family_email = family_res.data[0].get("email")
+                family_name = family_res.data[0].get("display_name") or "Familiar"
+
+                if not family_email:
+                    continue
+
+                checkins_res = (
+                    supabase.table("check_ins")
+                    .select("created_at, tone_score")
+                    .eq("user_id", patient_id)
+                    .gte("created_at", week_ago)
+                    .execute()
+                )
+                count = len(checkins_res.data)
+                avg_tone = (
+                    sum(c.get("tone_score", 0.5) for c in checkins_res.data) / count
+                    if count > 0
+                    else 0.5
+                )
+
+                if avg_tone > 0.6:
+                    summary = (
+                        f"{patient_name} tuvo una semana estable con {count} check-ins. "
+                        "Sin señales de alerta."
+                    )
+                    level = "yellow"
+                elif avg_tone > 0.4:
+                    summary = (
+                        f"{patient_name} tuvo una semana con altibajos. "
+                        f"Completó {count} check-ins."
+                    )
+                    level = "yellow"
+                else:
+                    summary = (
+                        f"{patient_name} puede haber tenido una semana difícil. "
+                        f"Solo completó {count} check-ins."
+                    )
+                    level = "orange"
+
+                send_alert_email(
+                    to_email=family_email,
+                    to_name=family_name,
+                    patient_name=patient_name,
+                    alert_level=level,
+                    message=summary,
+                )
+                logger.info({
+                    "event": "scheduler.weekly_family_summary_sent",
+                    "patient_id": patient_id,
+                    "family_email": family_email,
+                    "checkin_count": count,
+                    "avg_tone": avg_tone,
+                })
+            except Exception as exc:  # noqa: BLE001
+                logger.error({
+                    "event": "scheduler.weekly_family_summary_rel_error",
+                    "error": str(exc),
+                })
+
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "scheduler.weekly_family_summary_failed", "error": str(exc)})
+
+
 def start() -> None:
     """Start the scheduler. Called from main.py lifespan."""
     scheduler.add_job(
@@ -388,6 +494,15 @@ def start() -> None:
         hour=10,
         minute=0,
         id="celebrate_streaks",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        send_weekly_family_summary,
+        "cron",
+        day_of_week="mon",
+        hour=9,
+        minute=0,
+        id="weekly_family_summary",
         replace_existing=True,
     )
     scheduler.start()
