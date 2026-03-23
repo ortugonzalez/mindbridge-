@@ -7,7 +7,6 @@ import { useTheme } from '../contexts/ThemeContext'
 
 const USER_NAME_KEY = 'breso_user_name'
 const RESEND_COOLDOWN = 60 // seconds
-const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)
 
 export default function SignIn() {
   const { t } = useTranslation()
@@ -80,8 +79,8 @@ export default function SignIn() {
 
   const handleSignIn = async (e) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) return
-    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
+    if (!email) { setError('Ingresá tu email'); return }
+    if (!password.trim()) return
     setLoading(true)
     setError('')
     try {
@@ -102,8 +101,8 @@ export default function SignIn() {
 
   const handleRegister = async (e) => {
     e.preventDefault()
-    if (!email.trim() || !password.trim()) return
-    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
+    if (!email) { setError('Ingresá tu email'); return }
+    if (!password.trim()) return
     if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
     setLoading(true)
     setError('')
@@ -136,8 +135,7 @@ export default function SignIn() {
 
   const handleMagicLink = async (e) => {
     e?.preventDefault()
-    if (!email.trim()) return
-    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
+    if (!email) { setError('Ingresá tu email'); return }
     setLoading(true)
     setError('')
     try {
