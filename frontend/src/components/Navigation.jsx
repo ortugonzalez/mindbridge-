@@ -55,7 +55,7 @@ export default function Navigation() {
     { path: '/profile', icon: '👤', label: t('nav.profile'), roles: ['patient'] },
     { path: '/notifications', icon: '🔔', label: t('nav.notifications'), roles: ['patient'] },
     { path: '/contacts', icon: '🤝', label: t('nav.contacts'), roles: ['patient'] },
-    { path: '/invite-connect', icon: '🔗', label: 'Vincular cuenta', roles: ['patient', 'family'] },
+    { path: '/invite-connect', icon: '🔗', label: t('invite.nav_label'), roles: ['patient', 'family'] },
     { path: '/payment', icon: '💳', label: t('nav.subscription'), roles: ['patient'] },
     { path: '/settings', icon: '⚙️', label: t('nav.settings'), roles: ['patient', 'family'] },
     { path: '/help', icon: '❓', label: t('nav.help'), roles: ['patient', 'family'] }

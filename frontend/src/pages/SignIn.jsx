@@ -43,11 +43,10 @@ export default function SignIn() {
 
   useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current) }, [])
 
-  // FIX 9: fetch user_type from backend and route accordingly
   const afterLogin = async (user) => {
     const name = user?.user_metadata?.display_name || user?.user_metadata?.name || ''
     if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
-    
+
     try { localStorage.setItem('breso_user_type', userTypeParam) } catch {}
 
     try {
@@ -55,10 +54,10 @@ export default function SignIn() {
       const userType = res.data?.user_type || res.data?.userType
       if (userType) { try { localStorage.setItem('breso_user_type', userType) } catch {} }
     } catch {}
-    
+
     const finalUserType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
     const hasName = (() => { try { return !!localStorage.getItem(USER_NAME_KEY) } catch { return false } })()
-    
+
     if (!hasName) {
       if (finalUserType === 'family') navigate('/family-onboarding', { replace: true })
       else navigate('/onboarding', { replace: true })
@@ -70,16 +69,16 @@ export default function SignIn() {
 
   const translateError = (err) => {
     const msg = err?.message?.toLowerCase() || ''
-    if (msg.includes('invalid login credentials')) return 'Contraseña incorrecta o cuenta no encontrada'
-    if (msg.includes('password')) return 'Contraseña incorrecta'
-    if (msg.includes('email')) return 'Revisá el email ingresado'
-    if (msg.includes('not found')) return 'No encontramos esa cuenta'
-    return 'Ocurrió un error. Intentalo de nuevo.'
+    if (msg.includes('invalid login credentials')) return t('errors.generic')
+    if (msg.includes('password')) return t('errors.generic')
+    if (msg.includes('email')) return t('signin.error_email_empty')
+    if (msg.includes('not found')) return t('errors.generic')
+    return t('errors.generic')
   }
 
   const handleSignIn = async (e) => {
     e.preventDefault()
-    if (!email) { setError('Ingresá tu email'); return }
+    if (!email || !email.trim()) { setError(t('signin.error_email_empty')); return }
     if (!password.trim()) return
     setLoading(true)
     setError('')
@@ -99,54 +98,50 @@ export default function SignIn() {
     }
   }
 
-  const handleRegister = async (e) => {
-    e?.preventDefault()
-    if (!email) { setError('Ingresá tu email'); return }
-    if (!password) { setError('Ingresá una contraseña'); return }
-    if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
-
+  const handleRegister = async () => {
+    if (!email || !email.trim()) {
+      setError(t('signin.error_email_empty'))
+      return
+    }
+    if (!password) {
+      setError(t('signin.error_password_empty'))
+      return
+    }
+    if (password !== confirmPassword) {
+      setError(t('signin.error_password_match'))
+      return
+    }
     setLoading(true)
     setError('')
 
-    // First try signing in — account might already exist
-    const { data: existingData, error: existingError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password,
-    })
-    if (!existingError && existingData.session) {
-      const token = existingData.session.access_token
-      if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
-      navigate('/onboarding')
-      return
-    }
-
-    // Create account
     const { error } = await supabase.auth.signUp({
       email: email.trim(),
       password: password,
-      options: { emailRedirectTo: window.location.origin },
     })
-    if (error) { setError(error.message); setLoading(false); return }
 
-    // Immediately sign in after signup
-    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+    if (error) {
+      setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password: password,
     })
+
     if (!signInError) {
-      const token = signInData.session?.access_token
-      if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
       navigate('/onboarding')
     } else {
-      setError('Cuenta creada. Iniciá sesión.')
       setTab('password')
+      setError(t('signin.account_created'))
     }
     setLoading(false)
   }
 
   const handleMagicLink = async (e) => {
     e?.preventDefault()
-    if (!email) { setError('Ingresá tu email'); return }
+    if (!email || !email.trim()) { setError(t('signin.error_email_empty')); return }
     setLoading(true)
     setError('')
     try {
@@ -201,22 +196,16 @@ export default function SignIn() {
     <div className="flex flex-col items-center space-y-6 animate-fade-up pt-4">
       {/* Logo */}
       <div className="text-center space-y-1 mb-4 flex flex-col items-center w-full">
-        <img 
-          src={theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'} 
-          alt="BRENSO" 
+        <img
+          src={theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'}
+          alt="BRENSO"
           style={{ width: 120, height: 'auto', margin: '0 auto', display: 'block' }}
         />
         <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase pt-2">por Soledad</p>
       </div>
 
-      <div className="text-center space-y-1 mb-2 px-4 max-w-sm">
-        <h2 className="text-lg font-bold text-textdark dark:text-dm-text leading-snug">
-          Ingresá tu email para continuar
-        </h2>
-      </div>
-
       <div className="w-full rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-soft space-y-5">
-        
+
         {/* ── Tabs ── */}
         {!magicSent && (
           <div className="flex w-full mb-2 border-b border-softgray dark:border-dm-border">
@@ -224,19 +213,19 @@ export default function SignIn() {
               onClick={() => { setTab('magic'); setError('') }}
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'magic' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
             >
-              Enlace mágico
+              {t('signin.tab_magic')}
             </button>
             <button
               onClick={() => { setTab('password'); setError('') }}
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'password' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
             >
-              Con contraseña
+              {t('signin.tab_password')}
             </button>
             <button
               onClick={() => { setTab('register'); setError('') }}
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'register' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
             >
-              Crear cuenta
+              {t('signin.tab_register')}
             </button>
           </div>
         )}
@@ -248,16 +237,16 @@ export default function SignIn() {
               type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              placeholder={t('signin.email_placeholder')}
               className={inputCls}
               autoComplete="email"
               autoFocus
               disabled={loading}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
-            
+
             <button type="submit" disabled={loading || !email.trim()} className={btnCls}>
-              {loading ? t('common.loading') : 'Enviar enlace'}
+              {loading ? t('common.loading') : t('signin.send_link')}
             </button>
           </form>
         )}
@@ -269,7 +258,7 @@ export default function SignIn() {
               type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              placeholder={t('signin.email_placeholder')}
               className={inputCls}
               autoComplete="email"
               disabled={loading}
@@ -278,7 +267,7 @@ export default function SignIn() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña"
+              placeholder={t('signin.password_placeholder')}
               className={inputCls}
               autoComplete="current-password"
               disabled={loading}
@@ -286,19 +275,19 @@ export default function SignIn() {
             {error && <p className="text-sm text-red-500">{error}</p>}
 
             <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
-              {loading ? t('common.loading') : 'Iniciar sesión'}
+              {loading ? t('common.loading') : t('signin.signin_btn')}
             </button>
           </form>
         )}
 
         {/* ── Register form ── */}
         {tab === 'register' && !magicSent && (
-          <form onSubmit={handleRegister} className="space-y-4">
+          <div className="space-y-4">
             <input
               type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
+              placeholder={t('signin.email_placeholder')}
               className={inputCls}
               autoComplete="email"
               autoFocus
@@ -308,7 +297,7 @@ export default function SignIn() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Contraseña"
+              placeholder={t('signin.password_placeholder')}
               className={inputCls}
               autoComplete="new-password"
               disabled={loading}
@@ -317,30 +306,33 @@ export default function SignIn() {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirmar contraseña"
+              placeholder={t('signin.confirm_placeholder')}
               className={inputCls}
               autoComplete="new-password"
               disabled={loading}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
 
-            <button type="submit" disabled={loading || !email.trim() || !password.trim() || !confirmPassword.trim()} className={btnCls}>
-              {loading ? t('common.loading') : 'Crear cuenta'}
+            <button
+              type="button"
+              onClick={handleRegister}
+              disabled={loading || !email.trim() || !password.trim() || !confirmPassword.trim()}
+              className={btnCls}
+            >
+              {loading ? t('common.loading') : t('signin.register_btn')}
             </button>
-          </form>
+          </div>
         )}
-
-
 
         {/* ── Magic link / confirmation sent ── */}
         {magicSent && (
           <div className="space-y-5">
             <div className="text-center space-y-2 py-2">
               <p className="text-base font-semibold text-textdark dark:text-dm-text">
-                Te enviamos un enlace a <span className="text-sage">{email}</span> ✉️
+                {t('signin.link_sent')} <span className="text-sage">{email}</span> ✉️
               </p>
               <p className="text-sm text-textdark/55 dark:text-dm-muted leading-relaxed mt-1">
-                Revisá tu bandeja (y el spam)
+                {t('signin.check_spam')}
               </p>
             </div>
 
@@ -358,21 +350,20 @@ export default function SignIn() {
               ].join(' ')}
             >
               {resendCountdown > 0
-                ? `Reenviar en ${resendCountdown}s`
-                : 'Reenviar'}
+                ? t('signin.resend_wait', { seconds: resendCountdown })
+                : t('signin.resend')}
             </button>
 
-            {/* Change email link */}
             <button
               type="button"
               onClick={resetToEmail}
               className="w-full text-sm text-textdark/50 dark:text-dm-muted hover:text-sage transition py-1"
             >
-              Cambiar email
+              {t('signin.change_email')}
             </button>
 
             <p className="text-center text-xs text-textdark/35 dark:text-dm-muted">
-              El enlace expira en 24 horas.
+              {t('signin.link_expires')}
             </p>
           </div>
         )}

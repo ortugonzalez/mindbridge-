@@ -196,11 +196,7 @@ export default function Home() {
       {/* Main Card */}
       <div className="bg-white dark:bg-[#3D4F3D] rounded-[24px] p-6 shadow-sm border border-softgray/50 dark:border-dm-border mx-2">
         <h2 className="text-xl font-bold text-center text-textdark dark:text-dm-text mb-6">
-          {streak === 0 ? (
-            <>¡Bienvenido/a a BRENSO, {userName}! 🌱<br/>Soledad está lista para escucharte.</>
-          ) : (
-            <>Hola de nuevo, {userName} 👋<br/>Llevas {streak} {streak === 1 ? 'día' : 'días'} con Soledad.</>
-          )}
+          {greeting}, {userName}
         </h2>
         <div className="animate-[pulse_3s_ease-in-out_infinite]">
           <button

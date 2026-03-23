@@ -35,13 +35,12 @@ export function useSession() {
           try { localStorage.setItem('breso_token', data.session.access_token) } catch {}
           const name = localStorage.getItem('breso_user_name')
           const userType = localStorage.getItem('breso_user_type') || 'patient'
-          
           if (!name) {
-            if (userType === 'family') navigate('/family-onboarding', { replace: true })
-            else navigate('/onboarding', { replace: true })
+            navigate('/onboarding', { replace: true })
+          } else if (userType === 'family') {
+            navigate('/family-dashboard', { replace: true })
           } else {
-            if (userType === 'family') navigate('/family-dashboard', { replace: true })
-            else navigate('/home', { replace: true })
+            navigate('/home', { replace: true })
           }
           return
         }
