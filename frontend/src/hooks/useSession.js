@@ -33,7 +33,12 @@ export function useSession() {
         window.history.replaceState({}, '', '/')
         if (data?.session) {
           try { localStorage.setItem('breso_token', data.session.access_token) } catch {}
-          redirectUser()
+          const name = localStorage.getItem('breso_user_name')
+          if (name) {
+            navigate('/home', { replace: true })
+          } else {
+            navigate('/onboarding', { replace: true })
+          }
           return
         }
       }

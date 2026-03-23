@@ -99,7 +99,8 @@ export default function SignIn() {
     }
   }
 
-  const handleRegister = async () => {
+  const handleRegister = async (e) => {
+    e?.preventDefault()
     if (!email) { setError('Ingresá tu email'); return }
     if (!password) { setError('Ingresá una contraseña'); return }
     if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
@@ -114,7 +115,22 @@ export default function SignIn() {
 
     if (error) {
       setError(error.message)
+      setLoading(false)
+      return
+    }
+
+    // User created — sign in immediately (email confirmation OFF)
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password,
+    })
+
+    if (signInError) {
+      setError('Cuenta creada. Iniciá sesión.')
+      setTab('password')
     } else {
+      const token = signInData.session?.access_token
+      if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
       navigate('/onboarding')
     }
     setLoading(false)
