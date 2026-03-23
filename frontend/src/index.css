@@ -33,6 +33,8 @@
 
 body {
   margin: 0;
+  padding: 0;
+  min-height: 100vh;
   background: var(--color-background);
   color: var(--color-text);
   font-family: var(--sans);
@@ -41,6 +43,7 @@ body {
 
 * {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .dark {
@@ -57,19 +60,17 @@ body {
   --color-ghost-hover: rgba(124, 154, 126, 0.2);
 }
 
-.dark body {
-  background: var(--color-background);
+.dark body, body.dark {
+  background: #2D3B2D;
   color: var(--color-text);
 }
 
+/* Mobile: full width, natural scroll */
 #root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  margin: 0 auto;
-  text-align: left;
+  min-height: 100vh;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 p {
@@ -142,24 +143,41 @@ textarea::placeholder {
   border-right-color: transparent;
 }
 
-/* Desktop layout */
+/* Desktop: centered app frame */
 @media (min-width: 768px) {
-  /* Center content with max-width */
-  #root {
-    max-width: 480px;
-    margin: 0 auto;
-    min-height: 100vh;
-    box-shadow: 0 0 40px rgba(0,0,0,0.1);
-    position: relative;
-  }
-  
   body {
-    background: #E8EDE8;  /* Sage green bg outside the app */
+    background: #E8EDE8;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
   }
   
   body.dark {
-    background: #1A1F1A;
+    background: #1A2A1A;
   }
+  
+  #root {
+    width: 430px;
+    min-height: 100vh;
+    max-width: 430px;
+    background: #FAF8F5;
+    box-shadow: 0 0 60px rgba(0,0,0,0.15);
+    position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  
+  #root.dark {
+    background: #2D3B2D;
+  }
+}
+
+/* Ensure ALL pages fill the container */
+.page-container {
+  width: 100%;
+  min-height: 100vh;
+  overflow-y: auto;
+  padding-bottom: 80px;
 }
 
 @keyframes thinking {

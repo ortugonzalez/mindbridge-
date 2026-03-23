@@ -46,9 +46,16 @@ function App() {
   )
 }
 
+import { useEffect } from 'react'
+
 // Inner component so useSession can use useNavigate (requires Router context)
 function AppRoutes() {
+  const { theme } = useTheme()
   useSession() // sets up global auth state listener + redirects
+
+  useEffect(() => {
+    document.getElementById('root')?.classList.toggle('dark', theme === 'dark')
+  }, [theme])
 
   return (
     <div className="min-h-dvh bg-[#FAF8F5] dark:bg-dm-bg transition-colors duration-200">
