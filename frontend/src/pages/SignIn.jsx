@@ -174,11 +174,14 @@ export default function SignIn() {
   return (
     <div className="flex flex-col items-center space-y-6 animate-fade-up pt-4">
       {/* Logo */}
-      <div className="text-center space-y-1">
-        <div className="mx-auto h-14 w-14 rounded-full bg-sage flex items-center justify-center text-white text-2xl font-bold shadow-soft">
-          <img src="/logo.svg" alt="Breso" className="w-8 h-8 filter brightness-0 invert" onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerText='S' }} />
-        </div>
-        <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase mt-2">por BRESO</p>
+      <div className="text-center space-y-1 mb-4 flex flex-col items-center w-full">
+        <svg viewBox="0 0 240 70" xmlns="http://www.w3.org/2000/svg" width="160" style={{display:'block',margin:'0 auto'}}>
+          <circle cx="28" cy="35" r="22" fill="#7C9A7E" opacity="0.9"/>
+          <circle cx="48" cy="35" r="22" fill="#A8C5A0" opacity="0.7"/>
+          <ellipse cx="38" cy="35" rx="8" ry="16" fill="#7C9A7E" opacity="0.5"/>
+          <text x="82" y="41" font-family="system-ui,-apple-system,sans-serif" font-size="28" font-weight="700" fill="#2D2D2D" className="dark:fill-[#E8EDE8]" letter-spacing="3">BRESO</text>
+        </svg>
+        <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase pt-2">por Soledad</p>
       </div>
 
       <div className="text-center space-y-1 mb-2 px-4 max-w-sm">

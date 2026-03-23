@@ -139,3 +139,23 @@ textarea::placeholder {
   border-color: #7C9A7E;
   border-right-color: transparent;
 }
+
+/* Desktop layout */
+@media (min-width: 768px) {
+  /* Center content with max-width */
+  #root {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    box-shadow: 0 0 40px rgba(0,0,0,0.1);
+    position: relative;
+  }
+  
+  body {
+    background: #E8EDE8;  /* Sage green bg outside the app */
+  }
+  
+  body.dark {
+    background: #1A1F1A;
+  }
+}

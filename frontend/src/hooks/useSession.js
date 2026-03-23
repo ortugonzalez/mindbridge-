@@ -37,17 +37,6 @@ export function useSession() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Handle magic link hash fragment (#access_token=...) on page load
-    const hash = window.location.hash
-    if (hash && hash.includes('access_token')) {
-      supabase.auth.getSession().then(({ data: { session: s } }) => {
-        if (s) {
-          window.history.replaceState(null, '', window.location.pathname)
-          navigate(resolveRedirect(), { replace: true })
-        }
-      })
-    }
-
     // FIX 1: On mount, if already logged in and on auth page → redirect
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s)
