@@ -100,7 +100,7 @@ export default function Payment() {
         setPaymentSuccess(true)
       }
     } catch (err) {
-      setError('Error al procesar el pago: ' + (err.message || 'inténtalo de nuevo'))
+      setError('El pago por Celo Blockchain requiere tener instalada la wallet de MetaMask u Opera Crypto Browser en tu dispositivo.')
     } finally {
       setLoading(false)
     }

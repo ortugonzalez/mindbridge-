@@ -58,13 +58,14 @@ export default function Contacts() {
       phone: '',
       status: 'pending',
     }
+    const updated = [...contacts, newContact]
+    setContacts(updated)
+    try { localStorage.setItem('breso_trusted_contacts', JSON.stringify(updated)) } catch { }
+
     try {
       await inviteContact({ email: form.email, name: form.name, relationship: form.relationship })
       alert(t('contacts.inviteSent', { email: form.email }))
     } catch { }
-    const updated = [...contacts, newContact]
-    setContacts(updated)
-    safeSaveContacts(updated)
     setSaving(false)
     setShowAddModal(false)
     setForm({ name: '', email: '', relationship: '' })

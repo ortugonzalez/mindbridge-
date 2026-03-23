@@ -117,12 +117,20 @@ export default function Onboarding() {
                 placeholder="Tu nombre o apodo"
                 autoComplete="given-name"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === 'Enter' && userName.trim()) setStep(2) }}
+                onKeyDown={(e) => { 
+                  if (e.key === 'Enter' && userName.trim()) {
+                    safeSet(USER_NAME_KEY, userName.trim())
+                    setStep(2)
+                  }
+                }}
               />
               <button
                 type="button"
                 disabled={!userName.trim()}
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  safeSet(USER_NAME_KEY, userName.trim())
+                  setStep(2)
+                }}
                 className={btnPrimary}
               >
                 Continuar
@@ -158,10 +166,18 @@ export default function Onboarding() {
                   type="tel"
                   placeholder="Tu número"
                   autoFocus
-                  onKeyDown={(e) => { if (e.key === 'Enter' && userPhone.trim()) setStep(3) }}
+                  onKeyDown={(e) => { 
+                    if (e.key === 'Enter' && userPhone.trim()) {
+                      safeSet(USER_PHONE_KEY, phoneCountry + userPhone.trim())
+                      setStep(3)
+                    } 
+                  }}
                 />
               </div>
-              <button type="button" disabled={!userPhone.trim()} onClick={() => setStep(3)} className={btnPrimary}>
+              <button type="button" disabled={!userPhone.trim()} onClick={() => {
+                safeSet(USER_PHONE_KEY, phoneCountry + userPhone.trim())
+                setStep(3)
+              }} className={btnPrimary}>
                 Continuar
               </button>
             </div>

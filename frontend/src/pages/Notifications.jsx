@@ -77,10 +77,7 @@ export default function Notifications() {
               </svg>
             </div>
             <p className="text-textdark/70 dark:text-dm-text/80 font-medium text-lg">
-              Todo tranquilo por acá
-            </p>
-            <p className="text-textdark/50 dark:text-dm-muted text-sm mt-1">
-              No tenés notificaciones pendientes.
+              {t('notifications.empty')}
             </p>
           </div>
         ) : (

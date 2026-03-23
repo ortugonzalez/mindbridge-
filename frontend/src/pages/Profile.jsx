@@ -40,46 +40,55 @@ export default function Profile() {
   useEffect(() => {
     let mounted = true
     ;(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        const token = session?.access_token || safeGet('breso_token')
-        const res = await fetch(`${BASE_URL}/users/me/profile`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          signal: AbortSignal.timeout(5000),
-        })
-        if (res.ok && mounted) {
-          const data = await res.json()
-          const p = {
-            name: data.name || data.display_name || safeGet('breso_user_name') || '',
-            email: data.email || session?.user?.email || '',
-            phone: data.phone || data.phone_number || '',
-            type: data.user_type || safeGet('breso_user_type') || 'patient',
-            plan: data.plan || safeGet('breso_selected_plan') || 'free',
-            trialDaysRemaining: data.trial_days_left ?? 15,
-            isVerified: false,
-          }
-          setProfile(p)
-          setNameVal(p.name)
-          setPhoneVal(p.phone)
-          // Fetch cashback
-          fetchCashback(token).then(cb => { if (mounted) setCashback(cb) })
-          return
-        }
-      } catch {}
-      // Fallback to localStorage
+      const localName = safeGet('breso_user_name')
+      const localPhone = safeGet('breso_phone')
+
       if (mounted) {
-        const p = {
-          name: safeGet('breso_user_name'),
+        setProfile({
+          name: localName,
           email: '',
-          phone: '',
+          phone: localPhone,
           type: safeGet('breso_user_type') || 'patient',
           plan: safeGet('breso_selected_plan') || 'free',
           trialDaysRemaining: 15,
           isVerified: false,
+        })
+        setNameVal(localName)
+        setPhoneVal(localPhone)
+      }
+
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (mounted && session?.user?.email) {
+          setProfile(prev => prev ? { ...prev, email: session.user.email } : prev)
         }
-        setProfile(p)
-        setNameVal(p.name)
-        setPhoneVal(p.phone)
+
+        const token = session?.access_token || safeGet('breso_token')
+        if (token) {
+          const res = await fetch(`${BASE_URL}/users/me/profile`, {
+            headers: { Authorization: `Bearer ${token}` },
+            signal: AbortSignal.timeout(5000),
+          })
+          if (res.ok && mounted) {
+            const data = await res.json()
+            setProfile(prev => {
+              const newP = {
+                ...prev,
+                name: data.name || data.display_name || prev.name,
+                phone: data.phone || data.phone_number || prev.phone,
+                type: data.user_type || prev.type,
+                plan: data.plan || prev.plan,
+                trialDaysRemaining: data.trial_days_left ?? prev.trialDaysRemaining,
+              }
+              setNameVal(newP.name)
+              setPhoneVal(newP.phone)
+              return newP
+            })
+            fetchCashback(token).then(cb => { if (mounted) setCashback(cb) })
+          }
+        }
+      } catch (e) {
+        console.error('Profile load error:', e)
       }
     })()
     return () => { mounted = false }

@@ -28,8 +28,7 @@ export default function VerifyIdentity() {
           Verificá tu identidad
         </h1>
         <p className="text-sm text-textdark/70 dark:text-dm-muted leading-relaxed mb-8 px-2">
-          Self Protocol verifica que sos una persona real sin exponer tus datos personales. 
-          Usamos zero-knowledge proofs para proteger tu privacidad.
+          Self Protocol asegura que las personas detrás de las cuentas sean reales y únicas. No vendemos ni mostramos tus datos personales a nadie, tu identidad se encripta y se guarda sólo en tu dispositivo de forma completamente confidencial.
         </p>
 
         {/* QR Placeholder */}
