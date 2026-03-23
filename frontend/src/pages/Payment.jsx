@@ -76,6 +76,24 @@ export default function Payment() {
 
       if (data.payment_url) {
         window.open(data.payment_url, '_blank')
+        // Poll for payment completion every 3s
+        const pollInterval = setInterval(async () => {
+          try {
+            const { data: sessionData } = await supabase.auth.getSession()
+            const tok = sessionData.session?.access_token || localStorage.getItem('breso_token') || ''
+            const statusRes = await fetch(`${BASE_URL}/payments/status`, {
+              headers: { Authorization: `Bearer ${tok}` },
+            })
+            const statusData = await statusRes.json()
+            if (statusData.plan === 'essential' || statusData.plan === 'premium') {
+              clearInterval(pollInterval)
+              try { localStorage.setItem('breso_selected_plan', statusData.plan) } catch {}
+              setPaymentSuccess(true)
+            }
+          } catch {}
+        }, 3000)
+        setLoading(false)
+        return
       } else {
         try { localStorage.setItem('breso_selected_plan', plan) } catch {}
         setPaymentSuccess(true)

@@ -6,7 +6,8 @@ import threading
 from datetime import date, datetime, timezone, timedelta
 from typing import List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from integrations.email_client import send_alert_email
@@ -431,6 +432,7 @@ def _update_gamification(user_id: str) -> None:
 
 @router.post("/respond")
 async def respond_to_checkin(
+    request: Request,
     body: ChatRequest,
     background_tasks: BackgroundTasks,
     current_user=Depends(get_current_user),
@@ -443,9 +445,27 @@ async def respond_to_checkin(
     user_id: str = current_user.id
     logger.info({"event": "checkins.respond.received", "user_id": user_id, "message_preview": body.message[:50], "history_len": len(body.history), "language": body.language})
 
-    # Trial expiry guard
-    if _check_trial_expired(user_id):
-        raise HTTPException(status_code=402, detail={"trial_expired": True, "message": "Tu período de prueba ha terminado. Activá un plan para continuar."})
+    # x402 payment check — verify X-PAYMENT header if present
+    from integrations.x402_middleware import verify_x402_payment, PAYMENT_REQUIRED_RESPONSE as _PAY_REQ
+    x_payment = request.headers.get("X-PAYMENT", "")
+    payment_verified = False
+    if x_payment:
+        payment_verified = await verify_x402_payment(x_payment)
+        if payment_verified:
+            # Payment confirmed — upgrade user to essential plan
+            try:
+                get_supabase().table("users").update({"plan": "essential"}).eq("id", user_id).execute()
+                logger.info({"event": "x402.plan_upgraded", "user_id": user_id})
+            except Exception:  # noqa: BLE001
+                pass
+
+    # Trial expiry guard — bypass if payment was just verified via x402
+    if not payment_verified and _check_trial_expired(user_id):
+        return JSONResponse(
+            status_code=402,
+            content=_PAY_REQ,
+            headers={"Access-Control-Allow-Origin": "https://mindbridge-theta.vercel.app"},
+        )
 
     supabase = get_supabase()
     now_utc = datetime.now(timezone.utc)

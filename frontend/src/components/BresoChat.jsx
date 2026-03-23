@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 
 function formatTime(date) {
@@ -98,6 +99,28 @@ function ReactionMenu({ messageText, onReact }) {
       <button onClick={handleCopy} className="hover:scale-110 active:scale-95 transition-transform text-sm text-sage relative flex items-center justify-center p-1" title="Compartir">
         🔗
         {copied && <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-textdark text-white text-[10px] px-2 py-1 rounded shadow-md whitespace-nowrap">Copiado</span>}
+      </button>
+    </div>
+  )
+}
+
+function PaymentCard() {
+  const navigate = useNavigate()
+  return (
+    <div className="rounded-2xl border border-sage/40 bg-sage/5 p-4 shadow-sm animate-fade-up max-w-[85%]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-lg">🌱</span>
+        <span className="text-sm font-bold text-sage">Suscripción BRESO</span>
+      </div>
+      <p className="text-sm text-textdark dark:text-dm-text mb-3 leading-relaxed">
+        Tu período de prueba ha terminado. Activá tu suscripción mensual por <strong>$5 USDT</strong> para seguir hablando con Soledad.
+      </p>
+      <button
+        type="button"
+        onClick={() => navigate('/payment?plan=essential')}
+        className="w-full bg-sage text-white text-sm font-bold py-2.5 px-4 rounded-xl hover:opacity-90 active:scale-95 transition"
+      >
+        Activar suscripción →
       </button>
     </div>
   )
@@ -256,8 +279,14 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
                 <div className={fromSoledad ? 'flex items-end gap-2' : 'flex justify-end'}>
                   {fromSoledad && <SoledadAvatar large={isOpeningMsg} />}
 
+                  {m.isPaymentRequired ? (
+                    <div className="flex flex-col items-start">
+                      <PaymentCard />
+                      <div className="text-[10px] text-[#9CA3AF] mt-1 px-1 font-medium">{m.time}</div>
+                    </div>
+                  ) : (
                   <div className={['flex flex-col relative group', fromSoledad ? (isOpeningMsg ? 'items-start max-w-[85%]' : 'items-start max-w-[78%]') : 'items-end max-w-[78%]'].join(' ')}>
-                    
+
                     {fromSoledad && <ReactionMenu messageText={m.textKey ? t(m.textKey) : m.text} onReact={(emoji) => handleReact(msgId, emoji)} />}
 
                     <div
@@ -270,7 +299,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
                       ].join(' ')}
                     >
                       {m.textKey ? t(m.textKey) : m.text}
-                      
+
                       {reactions[msgId] && (
                         <div className="absolute -bottom-2 -right-2 bg-white dark:bg-dm-surface shadow-sm border border-softgray dark:border-dm-border rounded-full px-1.5 py-0.5 text-xs animate-fade-in-page z-10">
                           {reactions[msgId]}
@@ -282,6 +311,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
                       {m.time}
                     </div>
                   </div>
+                  )}
                 </div>
               </div>
             )

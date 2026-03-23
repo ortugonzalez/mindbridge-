@@ -286,6 +286,18 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
 
   console.log('[Soledad] response status:', response.status)
 
+  // x402 Payment Required — trial expired or no active subscription
+  if (response.status === 402) {
+    const data = await response.json().catch(() => ({}))
+    return {
+      paymentRequired: true,
+      paymentData: data,
+      text: null,
+      crisisDetected: false,
+      memoryExists: false,
+    }
+  }
+
   // Bug A fix: never swallow errors silently — surface the full details
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '')

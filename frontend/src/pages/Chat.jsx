@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
 import CrisisOverlay from '../components/CrisisOverlay'
@@ -14,6 +15,7 @@ function safeGet(key) {
 
 export default function Chat() {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const hasUserReplied = useRef(false)
   const historyLoaded = useRef(false)
 
@@ -188,6 +190,19 @@ export default function Chat() {
       // Pass full conversation history (including the new user message) to backend
       const currentMessages = [...messages, userMsg]
       const reply = await sendMessageToSoledad(trimmed, currentMessages, lang)
+
+      if (reply.paymentRequired) {
+        setMessages((prev) => [...prev, {
+          from: 'breso',
+          role: 'soledad',
+          isPaymentRequired: true,
+          paymentData: reply.paymentData,
+          text: null,
+          timestamp: new Date().toISOString(),
+        }])
+        return
+      }
+
       setMessages((prev) => [...prev, { from: 'breso', role: 'soledad', text: reply.text, suggestion: reply.suggestion, timestamp: new Date().toISOString() }])
 
       if (reply.crisisDetected) setCrisisDetected(true)
