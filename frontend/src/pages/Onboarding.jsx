@@ -66,12 +66,11 @@ export default function Onboarding() {
   }
 
   const renderProgressBar = () => (
-    <div className="flex gap-2 w-full mb-8">
-      {[1, 2, 3, 4].map(s => (
-        <div key={s} className="h-1.5 flex-1 rounded-full bg-softgray/50 dark:bg-dm-border overflow-hidden">
-           <div className={`h-full bg-sage transition-all duration-700 ease-out ${step >= s ? 'w-full' : 'w-0'}`} />
-        </div>
-      ))}
+    <div className="w-full h-1.5 rounded-full bg-softgray/50 dark:bg-dm-border overflow-hidden mb-8">
+      <div 
+        className="h-full bg-sage transition-all duration-700 ease-out" 
+        style={{ width: `${(step / 4) * 100}%` }}
+      />
     </div>
   )
 
@@ -98,7 +97,7 @@ export default function Onboarding() {
         <span className="text-xs font-black text-textdark/50 dark:text-dm-muted tracking-[0.15em] uppercase">
           Paso {step} de 4
         </span>
-        {step > 1 && step < 4 && (
+        {step > 1 && (
           <button type="button" onClick={() => setStep(step - 1)} className="text-sm font-semibold text-sage hover:underline">
             ← Volver
           </button>
@@ -228,11 +227,11 @@ export default function Onboarding() {
                <div className="h-24 w-24 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center mb-6 shadow-sm animate-bounce-short">
                 <span className="text-5xl">✅</span>
               </div>
-              <h2 className="text-2xl font-bold text-center text-textdark dark:text-dm-text mb-4">
+              <h2 className="text-2xl font-bold text-center text-textdark dark:text-dm-text mb-2">
                 Todo listo, {userName}.
               </h2>
-              <p className="text-center text-textdark/70 dark:text-dm-muted text-base">
-                Empecemos cuando quieras.
+              <p className="text-center text-textdark/70 dark:text-dm-muted text-lg font-medium">
+                Empecemos.
               </p>
             </div>
             {error && (
@@ -242,10 +241,10 @@ export default function Onboarding() {
               <button
                 type="button"
                 disabled={finalizing}
-                onClick={() => navigate('/chat')}
+                onClick={() => navigate('/home')}
                 className={btnPrimary}
               >
-                Continuar a BRESO
+                Continuar
               </button>
             </div>
           </div>

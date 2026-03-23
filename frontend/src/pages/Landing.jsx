@@ -48,15 +48,15 @@ export default function Landing() {
         />
 
         <h1 className="text-[24px] font-[400] text-[#2D2D2D] dark:text-dm-text mb-6">
-          {t('landing.tagline')}
+          Tu acompañante de bienestar emocional
         </h1>
 
         <p className="text-[16px] italic text-[#6B7280] dark:text-[#9CAF9C] max-w-[320px] mx-auto mb-8 font-serif leading-relaxed">
-          &ldquo;{t('landing.quote')}&rdquo;
+          "A todos nos hubiese gustado que nos ayudaran a entender lo que pasaba a nuestro alrededor."
         </p>
 
         <p className="text-[15px] text-[#4B5563] dark:text-[#E8EDE8]/80 max-w-sm mx-auto leading-[1.7] px-4 font-medium">
-          {t('landing.description')}
+          BRESO es un espacio seguro donde Soledad, tu acompañante de IA, te escucha todos los días, detecta cómo estás y coordina apoyo cuando lo necesitás.
         </p>
       </div>
 
@@ -84,8 +84,8 @@ export default function Landing() {
                 }`}
               >
                 <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🌱</div>
-                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">{t('landing.forSelf')}</h3>
-                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">{t('landing.forSelfSub')}</p>
+                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Para mí</h3>
+                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Hablá con Soledad cada día</p>
               </button>
 
               {/* Card Right: Para alguien que quiero */}
@@ -98,8 +98,8 @@ export default function Landing() {
                 }`}
               >
                 <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🤝</div>
-                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">{t('landing.forFamily')}</h3>
-                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">{t('landing.forFamilySub')}</p>
+                <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Para alguien que quiero</h3>
+                <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Acompañá el bienestar de alguien cercano</p>
               </button>
             </div>
           </>
@@ -134,14 +134,15 @@ export default function Landing() {
         )}
 
         {/* Action Button */}
-        <div className={`w-full max-w-md transition-all duration-500 ease-in-out overflow-hidden ${
-          selected ? 'opacity-100 max-h-20 translate-y-0' : 'opacity-0 max-h-0 translate-y-4'
-        }`}>
+        <div className="w-full max-w-md transition-all duration-500 ease-in-out">
           <button
             onClick={handleContinue}
-            className="w-full bg-[#7C9A7E] hover:bg-[#6b866c] text-white font-bold text-[16px] py-4 rounded-full shadow-soft transition-transform hover:scale-[1.02] active:scale-95"
+            disabled={!selected}
+            className={`w-full bg-[#7C9A7E] text-white font-bold text-[16px] py-4 rounded-full shadow-soft transition-all duration-300 ${
+              !selected ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#6b866c] hover:scale-[1.02] active:scale-95'
+            }`}
           >
-            {t('landing.continue')}
+            Continuar
           </button>
         </div>
       </div>

@@ -15,7 +15,7 @@ export default function SignIn() {
   const userTypeParam = searchParams.get('type') || 'patient'
   const { theme } = useTheme()
 
-  const [tab, setTab] = useState('signin') // 'signin' | 'register' | 'magic'
+  const [tab, setTab] = useState('magic') // 'magic' | 'password'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -187,170 +187,123 @@ export default function SignIn() {
 
       <div className="text-center space-y-1 mb-2 px-4 max-w-sm">
         <h2 className="text-lg font-bold text-textdark dark:text-dm-text leading-snug">
-          {tab === 'register' ? (
-            userTypeParam === 'family' 
-              ? 'Creá tu cuenta para acompañar a alguien'
-              : 'Creá tu cuenta para hablar con Soledad'
-          ) : 'Te damos la bienvenida'}
+          Ingresá tu email para continuar
         </h2>
       </div>
 
       <div className="w-full rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-soft space-y-5">
 
-        {/* Tabs — hidden when magic link sent */}
-        {!magicSent && (
-          <div className="flex rounded-xl bg-softgray dark:bg-dm-bg p-1 gap-1">
-            {['signin', 'register'].map((t_) => (
-              <button
-                key={t_}
-                type="button"
-                onClick={() => { setTab(t_); setError('') }}
-                className={[
-                  'flex-1 rounded-lg py-2 text-sm font-semibold transition',
-                  tab === t_
-                    ? 'bg-white dark:bg-dm-surface text-textdark dark:text-dm-text shadow-sm'
-                    : 'text-textdark/50 dark:text-dm-muted',
-                ].join(' ')}
-              >
-                {t_ === 'signin' ? t('auth.signin') : t('auth.register')}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* ── Sign in form ── */}
-        {tab === 'signin' && !magicSent && (
-          <form onSubmit={handleSignIn} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('auth.email')}
-              className={inputCls}
-              autoComplete="email"
-              disabled={loading}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('auth.password')}
-              className={inputCls}
-              autoComplete="current-password"
-              disabled={loading}
-            />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
-              {loading ? t('auth.signing_in') : t('auth.signin')}
-            </button>
-            <div className="relative flex items-center gap-3 py-1">
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-              <span className="text-xs text-textdark/40 dark:text-dm-muted">{t('auth.or')}</span>
-              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
-            </div>
-            <button
-              type="button"
-              disabled={loading}
-              onClick={() => { setTab('magic'); setError('') }}
-              className="w-full rounded-full border border-softgray dark:border-dm-border px-6 py-3 text-sm font-semibold text-textdark dark:text-dm-text transition hover:border-sage hover:text-sage"
-            >
-              {t('auth.magic_link')}
-            </button>
-          </form>
-        )}
-
-        {/* ── Register form ── */}
-        {tab === 'register' && !magicSent && (
-          <form onSubmit={handleRegister} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('auth.email')}
-              className={inputCls}
-              autoComplete="email"
-              disabled={loading}
-            />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('auth.password')}
-              className={inputCls}
-              autoComplete="new-password"
-              disabled={loading}
-            />
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
-              {loading ? t('common.loading') : t('auth.register')}
-            </button>
-          </form>
-        )}
-
         {/* ── Magic link form ── */}
         {tab === 'magic' && !magicSent && (
-          <form onSubmit={handleMagicLink} className="space-y-3">
-            <p className="text-sm text-textdark/60 dark:text-dm-muted leading-relaxed">
-              Ingresá tu email y te enviamos un enlace para entrar sin contraseña.
-            </p>
+          <form onSubmit={handleMagicLink} className="space-y-4">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('auth.email')}
+              placeholder="tu@email.com"
               className={inputCls}
               autoComplete="email"
               autoFocus
               disabled={loading}
             />
             {error && <p className="text-sm text-red-500">{error}</p>}
+            
             <button type="submit" disabled={loading || !email.trim()} className={btnCls}>
-              {loading ? t('common.loading') : t('auth.send_magic_link')}
+              {loading ? t('common.loading') : 'Recibir enlace mágico'}
             </button>
+
+            <div className="relative flex items-center gap-3 py-2">
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+            </div>
+
             <button
               type="button"
-              onClick={() => { setTab('signin'); setError('') }}
-              className="w-full text-sm text-textdark/50 dark:text-dm-muted hover:text-sage transition py-1"
+              disabled={loading}
+              onClick={() => { setTab('password'); setError('') }}
+              className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-2"
             >
-              ← {t('nav.back')}
+              Ingresar con contraseña
             </button>
           </form>
         )}
+
+        {/* ── Password form ── */}
+        {tab === 'password' && !magicSent && (
+          <form onSubmit={handleSignIn} className="space-y-4">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              className={inputCls}
+              autoComplete="email"
+              disabled={loading}
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Contraseña"
+              className={inputCls}
+              autoComplete="current-password"
+              disabled={loading}
+            />
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            
+            <button type="submit" disabled={loading || !email.trim() || !password.trim()} className={btnCls}>
+              {loading ? t('common.loading') : 'Continuar'}
+            </button>
+
+            <div className="relative flex items-center gap-3 py-2">
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+              <span className="text-xs text-textdark/40 dark:text-dm-muted font-medium">o</span>
+              <div className="flex-1 h-px bg-softgray dark:bg-dm-border" />
+            </div>
+
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => { setTab('magic'); setError('') }}
+              className="w-full text-xs font-semibold text-textdark/60 dark:text-dm-muted hover:text-sage transition py-2"
+            >
+              Recibir enlace mágico
+            </button>
+          </form>
+        )}
+
+
 
         {/* ── Magic link / confirmation sent ── */}
         {magicSent && (
           <div className="space-y-5">
             <div className="text-center space-y-2 py-2">
-              <div className="text-4xl mb-3">📬</div>
               <p className="text-base font-semibold text-textdark dark:text-dm-text">
-                Te enviamos un enlace a
+                Te enviamos un enlace a <span className="text-sage">{email}</span> ✉️
               </p>
-              <p className="text-sm font-medium text-sage break-all">{email}</p>
               <p className="text-sm text-textdark/55 dark:text-dm-muted leading-relaxed mt-1">
-                Revisá tu bandeja de entrada y también la carpeta de spam.
+                Revisá tu bandeja (y el spam)
               </p>
             </div>
 
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
-            {/* Resend button — only for magic link, not registration confirmation */}
-            {tab === 'magic' && (
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendCountdown > 0 || loading}
-                className={[
-                  'w-full rounded-full border px-6 py-3 text-sm font-semibold transition',
-                  resendCountdown > 0 || loading
-                    ? 'border-softgray dark:border-dm-border text-textdark/35 dark:text-dm-muted cursor-not-allowed'
-                    : 'border-sage text-sage hover:bg-sage hover:text-white',
-                ].join(' ')}
-              >
-                {resendCountdown > 0
-                  ? `Reenviar en ${resendCountdown}s...`
-                  : 'Volver a enviar'}
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resendCountdown > 0 || loading}
+              className={[
+                'w-full rounded-full border px-6 py-3 text-sm font-semibold transition',
+                resendCountdown > 0 || loading
+                  ? 'border-softgray dark:border-dm-border text-textdark/35 dark:text-dm-muted cursor-not-allowed'
+                  : 'border-sage text-sage hover:bg-sage hover:text-white',
+              ].join(' ')}
+            >
+              {resendCountdown > 0
+                ? `Reenviar en ${resendCountdown}s`
+                : 'Reenviar'}
+            </button>
 
             {/* Change email link */}
             <button

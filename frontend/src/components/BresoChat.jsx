@@ -176,6 +176,14 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isSending])
 
+  useEffect(() => {
+    const handleResize = () => {
+      setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   const canSend = text.trim().length > 0 && !isSending
 
   const startVoiceInput = () => {
