@@ -1,77 +1,85 @@
-# BRESO — Soledad 🌱
+# BRENSO — Soledad 🌱
 
-> "A todos nos hubiese gustado que nos ayudaran a entender lo que pasaba a nuestro alrededor."
+> "We all wished someone had helped us understand what was happening around us."
 
-## El problema
-En Latinoamérica, el 80% de las personas con problemas de salud mental nunca accede a tratamiento. Las barreras son el costo, el estigma y la falta de sistemas de apoyo accesibles.
+## The Problem
 
-## La solución
-BRESO es un agente de IA de bienestar emocional impulsado por **Soledad**, una acompañante que:
-- Tiene conversaciones diarias de check-in con el usuario
-- Detecta patrones emocionales y señales de crisis en tiempo real
-- Alerta a contactos familiares de confianza cuando es necesario
-- Coordina apoyo profesional
-- Procesa suscripciones de forma autónoma via x402 en Celo
+In Latin America, 80% of people with mental health issues never access treatment.
+The barriers: cost, stigma, and lack of accessible support systems.
 
-## Cómo funciona
-1. El usuario se registra e indica si es para sí mismo o para acompañar a alguien
-2. Chat diario con Soledad — que recuerda, aprende y se adapta
-3. Si detecta señales de alerta → notifica al familiar inmediatamente
-4. Pagos de suscripción en USDT sobre Celo via x402
-5. DeFi cashback: el 30% del rendimiento generado se devuelve mensualmente
+## The Solution
 
-## Integración con Celo
+BRENSO is an AI mental wellness agent powered by **Soledad**, an AI companion that:
+- Has daily check-in conversations with users
+- Detects emotional patterns and crisis signals in real time
+- Alerts trusted family contacts when needed
+- Coordinates professional support
+- Processes subscriptions autonomously via x402 on Celo
 
-| Feature | Implementación |
+## How It Works
+
+1. User signs up and selects their role (patient or family)
+2. Daily chat with Soledad — who remembers, learns and adapts
+3. Crisis signals detected → family notified immediately
+4. Subscription payments in USDT on Celo via x402
+5. DeFi cashback: 30% of yield returned monthly as credit
+
+## Celo Integration
+
+| Feature | Implementation |
 |---|---|
-| Identidad del agente | Contrato ERC-8004 en Celo Sepolia |
-| Pagos autónomos | x402 Thirdweb integration |
-| Stablecoins | USDT en Celo para suscripciones |
-| DeFi Yield | Sistema de cashback con Mento |
-| Contrato | `0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa` |
+| Agent Identity | ERC-8004 contract on Celo Sepolia |
+| Autonomous Payments | x402 via Thirdweb |
+| Stablecoins | USDT on Celo for subscriptions |
+| DeFi Yield | Mento Protocol cashback |
+| Contract | `0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa` |
 
-## Stack técnico
+## Tech Stack
+
 - **Frontend:** React + Vite + Tailwind CSS — Vercel
 - **Backend:** Python FastAPI — Railway
-- **Base de datos:** Supabase (PostgreSQL + Auth)
-- **IA:** Anthropic Claude (el cerebro de Soledad)
+- **Database:** Supabase (PostgreSQL + Auth)
+- **AI:** Anthropic Claude (Soledad's brain)
 - **Blockchain:** Celo Sepolia (ERC-8004 + x402)
 - **Emails:** Resend
-- **PWA:** Service Worker con push notifications
+- **PWA:** Service Worker with push notifications
+
+## Live Demo
+
+- **App:** https://mindbridge-theta.vercel.app
+- **API:** https://mindbridge-production-c766.up.railway.app/docs
+- **Contract:** https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa
+- **GitHub:** https://github.com/ortugonzalez/mindbridge-
 
 ## Agent Registry
 
-| | |
-|---|---|
-| **AgentScan** | https://agentscan.info |
-| **Contract** | `0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa` |
-| **Standard** | ERC-8004 |
-| **Network** | Celo Sepolia |
+- **AgentScan:** https://agentscan.info
+- **Contract:** `0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa`
+- **Standard:** ERC-8004
+- **Network:** Celo Sepolia
 
-## Demo en vivo
-- **App:** https://mindbridge-theta.vercel.app
-- **API:** https://mindbridge-production-c766.up.railway.app/docs
-- **Contrato:** https://celo-sepolia.blockscout.com/address/0x5520FaAD2a9bA826567FE86bd9Da7Df5308e1EEa
-- **GitHub:** https://github.com/ortugonzalez/mindbridge-
+## User Types
 
-## Tipos de usuario
-- **Paciente:** Chat diario con Soledad, tracking de racha, detección de crisis
-- **Familiar:** Resúmenes semanales, alertas en tiempo real, sin acceso a conversaciones privadas
+- **Patient:** Daily chat with Soledad, streak tracking, crisis detection
+- **Family:** Weekly summaries, real-time alerts, no access to private conversations
 
-## Planes de suscripción
-| Plan | Precio | Features |
+## Subscription Plans
+
+| Plan | Price | Features |
 |---|---|---|
-| Prueba gratuita | 15 días | Acceso completo |
-| Esencial | $5 USD/mes | Check-ins diarios, 1 contacto de confianza |
-| Premium | $12 USD/mes | Ilimitado + coordinación profesional |
+| Free Trial | 15 days | Full access |
+| Essential | $5 USD/month | Daily check-ins, 1 trusted contact |
+| Premium | $12 USD/month | Unlimited + professional coordination |
 
-Pagos procesados en USDT sobre Celo blockchain via x402.
-DeFi cashback: 30% del rendimiento devuelto mensualmente como crédito de suscripción.
+Payments processed in USDT on Celo blockchain via x402.
+DeFi cashback: 30% of yield returned monthly as subscription credit.
 
-## Sistema de alertas
-- 🟡 **Amarillo:** 24h sin check-in → email suave al familiar
-- 🟠 **Naranja:** 48h sin check-in ó 3 días negativos → alerta urgente
-- 🔴 **Rojo:** Keywords de crisis detectadas → push notification inmediata
+## Crisis Detection
 
-## Construido para
-Hackathon Celo "Build Agents for the Real World V2" — Marzo 2026
+- 🟡 **Yellow:** 24h no check-in → gentle family email
+- 🟠 **Orange:** 48h no check-in or 3 negative days → urgent alert
+- 🔴 **Red:** Crisis keywords detected → immediate push notification
+
+## Built for
+
+Celo "Build Agents for the Real World V2" Hackathon — March 2026

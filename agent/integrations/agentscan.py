@@ -13,8 +13,8 @@ ERC8004_CONTRACT = os.environ.get(
 )
 
 AGENT_DATA = {
-    "name": "Soledad por BRESO",
-    "description": "AI mental wellness agent for Latin America. Detects emotional patterns, coordinates family support, and processes autonomous payments on Celo.",
+    "name": "Soledad by BRENSO",
+    "description": "AI mental wellness agent for Latin America by BRENSO. Detects emotional patterns, coordinates family support, and processes autonomous payments on Celo.",
     "contractAddress": ERC8004_CONTRACT,
     "network": "celo-sepolia",
     "category": "healthcare",
