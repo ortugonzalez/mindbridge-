@@ -49,7 +49,7 @@ def send_alert_email(
           Soledad
         </h1>
         <p style="color: #6B7280; font-size: 14px;">
-          por BRESO
+          por BRENSO
         </p>
       </div>
 
@@ -82,7 +82,7 @@ def send_alert_email(
 
       <p style="color: #9CA3AF; font-size: 12px;
                 text-align: center;">
-        BRESO — Bienestar emocional para Latinoamérica
+        BRENSO — Bienestar emocional para Latinoamérica
       </p>
     </div>
     """
@@ -122,14 +122,14 @@ def send_invite_email(
         <span style="font-size: 32px;">🌱</span>
         <h1 style="color: #7C9A7E; font-weight: 400;
                    font-size: 24px; margin: 8px 0;">
-          BRESO
+          BRENSO
         </h1>
       </div>
 
       <div style="background: #FAF8F5; border-radius: 12px;
                   padding: 32px; margin-bottom: 24px;">
         <p style="color: #2D2D2D; font-size: 16px; line-height: 1.7; margin: 0 0 16px;">
-          <strong>{family_name}</strong> quiere acompañarte en BRESO.
+          <strong>{family_name}</strong> quiere acompañarte en BRENSO.
         </p>
         <p style="color: #2D2D2D; font-size: 16px; line-height: 1.7; margin: 0 0 24px;">
           Al aceptar, {family_name} podrá estar al tanto de tu bienestar
@@ -149,7 +149,7 @@ def send_invite_email(
         Si no esperabas este mensaje, podés ignorarlo con tranquilidad.
       </p>
       <p style="color: #9CA3AF; font-size: 12px; text-align: center;">
-        BRESO — Bienestar emocional para Latinoamérica
+        BRENSO — Bienestar emocional para Latinoamérica
       </p>
     </div>
     """
@@ -158,7 +158,7 @@ def send_invite_email(
         response = resend.Emails.send({
             "from": "Soledad <soledad@breso.app>",
             "to": [to_email],
-            "subject": f"{family_name} quiere acompañarte en BRESO",
+            "subject": f"{family_name} quiere acompañarte en BRENSO",
             "html": html_content,
         })
         email_id = response.get("id") if isinstance(response, dict) else getattr(response, "id", None)
@@ -187,13 +187,13 @@ def send_contact_invite_email(
         <h1 style="color:#7C9A7E;font-weight:400;font-size:24px;">
           Soledad
         </h1>
-        <p style="color:#6B7280;font-size:14px;">por BRESO</p>
+        <p style="color:#6B7280;font-size:14px;">por BRENSO</p>
       </div>
       <p style="color:#2D2D2D;font-size:16px;line-height:1.7;">
         Hola {to_name},
       </p>
       <p style="color:#2D2D2D;font-size:16px;line-height:1.7;">
-        {patient_name} te agregó como contacto de confianza en BRESO.
+        {patient_name} te agregó como contacto de confianza en BRENSO.
         Esto significa que si Soledad detecta que {patient_name}
         necesita apoyo, vas a recibir una notificación.
       </p>
@@ -215,7 +215,7 @@ def send_contact_invite_email(
       </p>
       <p style="color:#9CA3AF;font-size:12px;text-align:center;
                 margin-top:32px;">
-        — Soledad, por BRESO
+        — Soledad, por BRENSO
       </p>
     </div>
     """
@@ -271,7 +271,7 @@ def send_checkin_reminder(to_email: str, user_name: str) -> None:
       </div>
       <p style="color: #9CA3AF; font-size: 12px;
                 text-align: center; margin-top: 32px;">
-        — Soledad, por BRESO
+        — Soledad, por BRENSO
       </p>
     </div>
     """
@@ -327,7 +327,7 @@ def send_streak_celebration(to_email: str, user_name: str, streak: int, custom_m
       </div>
       <p style="color: #9CA3AF; font-size: 12px;
                 text-align: center; margin-top: 32px;">
-        — Soledad, por BRESO
+        — Soledad, por BRENSO
       </p>
     </div>
     """
@@ -353,7 +353,7 @@ def send_welcome_email(to_email: str, user_name: str) -> None:
         <span style="font-size: 32px;">🌱</span>
         <h1 style="color: #7C9A7E; font-weight: 400;
                    font-size: 24px; margin: 8px 0;">
-          Bienvenido/a a BRESO
+          Bienvenido/a a BRENSO
         </h1>
       </div>
       <p style="color: #2D2D2D; font-size: 16px;
@@ -372,7 +372,7 @@ def send_welcome_email(to_email: str, user_name: str) -> None:
       </p>
       <p style="color: #6B7280; font-size: 14px;
                 line-height: 1.6; margin-top: 32px;">
-        — Soledad, por BRESO
+        — Soledad, por BRENSO
       </p>
     </div>
     """
