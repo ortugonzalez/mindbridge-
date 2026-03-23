@@ -126,7 +126,7 @@ export default function SignIn() {
     })
 
     if (signInError) {
-      setError('Cuenta creada. Iniciá sesión.')
+      setError('Cuenta creada. Iniciá sesión con tu contraseña.')
       setTab('password')
     } else {
       const token = signInData.session?.access_token
