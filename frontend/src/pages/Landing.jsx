@@ -15,8 +15,13 @@ export default function Landing() {
   }, [])
 
   const handleContinue = () => {
-    if (selected === 'patient') navigate('/signin?type=patient')
-    else if (selected === 'family') navigate('/signin?type=family')
+    if (selected === 'patient') {
+      try { localStorage.setItem('breso_user_type', 'patient') } catch {}
+      navigate('/signin?type=patient')
+    } else if (selected === 'family') {
+      try { localStorage.setItem('breso_user_type', 'family') } catch {}
+      navigate('/signin?type=family')
+    }
   }
 
   return (

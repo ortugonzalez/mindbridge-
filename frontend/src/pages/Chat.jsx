@@ -10,12 +10,7 @@ function safeGet(key) {
   try { return localStorage.getItem(key) || '' } catch { return '' }
 }
 
-function getGreetingKey() {
-  const h = new Date().getHours()
-  if (h >= 6 && h < 12) return 'chat.greetingMorning'
-  if (h >= 12 && h < 20) return 'chat.greetingAfternoon'
-  return 'chat.greetingEvening'
-}
+// Replaced external greeting definitions with explicit localized strings within buildOpening
 
 export default function Chat() {
   const { t, i18n } = useTranslation()
@@ -34,12 +29,33 @@ export default function Chat() {
   const [streakDays, setStreakDays] = useState(0)
 
   const buildOpening = () => {
+    const h = new Date().getHours()
+    let timeGreeting = ''
+    let question = ''
+
+    if (h >= 6 && h < 12) {
+      timeGreeting = 'Buenos días'
+      question = '¿Cómo empezó el día para vos?'
+    } else if (h >= 12 && h < 20) {
+      timeGreeting = 'Buenas tardes'
+      question = '¿Cómo venís con el día?'
+    } else {
+      timeGreeting = 'Buenas noches'
+      question = '¿Cómo terminó el día?'
+    }
+
+    if (userName) {
+      timeGreeting = `${timeGreeting}, ${userName}`
+    }
+
+    const text = `${timeGreeting}. ${question}`
     const now = new Date().toISOString()
+
     return [
       {
         from: 'breso',
         role: 'soledad',
-        text: t(getGreetingKey()) + ' ' + t('chat.openingQuestion'),
+        text,
         timestamp: now,
       },
     ]

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import i18n, { STORAGE_KEY } from '../i18n'
+import { supabase } from '../lib/supabase'
 
 const THEME_KEY = 'breso_theme'
 const NO_BACK_ROUTES = new Set(['/', '/chat', '/welcome'])
@@ -45,15 +46,22 @@ export default function Navigation() {
   const showBack = !NO_BACK_ROUTES.has(location.pathname)
 
   const links = [
-    { path: '/home', icon: '🏠', label: t('nav.home') },
-    { path: '/chat', icon: '💬', label: t('nav.chat') },
-    { path: '/dashboard', icon: '📊', label: t('nav.progress') },
-    { path: '/profile', icon: '👤', label: t('nav.profile') },
-    { path: '/notifications', icon: '🔔', label: t('nav.notifications') },
-    { path: '/contacts', icon: '🤝', label: t('nav.contacts') },
-    { path: '/settings', icon: '⚙️', label: t('nav.settings') },
-    { path: '/help', icon: '❓', label: t('nav.help') },
+    { path: '/home', icon: '🏠', label: 'Inicio' },
+    { path: '/chat', icon: '💬', label: 'Hablar con Soledad' },
+    { path: '/dashboard', icon: '📊', label: 'Mi progreso' },
+    { path: '/profile', icon: '👤', label: 'Mi perfil' },
+    { path: '/notifications', icon: '🔔', label: 'Notificaciones' },
+    { path: '/contacts', icon: '🤝', label: 'Contactos de confianza' },
+    { path: '/payment', icon: '💳', label: 'Mi suscripción' },
+    { path: '/settings', icon: '⚙️', label: 'Configuración' },
+    { path: '/help', icon: '❓', label: 'Ayuda' }
   ]
+
+  const handleSignOut = async () => {
+    setIsOpen(false)
+    await supabase.auth.signOut()
+    navigate('/')
+  }
 
   const btnFixed = 'fixed top-3 z-40 flex h-9 w-9 items-center justify-center rounded-full border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface text-textdark dark:text-dm-text shadow-soft hover:opacity-80 transition'
 
@@ -168,14 +176,14 @@ export default function Navigation() {
           </div>
 
           {/* Sign out */}
-          <Link
-            to="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
           >
             <span className="text-base">🚪</span>
-            <span>{t('nav.signout')}</span>
-          </Link>
+            <span>Cerrar sesión</span>
+          </button>
         </div>
       </div>
     </>
