@@ -7,6 +7,7 @@ import { useTheme } from '../contexts/ThemeContext'
 
 const USER_NAME_KEY = 'breso_user_name'
 const RESEND_COOLDOWN = 60 // seconds
+const isValidEmail = (email) => email.includes('@') && email.includes('.')
 
 export default function SignIn() {
   const { t } = useTranslation()
@@ -80,6 +81,7 @@ export default function SignIn() {
   const handleSignIn = async (e) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
+    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
     setLoading(true)
     setError('')
     try {
@@ -101,6 +103,7 @@ export default function SignIn() {
   const handleRegister = async (e) => {
     e.preventDefault()
     if (!email.trim() || !password.trim()) return
+    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
     if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
     setLoading(true)
     setError('')
@@ -134,6 +137,7 @@ export default function SignIn() {
   const handleMagicLink = async (e) => {
     e?.preventDefault()
     if (!email.trim()) return
+    if (!isValidEmail(email.trim())) { setError('Revisá el email ingresado'); return }
     setLoading(true)
     setError('')
     try {
@@ -217,7 +221,7 @@ export default function SignIn() {
               onClick={() => { setTab('password'); setError('') }}
               className={`flex-1 pb-3 text-sm font-semibold transition-colors ${tab === 'password' ? 'text-sage border-b-2 border-sage' : 'text-textdark/50 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
             >
-              Contraseña
+              Con contraseña
             </button>
             <button
               onClick={() => { setTab('register'); setError('') }}
@@ -232,7 +236,7 @@ export default function SignIn() {
         {tab === 'magic' && !magicSent && (
           <form onSubmit={handleMagicLink} className="space-y-4">
             <input
-              type="email"
+              type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
@@ -253,7 +257,7 @@ export default function SignIn() {
         {tab === 'password' && !magicSent && (
           <form onSubmit={handleSignIn} className="space-y-4">
             <input
-              type="email"
+              type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
@@ -282,7 +286,7 @@ export default function SignIn() {
         {tab === 'register' && !magicSent && (
           <form onSubmit={handleRegister} className="space-y-4">
             <input
-              type="email"
+              type="text" inputMode="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="tu@email.com"
