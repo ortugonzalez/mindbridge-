@@ -404,6 +404,20 @@ export async function notifyPatient({ message }) {
   )
 }
 
+export async function getVapidPublicKey() {
+  return requestWithMock(
+    () => axiosClient.get('/users/me/vapid-public-key').then((res) => res.data),
+    () => ({ vapid_public_key: null })
+  )
+}
+
+export async function savePushSubscription(subscription) {
+  return requestWithMock(
+    () => axiosClient.post('/users/me/push-subscription', { subscription }).then((res) => res.data),
+    () => ({ success: true })
+  )
+}
+
 export async function postCheckin({ message, mode }) {
   const result = await submitCheckinResponse({ checkinId: 'today', response: message, mode })
   // Return shape Chat.jsx expects: { data: { replyText, nextMode } }
