@@ -250,6 +250,7 @@ const EN_MOCKS = [
 ]
 
 export async function sendMessageToSoledad(message, history = [], language = 'es') {
+  try {
   // Bug B fix: ONLY use Supabase session token — no localStorage fallback
   const { data: { session } } = await supabase.auth.getSession()
   const token = session?.access_token
@@ -257,8 +258,9 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
   console.log('[Soledad] token source:', token ? 'supabase_session' : 'NONE')
 
   if (!token) {
-    console.error('[Soledad] No auth session — user must be signed in via Supabase')
-    throw new Error('No auth session')
+    console.error('[Soledad] No auth session — returning mock')
+    const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
+    return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
   }
 
   // Bug C fix: resolve textKey to actual text, then filter empty entries
@@ -298,16 +300,11 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
     }
   }
 
-  // Bug A fix: never swallow errors silently — surface the full details
   if (!response.ok) {
     const errorBody = await response.text().catch(() => '')
     console.error('[Soledad] Backend error', response.status, errorBody)
-    // Only fall back to mock when there is no backend URL at all
-    if (!API_BASE) {
-      const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
-      return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
-    }
-    throw new Error(`Backend ${response.status}: ${errorBody}`)
+    const pool = language === 'en' ? EN_MOCKS : ES_MOCKS
+    return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
   }
 
   const data = await response.json()
@@ -321,6 +318,23 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
     crisisDetected: !!(data.crisis || data.is_crisis || data.crisisDetected),
     memoryExists: !!(data.memory || data.has_memory || data.memoryExists),
     memoryPreview: data.memory_preview || null,
+  }
+  } catch (error) {
+    console.error('Backend error:', error)
+    const mocks = {
+      es: [
+        "Lo que describís suena difícil. ¿Hace cuánto venís sintiéndote así?",
+        "Eso que decís me queda dando vueltas. ¿Podés contarme más?",
+        "A veces 'estoy bien' viene solo. ¿Cómo venís siendo honestamente?",
+      ],
+      en: [
+        "What you're describing sounds hard. How long have you been feeling this way?",
+        "What you said stays with me. Can you tell me more?",
+        "How have you honestly been this week?",
+      ]
+    }
+    const pool = mocks[language] || mocks.es
+    return { text: pool[Math.floor(Math.random() * pool.length)], crisisDetected: false, memoryExists: false }
   }
 }
 

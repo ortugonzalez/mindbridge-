@@ -99,38 +99,25 @@ export default function SignIn() {
     }
   }
 
-  const handleRegister = async (e) => {
-    e.preventDefault()
+  const handleRegister = async () => {
     if (!email) { setError('Ingresá tu email'); return }
-    if (!password.trim()) return
+    if (!password) { setError('Ingresá una contraseña'); return }
     if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return }
+
     setLoading(true)
     setError('')
-    try {
-      const { data, error: err } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          emailRedirectTo: window.location.origin,
-        },
-      })
-      if (err) throw err
-      if (data.session) {
-        const token = data.session.access_token
-        if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
-        
-        try { localStorage.setItem('breso_user_type', userTypeParam) } catch {}
-        if (userTypeParam === 'family') navigate('/family-onboarding', { replace: true })
-        else navigate('/onboarding', { replace: true })
-      } else {
-        setMagicSent(true)
-        startCountdown()
-      }
-    } catch (err) {
-      setError(translateError(err))
-    } finally {
-      setLoading(false)
+
+    const { data, error } = await supabase.auth.signUp({
+      email: email.trim(),
+      password: password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      navigate('/onboarding')
     }
+    setLoading(false)
   }
 
   const handleMagicLink = async (e) => {
