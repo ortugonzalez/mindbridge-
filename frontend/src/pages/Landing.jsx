@@ -133,6 +133,22 @@ export default function Landing() {
           </>
         )}
 
+        {/* Trust Badges */}
+        <div style={{display:'flex', gap:12, justifyContent:'center', marginTop:24, marginBottom:24, flexWrap:'wrap'}}>
+          <span style={{fontSize:11, color:'#6B7280', background:'#F3F4F6', padding:'4px 10px', borderRadius:20}}>
+            🔒 Self Protocol
+          </span>
+          <span style={{fontSize:11, color:'#6B7280', background:'#F3F4F6', padding:'4px 10px', borderRadius:20}}>
+            ⛓️ ERC-8004
+          </span>
+          <span style={{fontSize:11, color:'#6B7280', background:'#F3F4F6', padding:'4px 10px', borderRadius:20}}>
+            💳 x402
+          </span>
+          <span style={{fontSize:11, color:'#6B7280', background:'#F3F4F6', padding:'4px 10px', borderRadius:20}}>
+            🌱 Celo
+          </span>
+        </div>
+
         {/* Action Button */}
         <div className="w-full max-w-md transition-all duration-500 ease-in-out">
           <button

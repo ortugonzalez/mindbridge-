@@ -40,6 +40,7 @@ export default function Payment() {
   const [renewalDate, setRenewalDate] = useState('')
   const [error, setError] = useState('')
   const [hasMetaMask, setHasMetaMask] = useState(false)
+  const [paymentCurrency, setPaymentCurrency] = useState('USDT')
 
   const predictedRenewalDate = new Date()
   predictedRenewalDate.setMonth(predictedRenewalDate.getMonth() + 1)
@@ -66,7 +67,7 @@ export default function Payment() {
       const res = await fetch(`${BASE_URL}/payments/create-subscription`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ plan }),
+        body: JSON.stringify({ plan, currency: paymentCurrency }),
       })
       const data = await res.json()
 
@@ -217,6 +218,26 @@ export default function Payment() {
           <p className="text-xs font-semibold text-textdark/60 dark:text-dm-muted text-center pt-2">
             {t('payment.billingNote')}
           </p>
+
+          <div className="flex justify-center border border-softgray dark:border-dm-border rounded-xl p-1 bg-[#FAF8F5] dark:bg-dm-bg">
+            <button
+              onClick={() => setPaymentCurrency('USDT')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${paymentCurrency === 'USDT' ? 'bg-sage text-white shadow-sm' : 'text-textdark/60 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
+            >
+              USDT (Celo)
+            </button>
+            <button
+              onClick={() => setPaymentCurrency('cUSD')}
+              className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-colors ${paymentCurrency === 'cUSD' ? 'bg-sage text-white shadow-sm' : 'text-textdark/60 dark:text-dm-muted hover:text-textdark dark:hover:text-dm-text'}`}
+            >
+              cUSD (Celo)
+            </button>
+          </div>
+          {paymentCurrency === 'cUSD' && (
+            <p className="text-[10px] text-center text-textdark/50 dark:text-dm-muted -mt-1 font-medium">
+              cUSD es la moneda estable nativa de Celo
+            </p>
+          )}
 
           <button
             type="button"

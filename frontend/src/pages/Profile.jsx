@@ -56,6 +56,7 @@ export default function Profile() {
             type: data.user_type || safeGet('breso_user_type') || 'patient',
             plan: data.plan || safeGet('breso_selected_plan') || 'free',
             trialDaysRemaining: data.trial_days_left ?? 15,
+            isVerified: false,
           }
           setProfile(p)
           setNameVal(p.name)
@@ -74,6 +75,7 @@ export default function Profile() {
           type: safeGet('breso_user_type') || 'patient',
           plan: safeGet('breso_selected_plan') || 'free',
           trialDaysRemaining: 15,
+          isVerified: false,
         }
         setProfile(p)
         setNameVal(p.name)
@@ -294,6 +296,35 @@ export default function Profile() {
             Cambiar plan
           </button>
         </div>
+      </div>
+
+      {/* Verification Block */}
+      <div className="rounded-2xl bg-white dark:bg-dm-surface p-6 shadow-soft border border-softgray dark:border-dm-border">
+        {profile.isVerified ? (
+          <div className="flex items-center gap-4">
+            <span className="text-3xl">✅</span>
+            <div>
+              <p className="text-base font-bold text-textdark dark:text-dm-text">Identidad verificada</p>
+              <p className="text-sm text-textdark/70 dark:text-dm-muted">Verificado con Self Protocol</p>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-2xl">🔐</span>
+              <p className="text-base font-bold text-textdark dark:text-dm-text">Verificá tu identidad</p>
+            </div>
+            <p className="text-sm text-textdark/70 dark:text-dm-muted leading-relaxed mb-4">
+              Usamos Self Protocol para verificar que sos una persona real, sin exponer tus datos.
+            </p>
+            <button
+              onClick={() => navigate('/verify-identity')}
+              className="w-full py-2.5 rounded-xl bg-sage text-white font-bold hover:bg-sage/90 transition-colors shadow-sm"
+            >
+              Verificar con Self Protocol
+            </button>
+          </div>
+        )}
       </div>
 
       {/* DeFi Cashback Card */}
