@@ -27,6 +27,6 @@ export default function AuthGuard({ children }) {
   }, [])
 
   if (!checked) return null // brief flash prevention
-  if (!isLoggedIn) return <Navigate to="/signin" replace />
+  if (!isLoggedIn) return <Navigate to="/" replace />
   return children
 }

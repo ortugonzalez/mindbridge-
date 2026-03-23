@@ -54,9 +54,8 @@ function AppRoutes() {
       <LanguageToggle />
       <main className="mx-auto w-full max-w-xl px-4 pt-16 pb-8">
         <Routes>
-          <Route path="/" element={<SignIn />} />
+          <Route path="/" element={<Landing />} />
           <Route path="/signin" element={<SignIn />} />
-          <Route path="/landing" element={<AuthGuard><Landing /></AuthGuard>} />
           <Route path="/welcome" element={<AuthGuard><Welcome /></AuthGuard>} />
           <Route path="/onboarding" element={<AuthGuard><Onboarding /></AuthGuard>} />
           <Route path="/chat" element={<AuthGuard><Chat /></AuthGuard>} />

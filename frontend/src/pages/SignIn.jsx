@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { getUserProfile } from '../services/api'
 
@@ -10,6 +10,8 @@ const RESEND_COOLDOWN = 60 // seconds
 export default function SignIn() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const userTypeParam = searchParams.get('type') || 'patient'
 
   const [tab, setTab] = useState('signin') // 'signin' | 'register' | 'magic'
   const [email, setEmail] = useState('')
@@ -42,16 +44,24 @@ export default function SignIn() {
   const afterLogin = async (user) => {
     const name = user?.user_metadata?.display_name || user?.user_metadata?.name || ''
     if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
+    
+    try { localStorage.setItem('breso_user_type', userTypeParam) } catch {}
+
     try {
       const res = await getUserProfile()
       const userType = res.data?.user_type || res.data?.userType
       if (userType) { try { localStorage.setItem('breso_user_type', userType) } catch {} }
     } catch {}
-    const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
+    
+    const finalUserType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
     const hasName = (() => { try { return !!localStorage.getItem(USER_NAME_KEY) } catch { return false } })()
-    if (!hasName) navigate('/landing', { replace: true })
-    else if (userType === 'family') navigate('/family-dashboard', { replace: true })
-    else if (userType === 'professional') navigate('/professional-dashboard', { replace: true })
+    
+    if (!hasName) {
+      if (finalUserType === 'family') navigate('/family-onboarding', { replace: true })
+      else navigate('/onboarding', { replace: true })
+    }
+    else if (finalUserType === 'family') navigate('/family-dashboard', { replace: true })
+    else if (finalUserType === 'professional') navigate('/professional-dashboard', { replace: true })
     else navigate('/chat', { replace: true })
   }
 
@@ -94,7 +104,10 @@ export default function SignIn() {
       if (data.session) {
         const token = data.session.access_token
         if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
-        navigate('/landing', { replace: true })
+        
+        try { localStorage.setItem('breso_user_type', userTypeParam) } catch {}
+        if (userTypeParam === 'family') navigate('/family-onboarding', { replace: true })
+        else navigate('/onboarding', { replace: true })
       } else {
         // Email confirmation required — show magic-style sent screen
         setMagicSent(true)
@@ -163,9 +176,19 @@ export default function SignIn() {
       {/* Logo */}
       <div className="text-center space-y-1">
         <div className="mx-auto h-14 w-14 rounded-full bg-sage flex items-center justify-center text-white text-2xl font-bold shadow-soft">
-          S
+          <img src="/logo.svg" alt="Breso" className="w-8 h-8 filter brightness-0 invert" onError={(e) => { e.target.style.display='none'; e.target.parentNode.innerText='S' }} />
         </div>
-        <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase">por BRESO</p>
+        <p className="text-xs text-textdark/50 dark:text-dm-muted tracking-widest uppercase mt-2">por BRESO</p>
+      </div>
+
+      <div className="text-center space-y-1 mb-2 px-4 max-w-sm">
+        <h2 className="text-lg font-bold text-textdark dark:text-dm-text leading-snug">
+          {tab === 'register' ? (
+            userTypeParam === 'family' 
+              ? 'Creá tu cuenta para acompañar a alguien'
+              : 'Creá tu cuenta para hablar con Soledad'
+          ) : 'Te damos la bienvenida'}
+        </h2>
       </div>
 
       <div className="w-full rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-soft space-y-5">

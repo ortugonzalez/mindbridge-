@@ -11,17 +11,20 @@ function getStoredName() {
 const PROTECTED_PATHS = [
   '/chat', '/dashboard', '/checkin', '/profile', '/notifications',
   '/contacts', '/settings', '/help', '/payment',
-  '/family-dashboard', '/professional-dashboard', '/landing', '/welcome', '/onboarding',
+  '/family-dashboard', '/professional-dashboard', '/welcome', '/onboarding',
 ]
 
 /** FIX 9: determine correct destination after sign-in */
 function resolveRedirect() {
   const userType = (() => { try { return localStorage.getItem('breso_user_type') || 'patient' } catch { return 'patient' } })()
   const hasName = !!getStoredName()
-  if (!hasName) return '/landing'
+  if (!hasName) {
+    if (userType === 'family') return '/family-onboarding'
+    return '/onboarding'
+  }
   if (userType === 'family') return '/family-dashboard'
   if (userType === 'professional') return '/professional-dashboard'
-  return '/home'
+  return '/chat'
 }
 
 /**
@@ -80,7 +83,7 @@ export function useSession() {
         // FIX 4: only redirect if user was on a protected route
         const currentPath = window.location.pathname
         if (PROTECTED_PATHS.some(p => currentPath.startsWith(p))) {
-          navigate('/signin', { replace: true })
+          navigate('/', { replace: true })
         }
       }
     })

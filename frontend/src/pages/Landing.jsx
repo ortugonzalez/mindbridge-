@@ -1,169 +1,103 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-
-function PlanFeatures({ features = [], accentClass = 'text-sage' }) {
-  return (
-    <ul className="space-y-2 mt-3">
-      {features.map((f, i) => {
-        const isNo = f.startsWith('✗')
-        return (
-          <li
-            key={i}
-            className={['flex items-start gap-2 text-sm', isNo ? 'text-textdark/35 dark:text-dm-muted/40' : 'text-textdark/80 dark:text-dm-text'].join(' ')}
-          >
-            <span className={`mt-0.5 shrink-0 text-xs ${isNo ? '' : accentClass}`}>{isNo ? '✗' : '✓'}</span>
-            <span>{f.replace(/^[✓✗]\s/, '')}</span>
-          </li>
-        )
-      })}
-    </ul>
-  )
-}
-
-function getTrialDaysLeft() {
-  try {
-    const start = localStorage.getItem('breso_trial_start')
-    if (!start) return null
-    const elapsed = Math.floor((Date.now() - new Date(start).getTime()) / (1000 * 60 * 60 * 24))
-    return Math.max(0, 15 - elapsed)
-  } catch { return null }
-}
+import { useTheme } from '../contexts/ThemeContext'
 
 export default function Landing() {
-  const { t } = useTranslation()
+  const [selected, setSelected] = useState(null)
+  const [showCards, setShowCards] = useState(false)
   const navigate = useNavigate()
-  const [trialDaysLeft, setTrialDaysLeft] = useState(null)
-  const [trialActive, setTrialActive] = useState(false)
+  const { theme } = useTheme()
 
   useEffect(() => {
-    const days = getTrialDaysLeft()
-    if (days !== null) {
-      setTrialActive(true)
-      setTrialDaysLeft(days)
-    }
+    // Slide up cards after a tiny delay for smooth entry
+    const t = setTimeout(() => setShowCards(true), 100)
+    return () => clearTimeout(t)
   }, [])
 
-  const freeFeatures = t('landing.free.features', { returnObjects: true }) || []
-  const essentialFeatures = t('landing.essential.features', { returnObjects: true }) || []
-  const premiumFeatures = t('landing.premium.features', { returnObjects: true }) || []
-
-  const handleFree = () => {
-    if (trialActive) return
-    try {
-      localStorage.setItem('breso_selected_plan', 'free')
-      localStorage.setItem('breso_trial_start', new Date().toISOString())
-    } catch { }
-    navigate('/welcome')
+  const handleContinue = () => {
+    if (selected === 'patient') navigate('/signin?type=patient')
+    else if (selected === 'family') navigate('/signin?type=family')
   }
-
-  const handleEssential = () => {
-    try { localStorage.setItem('breso_selected_plan', 'essential') } catch { }
-    navigate('/payment?plan=essential')
-  }
-
-  const handlePremium = () => navigate('/payment?plan=premium')
 
   return (
-    <div className="space-y-6 animate-fade-up">
-      {/* Hero */}
-      <div className="space-y-2 pt-1">
-        <h1 className="text-3xl font-bold leading-tight text-textdark dark:text-dm-text">
-          {t('landing.hero')}
+    <div className="flex flex-col min-h-screen bg-[#FAF8F5] dark:bg-dm-bg transition-colors duration-300">
+      {/* Top 60% Hero Section */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6 text-center bg-gradient-to-b from-[#FAF8F5] to-[#F0F5F0] dark:from-[#2D3B2D] dark:to-[#1F2E1F]">
+        <img 
+          src={theme === 'dark' ? '/logo-dark.svg' : '/logo.svg'} 
+          alt="BRESO Logo" 
+          className="w-48 mb-8"
+          onError={(e) => {
+            // Fallback if logo-dark missing
+            if(theme === 'dark') e.target.src = '/logo.svg'
+          }}
+        />
+
+        <h1 className="text-[24px] font-[400] text-[#2D2D2D] dark:text-dm-text mb-6">
+          Tu acompañante de bienestar emocional
         </h1>
-        <p className="text-base leading-relaxed text-textdark/60 dark:text-dm-muted">
-          {t('landing.heroSub')}
+
+        <p className="text-[16px] italic text-[#6B7280] dark:text-[#9CAF9C] max-w-[320px] mx-auto mb-8 font-serif leading-relaxed">
+          "A todos nos hubiese gustado que nos ayudaran a entender lo que pasaba a nuestro alrededor."
+        </p>
+
+        <p className="text-[15px] text-[#4B5563] dark:text-[#E8EDE8]/80 max-w-sm mx-auto leading-[1.7] px-4 font-medium">
+          BRESO es un espacio seguro donde Soledad, tu acompañante de IA, te escucha todos los días, detecta cómo estás y coordina apoyo cuando lo necesitás.
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      {/* Bottom 40% Type Selection */}
+      <div 
+        className={`bg-white dark:bg-[#3D4F3D] rounded-t-[2.5rem] p-8 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_rgba(0,0,0,0.2)] flex flex-col items-center transition-transform duration-700 ease-out transform ${
+          showCards ? 'translate-y-0 opacity-100' : 'translate-y-full opacity-0'
+        }`}
+      >
+        <div className="w-12 h-1.5 bg-[#E5E7EB] dark:bg-[#4A5E4A] rounded-full mb-6"></div>
+        <h2 className="text-[18px] font-[500] text-[#2D2D2D] dark:text-dm-text mb-6 text-center">
+          ¿Para quién es BRESO?
+        </h2>
 
-        {/* ── FREE TRIAL ── */}
-        <div className="relative rounded-2xl border border-sage/60 dark:border-sage/40 bg-white dark:bg-dm-surface p-6 shadow-sm overflow-hidden">
-          <div className="flex items-baseline justify-between mb-4">
-            <span className="text-xl font-bold text-textdark dark:text-dm-text">Versión de prueba</span>
-            <span className="text-sm font-semibold text-sage">15 días</span>
-          </div>
-          <PlanFeatures features={freeFeatures} accentClass="text-sage" />
+        <div className="flex flex-col sm:flex-row w-full max-w-md gap-4 mb-6">
+          {/* Card Left: Para mí */}
+          <button
+            onClick={() => setSelected('patient')}
+            className={`flex-1 text-left p-5 rounded-2xl border-2 transition-all duration-300 ${
+              selected === 'patient' 
+                ? 'border-[#7C9A7E] bg-[#F0F7F0] dark:bg-[#7C9A7E]/20 shadow-md scale-[1.02]' 
+                : 'border-[#E5E7EB] dark:border-[#4A5E4A] hover:border-[#7C9A7E]/50'
+            }`}
+          >
+            <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🌱</div>
+            <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Quiero cuidarme</h3>
+            <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Hablá con Soledad cada día</p>
+          </button>
 
-          {trialActive ? (
-            <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
-              <div className="flex justify-between items-end mb-2">
-                <span className="text-sm font-semibold text-green-600 dark:text-green-500">{trialDaysLeft > 0 ? `${trialDaysLeft} días restantes` : 'Finalizada'}</span>
-                <span className="text-xs font-medium text-textdark/50 dark:text-dm-muted">{15 - trialDaysLeft}/15 usados</span>
-              </div>
-              <div className="w-full h-2 bg-softgray dark:bg-dm-border rounded-full overflow-hidden mb-4">
-                <div
-                  className="h-full bg-green-500 transition-all duration-500"
-                  style={{ width: `${((15 - trialDaysLeft) / 15) * 100}%` }}
-                ></div>
-              </div>
-              <button
-                type="button"
-                disabled
-                className="w-full rounded-full bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50 px-5 py-3 text-sm font-semibold text-green-700 dark:text-green-400 opacity-90 cursor-default"
-              >
-                Prueba en curso ✓
-              </button>
-            </div>
-          ) : (
-            <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
-              <button
-                type="button"
-                onClick={handleFree}
-                className="w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white shadow-soft transition-transform hover:-translate-y-0.5 hover:shadow-md active:scale-95"
-              >
-                {t('landing.free.cta')}
-              </button>
-            </div>
-          )}
+          {/* Card Right: Para alguien que quiero */}
+          <button
+            onClick={() => setSelected('family')}
+            className={`flex-1 text-left p-5 rounded-2xl border-2 transition-all duration-300 ${
+              selected === 'family' 
+                ? 'border-[#7C9A7E] bg-[#F0F7F0] dark:bg-[#7C9A7E]/20 shadow-md scale-[1.02]' 
+                : 'border-[#E5E7EB] dark:border-[#4A5E4A] hover:border-[#7C9A7E]/50'
+            }`}
+          >
+            <div className="text-[40px] mb-3 leading-none drop-shadow-sm">🤝</div>
+            <h3 className="text-[16px] font-bold text-[#2D2D2D] dark:text-dm-text mb-1">Quiero acompañar</h3>
+            <p className="text-[13px] text-[#6B7280] dark:text-dm-muted leading-tight">Seguí el bienestar de alguien cercano</p>
+          </button>
         </div>
 
-        {/* ── ESSENTIAL ── */}
-        <div className="relative rounded-2xl border border-softgray dark:border-dm-border bg-white dark:bg-dm-surface p-6 shadow-sm transition hover:border-sage/40 hover:shadow-md">
-          <div className="flex items-baseline justify-between mb-2">
-            <span className="text-xl font-bold text-textdark dark:text-dm-text">Esencial</span>
-          </div>
-          <div className="mb-4">
-            <span className="text-2xl font-black text-textdark dark:text-dm-text">5 USDT</span>
-            <span className="text-sm font-semibold text-textdark/50 dark:text-dm-muted">/mes</span>
-          </div>
-          <PlanFeatures features={essentialFeatures} accentClass="text-sage" />
-          <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
-            <button
-              type="button"
-              onClick={handleEssential}
-              className="w-full rounded-full bg-sage px-5 py-3 text-sm font-semibold text-white transition-transform hover:-translate-y-0.5 hover:shadow-md active:scale-95"
-            >
-              Seleccionar
-            </button>
-          </div>
+        {/* Action Button */}
+        <div className={`w-full max-w-md transition-all duration-500 ease-in-out overflow-hidden ${
+          selected ? 'opacity-100 max-h-20 translate-y-0' : 'opacity-0 max-h-0 translate-y-4'
+        }`}>
+          <button
+            onClick={handleContinue}
+            className="w-full bg-[#7C9A7E] hover:bg-[#6b866c] text-white font-bold text-[16px] py-4 rounded-full shadow-soft transition-transform hover:scale-[1.02] active:scale-95"
+          >
+            Continuar
+          </button>
         </div>
-
-        {/* ── PREMIUM ── */}
-        <div className="relative rounded-2xl border-2 border-[#B8860B]/70 bg-gradient-to-b from-white to-[#B8860B]/5 dark:from-dm-surface dark:to-[#B8860B]/10 p-6 shadow-md transition hover:shadow-lg">
-          <div className="absolute top-4 right-4">
-            <span className="rounded-full bg-gradient-to-r from-[#B8860B] to-[#DAA520] px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm">Premium</span>
-          </div>
-          <div className="flex items-baseline justify-between mb-2 pr-20">
-            <span className="text-xl font-bold text-textdark dark:text-dm-text">Premium</span>
-          </div>
-          <div className="mb-4">
-            <span className="text-2xl font-black text-[#B8860B] dark:text-[#E8CD81]">12 USDT</span>
-            <span className="text-sm font-semibold text-textdark/50 dark:text-dm-muted">/mes</span>
-          </div>
-          <PlanFeatures features={premiumFeatures} accentClass="text-[#B8860B]" />
-          <div className="mt-6 pt-5 border-t border-softgray dark:border-dm-border">
-            <button
-              type="button"
-              onClick={handlePremium}
-              className="w-full rounded-full border border-[#B8860B] bg-white dark:bg-dm-surface px-5 py-3 text-sm font-semibold text-[#B8860B] transition-all hover:bg-[#B8860B] hover:text-white hover:-translate-y-0.5 hover:shadow-md active:scale-95"
-            >
-              Seleccionar
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   )

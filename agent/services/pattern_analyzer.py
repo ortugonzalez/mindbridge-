@@ -2,13 +2,18 @@
 from __future__ import annotations
 
 import logging
+import os
 import statistics
 from datetime import datetime, timezone
 from typing import Any
 
+import anthropic
+
 from integrations.supabase_client import get_supabase
 
 logger = logging.getLogger("breso.pattern_analyzer")
+
+_anthropic_client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
 
 
 # ---------------------------------------------------------------------------
@@ -40,7 +45,7 @@ class PatternAnalyzer:
     def analyze_message(self, message: str, history: list, language: str = "es") -> dict:
         """
         Analyze a message for crisis / warning signals.
-        Returns {'level': 'red'|'orange'|'green', 'trigger': str|None, 'keyword': str|None}
+        Returns {'level': 'red'|'orange'|'yellow'|'green', 'trigger': str|None, 'keyword': str|None}
         """
         message_lower = message.lower()
 
@@ -70,13 +75,81 @@ class PatternAnalyzer:
 
         return {"level": "green", "trigger": None, "keyword": None}
 
+    async def analyze_message_with_semantic(
+        self, message: str, history: list, language: str = "es"
+    ) -> dict:
+        """
+        Analyze message using both keyword detection and Claude semantic risk scoring.
+        Keyword detection takes precedence for crisis-level signals.
+        Semantic score fills in the gaps for nuanced risk.
+        """
+        # Run keyword check first — always takes precedence for red
+        keyword_result = self.analyze_message(message, history, language)
+        if keyword_result["level"] == "red":
+            return keyword_result
+
+        # Complement with semantic scoring
+        semantic_score = await get_semantic_risk_score(message, history)
+
+        if semantic_score > 0.8:
+            return {"level": "red", "trigger": "semantic_risk", "keyword": None, "semantic_score": semantic_score}
+        if semantic_score > 0.6:
+            return {"level": "orange", "trigger": "semantic_risk", "keyword": None, "semantic_score": semantic_score}
+        if semantic_score > 0.4:
+            return {"level": "yellow", "trigger": "semantic_risk", "keyword": None, "semantic_score": semantic_score}
+
+        # Fall back to keyword result (orange or green)
+        return {**keyword_result, "semantic_score": semantic_score}
+
 
 _analyzer = PatternAnalyzer()
+
+
+async def get_semantic_risk_score(message: str, history: list) -> float:
+    """
+    Ask Claude to evaluate risk level 1-10.
+    Returns normalized 0.0-1.0 score.
+    """
+    try:
+        recent = history[-5:] if len(history) > 5 else history
+        context = "\n".join([
+            f"{m.get('role', 'user')}: {m.get('content', '')}"
+            for m in recent
+        ])
+
+        response = _anthropic_client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=10,
+            messages=[{
+                "role": "user",
+                "content": (
+                    f"Rate the emotional risk level of this message from 1-10.\n"
+                    f"1 = very positive/stable\n"
+                    f"10 = crisis/immediate danger\n\n"
+                    f"Context: {context}\n"
+                    f"Current message: {message}\n\n"
+                    f"Respond with ONLY a number 1-10."
+                ),
+            }],
+        )
+
+        score = float(response.content[0].text.strip())
+        return min(max(score / 10.0, 0.0), 1.0)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning({"event": "pattern_analyzer.semantic_risk_error", "error": str(exc)})
+        return 0.5
 
 
 def analyze_message(message: str, history: list, language: str = "es") -> dict:
     """Module-level convenience wrapper for PatternAnalyzer.analyze_message."""
     return _analyzer.analyze_message(message, history, language)
+
+
+async def analyze_message_with_semantic(
+    message: str, history: list, language: str = "es"
+) -> dict:
+    """Module-level convenience wrapper for semantic-enhanced analysis."""
+    return await _analyzer.analyze_message_with_semantic(message, history, language)
 
 
 def check_sustained_negativity(history_scores: list) -> bool:
