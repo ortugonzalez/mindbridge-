@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 
@@ -6,7 +6,7 @@ export default function AcceptInvite() {
   const { token } = useParams()
   const navigate = useNavigate()
   const [status, setStatus] = useState('idle') // idle, loading, success, error
-  const [inviterName, setInviterName] = useState('Alguien') 
+  const inviterName = 'Alguien'
 
   // In a real scenario, you might do a GET /family/invite-info?token=... to fetch inviterName first.
   
@@ -18,11 +18,11 @@ export default function AcceptInvite() {
       const base = import.meta.env.VITE_API_BASE_URL
       
       if (base) {
-        await fetch(`${base}/family/accept-invite`, {
-          method: 'POST',
+        const response = await fetch(`${base}/auth/accept-invite/${token}`, {
+          method: 'GET',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
-          body: JSON.stringify({ token })
-        }).catch(() => {})
+        })
+        if (!response.ok) throw new Error('accept invite failed')
       }
       setStatus('success')
     } catch {

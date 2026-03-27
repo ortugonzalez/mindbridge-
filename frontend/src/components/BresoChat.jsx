@@ -130,6 +130,7 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
   const { t, i18n } = useTranslation()
   const [text, setText] = useState('')
   const [isListening, setIsListening] = useState(false)
+  const todayStr = new Date().toISOString().slice(0, 10)
   
   const [reactions, setReactions] = useState(() => {
     try { return JSON.parse(localStorage.getItem('breso_reactions') || '{}') } catch { return {} }
@@ -140,15 +141,17 @@ export default function BresoChat({ messages = [], onSend, onMoodSelected, isSen
       const newReacts = { ...reactions, [msgId]: emoji }
       setReactions(newReacts)
       localStorage.setItem('breso_reactions', JSON.stringify(newReacts))
-      // MOCK: POST to /checkins/react natively.
-      fetch(import.meta.env.VITE_API_BASE_URL + '/checkins/react', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('breso_token') || ''}`
-        },
-        body: JSON.stringify({ message_id: msgId, reaction: emoji }),
-      }).catch(() => {})
+      const baseUrl = import.meta.env.VITE_API_BASE_URL
+      if (baseUrl) {
+        fetch(baseUrl + '/checkins/react', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('breso_token') || ''}`
+          },
+          body: JSON.stringify({ message_id: msgId, reaction: emoji }),
+        }).catch(() => {})
+      }
     } catch {}
   }
   

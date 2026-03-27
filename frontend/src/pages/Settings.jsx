@@ -24,7 +24,6 @@ export default function Settings() {
   })
 
   const [exportMsg, setExportMsg] = useState(false)
-  const [showExportChoice, setShowExportChoice] = useState(false)
 
   const exportAsPDF = (data, type) => {
     const currentLang = i18n.language || 'es'
@@ -205,14 +204,9 @@ export default function Settings() {
     }
     try {
       const res = await getConversationHistory(200)
-      const items = res.data && Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : [])
+      const items = res.data?.messages || res.messages || []
       if (items.length > 0) {
-        data.conversaciones = items.flatMap(item => {
-          const msgs = []
-          if (item.user_message) msgs.push({ role: 'user', text: item.user_message })
-          if (item.soledad_response) msgs.push({ role: 'soledad', text: item.soledad_response })
-          return msgs
-        })
+        data.conversaciones = items
       }
     } catch {}
     try {
@@ -221,7 +215,6 @@ export default function Settings() {
       if (summaryItems.length > 0) data.summaries = summaryItems
     } catch {}
     exportAsPDF(data, 'personal')
-    setShowExportChoice(false)
     setExportMsg(true)
     setTimeout(() => setExportMsg(false), 3000)
   }
@@ -229,7 +222,6 @@ export default function Settings() {
   const handleExportProfessional = () => {
     const data = { dias_racha: null }
     exportAsPDF(data, 'professional')
-    setShowExportChoice(false)
     setExportMsg(true)
     setTimeout(() => setExportMsg(false), 3000)
   }

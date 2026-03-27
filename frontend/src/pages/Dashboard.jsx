@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
 import CheckInHistory from '../components/CheckInHistory'
-import { addContact, getCheckinHistory, getDashboard } from '../services/api'
+import { getCheckinHistory, getDashboard } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 
@@ -14,17 +13,8 @@ function safeGetLocalStorage(key) {
   }
 }
 
-function safeSetLocalStorage(key, value) {
-  try {
-    localStorage.setItem(key, value)
-  } catch {
-    // ignore
-  }
-}
-
 export default function Dashboard() {
-  const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
+  const { t } = useTranslation()
 
   const storedUserName = safeGetLocalStorage(USER_NAME_KEY)
 
@@ -34,11 +24,8 @@ export default function Dashboard() {
   const [dashboard, setDashboard] = useState(null)
   const [history, setHistory] = useState(null)
 
-  const [startLoading, setStartLoading] = useState(false)
   const [showHistoryDetails, setShowHistoryDetails] = useState(false)
   const [selectedHistoryItem, setSelectedHistoryItem] = useState(null)
-
-  const weekdays = t('dashboard.weekdays', { returnObjects: true }) || []
 
   useEffect(() => {
     let isMounted = true
@@ -73,8 +60,6 @@ export default function Dashboard() {
     return dashboard?.weeklyCompleted || []
   }, [dashboard, history])
 
-  const nextProposal = dashboard?.proposal || ''
-
   const streakMilestones = [3, 7, 30, 100]
   const nextMilestone = streakMilestones.find(m => m > streakDays) || 100
   const progressPercent = Math.min(100, Math.round((streakDays / nextMilestone) * 100))
@@ -95,11 +80,6 @@ export default function Dashboard() {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
   const todaysProposal = Array.isArray(dailyProposals) ? dailyProposals[dayOfYear % dailyProposals.length] : ''
 
-  const handleStart = () => {
-    setStartLoading(true)
-    navigate('/chat', { state: { mode: dashboard?.mode || 'listening' } })
-  }
-
   const getMoodDot = (level) => {
     switch(level) {
       case 'red': return 'bg-red-500'
@@ -108,11 +88,6 @@ export default function Dashboard() {
       default: return 'bg-green-500'
     }
   }
-
-  const completedLabel = t('dashboard.status.completed')
-  const pendingLabel = t('dashboard.status.pending')
-
-  const activeLang = i18n.language?.startsWith('es') ? 'es' : 'en'
 
   return (
     <div className="space-y-4">

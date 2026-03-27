@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import { setupProfile } from '../services/api'
 
 export default function FamilyOnboarding() {
   const navigate = useNavigate()
@@ -23,6 +24,10 @@ export default function FamilyOnboarding() {
     setError('')
     try {
       if (name) localStorage.setItem('breso_user_name', name)
+      await setupProfile({
+        user_type: 'family',
+        display_name: name.trim(),
+      }).catch(() => {})
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token || localStorage.getItem('breso_token') || ''
       const base = import.meta.env.VITE_API_BASE_URL

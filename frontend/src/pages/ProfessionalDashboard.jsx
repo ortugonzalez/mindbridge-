@@ -1,9 +1,6 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 export default function ProfessionalDashboard() {
-  const { t } = useTranslation()
-
   // Mock patient list
   const [patients] = useState([
     {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
-import { getFamilyPatientStatus, getFamilyWeeklyReport, notifyPatient } from '../services/api'
+import { getFamilyPatientStatus, getFamilyWeeklyReport } from '../services/api'
 
 const ALERT_UI = {
   green:  { bg: 'bg-[#F0FDF4]', text: 'text-[#166534]', icon: '🌱' },

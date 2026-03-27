@@ -93,7 +93,7 @@ const EN_REPLIES = [
   "You don't have to have everything figured out to talk. We can go slowly.",
 ]
 
-function mockCheckinReply(mode) {
+function mockCheckinReply() {
   const es = i18n.language?.startsWith('es')
   if (es) {
     const replies = ES_REPLIES
@@ -141,19 +141,20 @@ function normalizeDashboard(raw) {
   const mock = mockDashboard()
   const r = raw || {}
   const userRaw = r.user || r.profile || r.usuario || r
+  const weekly =
+    normalizeWeeklyToBooleans(r.weeklyCompleted) ||
+    normalizeWeeklyToBooleans(r.weekly) ||
+    normalizeWeeklyToBooleans(r.history) ||
+    normalizeWeeklyToBooleans(r.weekly_checkins)
   return {
     user: {
       nombre: userRaw?.nombre || userRaw?.name || mock.user.nombre,
       plan: userRaw?.plan || r.plan || mock.user.plan,
     },
     streakDaysConsecutive: Number(
-      r.streakDaysConsecutive ?? r.streak_days ?? r.streak ?? r.streakDays ?? mock.streakDaysConsecutive
+      r.streakDaysConsecutive ?? r.streak_days ?? r.streak ?? r.streakDays ?? r.current_streak ?? mock.streakDaysConsecutive
     ),
-    weeklyCompleted:
-      normalizeWeeklyToBooleans(r.weeklyCompleted) ||
-      normalizeWeeklyToBooleans(r.weekly) ||
-      normalizeWeeklyToBooleans(r.history) ||
-      mock.weeklyCompleted,
+    weeklyCompleted: weekly || mock.weeklyCompleted,
     proposal: r.proposal || r.proposalText || r.nextProposal || r.propuesta || mock.proposal,
     contact: {
       nombre: r.contact?.nombre || r.contact?.name || mock.contact.nombre,
@@ -167,13 +168,34 @@ function normalizeDashboard(raw) {
 function normalizeHistory(raw) {
   const mock = mockCheckinHistory()
   const r = raw || {}
+  const items = Array.isArray(r.items)
+    ? r.items
+    : Array.isArray(r)
+      ? r
+      : mock.items
   return {
     weeklyCompleted:
       normalizeWeeklyToBooleans(r.weeklyCompleted) ||
       normalizeWeeklyToBooleans(r.weekly) ||
       normalizeWeeklyToBooleans(r.history) ||
+      normalizeWeeklyToBooleans(r.weekly_checkins) ||
       mock.weeklyCompleted,
-    items: Array.isArray(r.items) ? r.items : mock.items,
+    items: items.map((item) => ({
+      ...item,
+      created_at: item.created_at || item.responded_at || item.scheduled_at,
+      summary: item.summary || item.breso_message || '',
+      alert_level:
+        item.alert_level ||
+        (typeof item.tone_score === 'number'
+          ? item.tone_score < -0.3
+            ? 'red'
+            : item.tone_score < 0
+              ? 'orange'
+              : item.tone_score < 0.3
+                ? 'yellow'
+                : 'green'
+          : 'green'),
+    })),
   }
 }
 
@@ -220,11 +242,19 @@ export async function getConversationHistory(limit = 20) {
   )
 }
 
-export async function registerUser({ name, email, password }) {
+export async function registerUser({ email, password, display_name, language = 'es', timezone = 'America/Argentina/Buenos_Aires', checkin_time_preference = '09:00', phone_number }) {
   const lang = i18n.language || 'es'
   return requestWithMock(
     () =>
-      axiosClient.post('/auth/register', { name, email, password, preferred_language: lang }).then((res) => {
+      axiosClient.post('/auth/register', {
+        email,
+        password,
+        display_name,
+        language: language || lang,
+        timezone,
+        checkin_time_preference,
+        phone_number,
+      }).then((res) => {
         const token = res.data?.token || res.data?.access_token || null
         if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
         return res.data
@@ -340,14 +370,22 @@ export async function sendMessageToSoledad(message, history = [], language = 'es
 
 export async function addContact({ name, email, relation }) {
   return requestWithMock(
-    () => axiosClient.post('/contacts', { name, email, relation }).then((res) => res.data),
+    () => axiosClient.post('/contacts/invite', { contact_name: name, contact_email: email, relationship: relation }).then((res) => res.data),
     () => ({ ok: true, fromMock: true })
   )
 }
 
-export async function inviteContact({ email, name, relationship }) {
+export async function getContacts() {
   return requestWithMock(
-    () => axiosClient.post('/relationships/invite', { email, name, relationship }).then((res) => res.data),
+    () => axiosClient.get('/contacts').then((res) => res.data),
+    () => []
+  )
+}
+
+export async function inviteContact({ email, relationship }) {
+  const relationshipType = ['family', 'professional'].includes(relationship) ? relationship : 'family'
+  return requestWithMock(
+    () => axiosClient.post('/relationships/invite', { email, relationship_type: relationshipType }).then((res) => res.data),
     () => ({ ok: true, fromMock: true })
   )
 }
@@ -368,7 +406,7 @@ export async function getDashboard() {
 
 export async function getCheckinHistory() {
   return requestWithMock(
-    () => axiosClient.get('/checkin/history').then((res) => normalizeHistory(res.data)),
+    () => axiosClient.get('/checkins/history').then((res) => normalizeHistory(res.data)),
     () => normalizeHistory({})
   )
 }
@@ -435,7 +473,14 @@ export async function notifyPatient({ message }) {
 export async function getVapidPublicKey() {
   return requestWithMock(
     () => axiosClient.get('/users/me/vapid-public-key').then((res) => res.data),
-    () => ({ vapid_public_key: null })
+    () => ({ vapid_public_key: import.meta.env.VITE_VAPID_PUBLIC_KEY || null })
+  )
+}
+
+export async function setupProfile({ user_type, display_name, phone_number, invite_token }) {
+  return requestWithMock(
+    () => axiosClient.post('/auth/setup-profile', { user_type, display_name, phone_number, invite_token }).then((res) => res.data),
+    () => ({ success: true, linked: Boolean(invite_token), fromMock: true })
   )
 }
 

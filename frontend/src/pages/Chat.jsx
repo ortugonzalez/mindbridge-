@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import BresoChat from '../components/BresoChat'
 import CrisisOverlay from '../components/CrisisOverlay'
@@ -15,7 +15,6 @@ function safeGet(key) {
 
 export default function Chat() {
   const { t, i18n } = useTranslation()
-  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const isDemo = searchParams.get('demo') === 'true'
 
@@ -23,7 +22,6 @@ export default function Chat() {
   const historyLoaded = useRef(false)
 
   const [userName] = useState(safeGet(USER_NAME_KEY))
-  const [mode, setMode] = useState('listening')
   const [messages, setMessages] = useState(() => {
     try {
       const stored = localStorage.getItem('breso_conversation') || localStorage.getItem('breso_conversation_history')
@@ -62,7 +60,7 @@ export default function Chat() {
   const [showStreakBanner, setShowStreakBanner] = useState(false)
   const [streakDays, setStreakDays] = useState(0)
 
-  const buildOpening = () => {
+  const buildOpening = useCallback(() => {
     const h = new Date().getHours()
     let key = 'chat.opening_evening'
     if (h >= 6 && h < 12) key = 'chat.opening_morning'
@@ -75,7 +73,7 @@ export default function Chat() {
     }
 
     return [{ from: 'breso', role: 'soledad', text, timestamp: new Date().toISOString() }]
-  }
+  }, [t, userName])
 
   // Save messages to localStorage whenever they change (only after user interaction)
   useEffect(() => {
@@ -96,32 +94,32 @@ export default function Chat() {
       return
     }
 
-    if (messages.length === 0) setMessages(buildOpening())
+    if (messages.length === 0) {
+      setMessages((prev) => (prev.length === 0 ? buildOpening() : prev))
+    }
     
-      ; (async () => {
+    ;(async () => {
         try {
           const history = await getConversationHistory(20)
           if (!mounted) return
           // History returns newest-first; reverse to get chronological order
-          const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
-          if (items.length > 0) {
+          const items = history.data?.messages || history.messages || []
+          if (Array.isArray(items) && items.length > 0) {
             historyLoaded.current = true
             hasUserReplied.current = true
-            // Build message pairs oldest-first
-            const historicMessages = [...items].reverse().flatMap((item) => {
-              const msgs = []
-              if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message })
-              if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response })
-              return msgs
-            })
+            const historicMessages = items.map((item) => ({
+              from: item.role === 'soledad' ? 'breso' : 'user',
+              role: item.role === 'soledad' ? 'soledad' : 'user',
+              text: item.text,
+              timestamp: item.timestamp,
+            }))
             setMessages(historicMessages)
             return
           }
         } catch { }
       })()
     return () => { mounted = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDemo])
+  }, [buildOpening, isDemo, messages.length])
 
   // Demo injection sequence
   useEffect(() => {
@@ -141,7 +139,7 @@ export default function Chat() {
 
     let timeouts = []
 
-    DEMO_CONVERSATION.forEach((msg, idx) => {
+    DEMO_CONVERSATION.forEach((msg) => {
       if (msg.role === 'soledad' && msg.delay > 2000) {
         // Show typing indicator
         timeouts.push(setTimeout(() => {
@@ -166,13 +164,10 @@ export default function Chat() {
   // Fetch current mode from dashboard
   useEffect(() => {
     let mounted = true
-      ; (async () => {
+    ;(async () => {
         try {
           const res = await getDashboard()
           if (!mounted) return
-          const apiMode = res.data?.mode
-          if (apiMode) setMode(apiMode)
-
           const days = res.data?.streakDaysConsecutive || 0
           setStreakDays(days)
           if (days >= 3) {
@@ -182,13 +177,11 @@ export default function Chat() {
         } catch { }
       })()
     return () => { mounted = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Rebuild opening messages on language change (only if user hasn't replied and no history)
   useEffect(() => {
     // Disabled rebuilding opening dynamically to avoid overriding mood selector workflow
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i18n.language])
 
   const handleLoadOlder = async () => {
@@ -197,13 +190,13 @@ export default function Chat() {
     try {
       const newLimit = historyLimit + 20
       const history = await getConversationHistory(newLimit)
-      const items = Array.isArray(history.data) ? history.data : (Array.isArray(history) ? history : [])
-      const newHistoricMessages = [...items].reverse().flatMap((item) => {
-        const msgs = []
-        if (item.user_message) msgs.push({ from: 'user', role: 'user', text: item.user_message, timestamp: item.scheduled_at || new Date().toISOString() })
-        if (item.soledad_response) msgs.push({ from: 'breso', role: 'soledad', text: item.soledad_response, timestamp: item.scheduled_at || new Date().toISOString() })
-        return msgs
-      })
+      const items = history.data?.messages || history.messages || []
+      const newHistoricMessages = Array.isArray(items) ? items.map((item) => ({
+        from: item.role === 'soledad' ? 'breso' : 'user',
+        role: item.role === 'soledad' ? 'soledad' : 'user',
+        text: item.text,
+        timestamp: item.timestamp || new Date().toISOString(),
+      })) : []
       
       setHistoryLimit(newLimit)
       

@@ -5,11 +5,6 @@ import { supabase } from '../lib/supabase'
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://mindbridge-production-c766.up.railway.app'
 
-function truncateAddress(addr) {
-  if (!addr) return ''
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`
-}
-
 export default function Payment() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -34,17 +29,12 @@ export default function Payment() {
   }
   const planInfo = PLAN_INFO[plan] || PLAN_INFO.essential
 
-  const [walletAddress, setWalletAddress] = useState('')
   const [paymentSuccess, setPaymentSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [renewalDate, setRenewalDate] = useState('')
   const [error, setError] = useState('')
   const [hasMetaMask, setHasMetaMask] = useState(false)
   const [paymentCurrency, setPaymentCurrency] = useState('USDT')
-
-  const predictedRenewalDate = new Date()
-  predictedRenewalDate.setMonth(predictedRenewalDate.getMonth() + 1)
-  const predictedRenewalString = predictedRenewalDate.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
 
   useEffect(() => {
     setHasMetaMask(typeof window !== 'undefined' && Boolean(window.ethereum))
@@ -99,7 +89,7 @@ export default function Payment() {
         try { localStorage.setItem('breso_selected_plan', plan) } catch {}
         setPaymentSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('El pago por Celo Blockchain requiere tener instalada la wallet de MetaMask u Opera Crypto Browser en tu dispositivo.')
     } finally {
       setLoading(false)
@@ -119,7 +109,7 @@ export default function Payment() {
       alert("Tu suscripción fue cancelada correctamente.")
       try { localStorage.removeItem('breso_selected_plan') } catch {}
       setPaymentSuccess(false)
-    } catch (e) {
+    } catch {
       alert("Error al cancelar. Intentá más tarde.")
     }
   }

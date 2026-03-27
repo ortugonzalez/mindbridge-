@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone, timedelta
 
 from fastapi import APIRouter, Body, Depends, Header, HTTPException
@@ -377,6 +378,12 @@ async def save_push_subscription(
         raise HTTPException(status_code=500, detail="Failed to save push subscription") from exc
 
 
+@router.get("/me/vapid-public-key")
+async def get_vapid_public_key(current_user=Depends(get_current_user)) -> dict:
+    """Return the public VAPID key for Web Push subscriptions."""
+    return {"vapid_public_key": os.getenv("VAPID_PUBLIC_KEY")}
+
+
 # ---------------------------------------------------------------------------
 # GET /dashboard
 # ---------------------------------------------------------------------------
@@ -540,6 +547,63 @@ async def get_my_invite(current_user=Depends(get_current_user)) -> dict:
         "invite_url": invite_url,
         "message": "Compartí este link con tu familiar",
     }
+
+
+@family_router.post("/accept-invite/{token}")
+async def accept_family_invite_for_contact(
+    token: str,
+    current_user=Depends(get_current_user),
+) -> dict:
+    """Allow a logged-in family user to accept a patient-generated invite token."""
+    supabase = get_supabase()
+
+    user_row = (
+        supabase.table("users")
+        .select("user_type")
+        .eq("id", current_user.id)
+        .single()
+        .execute()
+    ).data or {}
+    if user_row.get("user_type") != "family":
+        raise HTTPException(status_code=403, detail="Only family users can accept this invite")
+
+    invite_resp = (
+        supabase.table("user_relationships")
+        .select("id, patient_id, related_user_id, status")
+        .eq("invite_token", token)
+        .eq("status", "pending")
+        .single()
+        .execute()
+    )
+    invite = invite_resp.data or None
+    if not invite or invite.get("related_user_id"):
+        raise HTTPException(status_code=404, detail="Invite not found or already used")
+
+    existing = (
+        supabase.table("user_relationships")
+        .select("id")
+        .eq("patient_id", invite["patient_id"])
+        .eq("related_user_id", str(current_user.id))
+        .execute()
+    )
+    if existing.data:
+        raise HTTPException(status_code=409, detail="Relationship already exists")
+
+    try:
+        supabase.table("user_relationships").update(
+            {"related_user_id": str(current_user.id), "status": "active"}
+        ).eq("id", invite["id"]).execute()
+    except Exception as exc:  # noqa: BLE001
+        logger.error({"event": "family.accept_invite.error", "error": str(exc), "token": token})
+        raise HTTPException(status_code=500, detail="Failed to accept invite") from exc
+
+    logger.info({
+        "event": "family.accept_invite.success",
+        "family_user_id": current_user.id,
+        "patient_id": invite["patient_id"],
+        "relationship_id": invite["id"],
+    })
+    return {"success": True, "patient_id": invite["patient_id"]}
 
 
 @family_router.get("/patient-status")

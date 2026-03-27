@@ -1,28 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
 
 const Toast = ({ message, type = 'info', onClose }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isRendered, setIsRendered] = useState(true);
+  const [isVisible, setIsVisible] = useState(true)
+  const [isRendered, setIsRendered] = useState(true)
 
   useEffect(() => {
-    // Slide up immediately on mount
-    setIsVisible(true);
-
     const timer = setTimeout(() => {
-      // Start fade out after 3 seconds
-      setIsVisible(false);
+      setIsVisible(false)
       
-      // Wait for animation to finish before unmounting
       setTimeout(() => {
-        setIsRendered(false);
-        if (onClose) onClose();
-      }, 300); // 300ms matches the transition duration
-    }, 3000);
+        setIsRendered(false)
+        if (onClose) onClose()
+      }, 300)
+    }, 3000)
 
-    return () => clearTimeout(timer);
-  }, [onClose]);
+    return () => clearTimeout(timer)
+  }, [onClose])
 
-  if (!isRendered) return null;
+  if (!isRendered) return null
 
   const typeConfig = {
     success: {
@@ -55,7 +50,7 @@ const Toast = ({ message, type = 'info', onClose }) => {
         </svg>
       )
     }
-  };
+  }
 
   const currentConfig = typeConfig[type] || typeConfig.info;
 
@@ -71,6 +66,6 @@ const Toast = ({ message, type = 'info', onClose }) => {
       </div>
     </div>
   );
-};
+}
 
-export default Toast;
+export default Toast

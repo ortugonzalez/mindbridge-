@@ -12,7 +12,9 @@ export default function AuthGuard({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
+    let active = true
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return
       if (session) {
         setIsLoggedIn(true)
       } else {
@@ -24,6 +26,9 @@ export default function AuthGuard({ children }) {
       }
       setChecked(true)
     })
+    return () => {
+      active = false
+    }
   }, [])
 
   if (!checked) return null // brief flash prevention

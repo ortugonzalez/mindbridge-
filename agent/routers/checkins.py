@@ -27,6 +27,11 @@ class ChatRequest(BaseModel):
     language: str = "es"
     history: List[HistoryMessage] = []
 
+
+class MessageReaction(BaseModel):
+    message_id: str
+    reaction: str
+
 router = APIRouter(prefix="/checkins", tags=["checkins"])
 logger = logging.getLogger("breso.checkins")
 
@@ -712,6 +717,21 @@ async def respond_to_checkin(
         "has_memory": bool(memory),
         "memory_preview": memory_preview,
     }
+
+
+@router.post("/react")
+async def react_to_message(
+    body: MessageReaction,
+    current_user=Depends(get_current_user),
+) -> dict:
+    """Best-effort reaction endpoint for chat messages."""
+    logger.info({
+        "event": "checkins.react",
+        "user_id": current_user.id,
+        "message_id": body.message_id,
+        "reaction": body.reaction,
+    })
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

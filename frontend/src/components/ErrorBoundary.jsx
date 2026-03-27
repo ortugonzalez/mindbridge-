@@ -46,7 +46,7 @@ export default class ErrorBoundary extends Component {
           >
             Volver al inicio
           </button>
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <pre style={{
               marginTop: 24,
               fontSize: 11,
