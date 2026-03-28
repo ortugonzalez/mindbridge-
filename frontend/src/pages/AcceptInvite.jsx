@@ -18,8 +18,8 @@ export default function AcceptInvite() {
       const base = import.meta.env.VITE_API_BASE_URL
       
       if (base) {
-        const response = await fetch(`${base}/auth/accept-invite/${token}`, {
-          method: 'GET',
+        const response = await fetch(`${base}/family/accept-invite/${token}`, {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
         })
         if (!response.ok) throw new Error('accept invite failed')
