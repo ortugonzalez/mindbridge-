@@ -43,6 +43,14 @@ export default function SignIn() {
 
   useEffect(() => () => { if (countdownRef.current) clearInterval(countdownRef.current) }, [])
 
+  const isSpanish = () => {
+    try {
+      return (navigator.language || '').toLowerCase().startsWith('es')
+    } catch {
+      return true
+    }
+  }
+
   const afterLogin = async (user) => {
     const name = user?.user_metadata?.display_name || user?.user_metadata?.name || ''
     if (name) { try { localStorage.setItem(USER_NAME_KEY, name) } catch {} }
@@ -69,10 +77,13 @@ export default function SignIn() {
 
   const translateError = (err) => {
     const msg = err?.message?.toLowerCase() || ''
-    if (msg.includes('invalid login credentials')) return t('errors.generic')
-    if (msg.includes('password')) return t('errors.generic')
+    if (msg.includes('email not confirmed') || msg.includes('confirm')) {
+      return isSpanish() ? 'Confirmá tu correo antes de iniciar sesión.' : 'Confirm your email before signing in.'
+    }
+    if (msg.includes('invalid login credentials') || msg.includes('password') || msg.includes('not found')) {
+      return isSpanish() ? 'Email o contraseña incorrectos.' : 'Invalid email or password.'
+    }
     if (msg.includes('email')) return t('signin.error_email_empty')
-    if (msg.includes('not found')) return t('errors.generic')
     return t('errors.generic')
   }
 
@@ -114,7 +125,7 @@ export default function SignIn() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password: password,
     })
@@ -125,16 +136,15 @@ export default function SignIn() {
       return
     }
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password: password,
-    })
-
-    if (!signInError) {
-      navigate('/onboarding')
+    if (data?.session) {
+      await afterLogin(data.session.user || data.user)
     } else {
       setTab('password')
-      setError(t('signin.account_created'))
+      setError(
+        isSpanish()
+          ? 'Cuenta creada. Revisá tu correo para confirmarla antes de iniciar sesión.'
+          : 'Account created. Check your email to confirm it before signing in.'
+      )
     }
     setLoading(false)
   }
