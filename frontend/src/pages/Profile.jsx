@@ -44,15 +44,15 @@ export default function Profile() {
       const localPhone = safeGet('breso_phone')
 
       if (mounted) {
-        setProfile({
-          name: localName,
-          email: '',
-          phone: localPhone,
-          type: safeGet('breso_user_type') || 'patient',
-          plan: safeGet('breso_selected_plan') || 'free',
-          trialDaysRemaining: 15,
-          isVerified: false,
-        })
+          setProfile({
+            name: localName,
+            email: '',
+            phone: localPhone,
+            type: safeGet('breso_user_type') || 'patient',
+            plan: safeGet('breso_selected_plan') || 'free',
+            trialDaysRemaining: 15,
+            isVerified: false,
+          })
         setNameVal(localName)
         setPhoneVal(localPhone)
       }
@@ -79,6 +79,7 @@ export default function Profile() {
                 type: data.user_type || prev.type,
                 plan: data.plan || prev.plan,
                 trialDaysRemaining: data.trial_days_left ?? prev.trialDaysRemaining,
+                isVerified: Boolean(data.identity_verified ?? prev.isVerified),
               }
               setNameVal(newP.name)
               setPhoneVal(newP.phone)
@@ -96,17 +97,17 @@ export default function Profile() {
 
   const saveName = async () => {
     setSaving(true)
-    try { localStorage.setItem('breso_user_name', nameVal.trim()) } catch {}
+    try { localStorage.setItem('breso_user_name', nameVal.trim()) } catch (storageError) { console.warn('[Profile] name cache failed', storageError?.message || storageError) }
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token || safeGet('breso_token')
       await fetch(`${BASE_URL}/users/me/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ name: nameVal.trim() }),
+        body: JSON.stringify({ display_name: nameVal.trim() }),
         signal: AbortSignal.timeout(5000),
       })
-    } catch {}
+    } catch (err) { console.warn('[Profile] saveName sync failed', err?.message || err) }
     setProfile(p => ({ ...p, name: nameVal.trim() }))
     setSaving(false)
     setEditingName(false)
@@ -122,10 +123,10 @@ export default function Profile() {
       await fetch(`${BASE_URL}/users/me/profile`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({ phone: phoneVal.trim() }),
+        body: JSON.stringify({ phone_number: phoneVal.trim() }),
         signal: AbortSignal.timeout(5000),
       })
-    } catch {}
+    } catch (err) { console.warn('[Profile] savePhone sync failed', err?.message || err) }
     setProfile(p => ({ ...p, phone: phoneVal.trim() }))
     setSaving(false)
     setEditingPhone(false)

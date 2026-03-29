@@ -4,6 +4,7 @@ from __future__ import annotations
 import logging
 import os
 import uuid
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -103,7 +104,7 @@ async def send_invite(
     # Mark invite as sent
     try:
         supabase.table("user_relationships").update(
-            {"invite_sent_at": "now()"}
+            {"invite_sent_at": datetime.now(timezone.utc).isoformat()}
         ).eq("invite_token", invite_token).execute()
     except Exception:  # noqa: BLE001
         pass

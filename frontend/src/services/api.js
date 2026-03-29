@@ -16,7 +16,9 @@ axiosClient.interceptors.request.use((config) => {
   try {
     const token = localStorage.getItem('breso_token')
     if (token) config.headers.Authorization = `Bearer ${token}`
-  } catch { }
+  } catch (error) {
+    console.warn('[API] Unable to read stored token', error?.message || error)
+  }
   return config
 })
 
@@ -51,7 +53,8 @@ async function requestWithMock(fn, mockFactory) {
   try {
     const res = await fn()
     return { data: res, fromMock: false }
-  } catch {
+  } catch (error) {
+    console.warn('[API] Falling back to mock response', error?.message || error)
     return { data: mockFactory(), fromMock: true }
   }
 }
@@ -208,7 +211,13 @@ export async function signIn({ email, password }) {
     () =>
       axiosClient.post('/auth/signin', { email, password }).then((res) => {
         const token = res.data?.access_token || res.data?.token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
+        if (token) {
+          try {
+            localStorage.setItem('breso_token', token)
+          } catch (storageError) {
+            console.warn('[API] Unable to persist auth token', storageError?.message || storageError)
+          }
+        }
         return res.data
       }),
     () => ({ access_token: 'mock-token', user_id: 'mock-user', fromMock: true })
@@ -231,6 +240,7 @@ export async function getUserProfile() {
       user_type: 'patient',
       language: i18n.language || 'es',
       trial_days_left: 15,
+      identity_verified: false,
     })
   )
 }
@@ -256,7 +266,13 @@ export async function registerUser({ email, password, display_name, language = '
         phone_number,
       }).then((res) => {
         const token = res.data?.token || res.data?.access_token || null
-        if (token) { try { localStorage.setItem('breso_token', token) } catch { } }
+        if (token) {
+          try {
+            localStorage.setItem('breso_token', token)
+          } catch (storageError) {
+            console.warn('[API] Unable to persist auth token', storageError?.message || storageError)
+          }
+        }
         return res.data
       }),
     () => ({ ok: true, fromMock: true })
@@ -467,6 +483,61 @@ export async function getFamilyWeeklyReport() {
   return requestWithMock(
     () => axiosClient.get('/family/weekly-report').then((res) => res.data),
     () => ({ week: '', summary: '', alert_level: 'green', recommendation: '' })
+  )
+}
+
+export async function getAlerts() {
+  return requestWithMock(
+    () => axiosClient.get('/alerts').then((res) => res.data),
+    () => []
+  )
+}
+
+export async function markAlertRead(alertId) {
+  return requestWithMock(
+    () => axiosClient.patch(`/alerts/${alertId}/read`).then((res) => res.data),
+    () => ({ success: true, fromMock: true })
+  )
+}
+
+export async function markAllAlertsRead() {
+  return requestWithMock(
+    () => axiosClient.patch('/alerts/read-all').then((res) => res.data),
+    () => ({ success: true, fromMock: true })
+  )
+}
+
+export async function getMyPatients() {
+  return requestWithMock(
+    () => axiosClient.get('/relationships/my-patients').then((res) => res.data),
+    () => []
+  )
+}
+
+export async function getSubscriptionStatus() {
+  return requestWithMock(
+    () => axiosClient.get('/subscriptions/status').then((res) => res.data),
+    () => ({ active: false, plan: 'free_trial', status: 'trial', trial_days_left: 15 })
+  )
+}
+
+export async function getVerificationRequest() {
+  return requestWithMock(
+    () => axiosClient.get('/users/me/verify-identity').then((res) => res.data),
+    () => ({
+      is_verified: false,
+      verification_url: 'https://app.ai.self.xyz',
+      qr_code: '',
+      verification_id: 'demo-verification',
+      instructions: 'Escaneá el QR con la app Self Protocol para verificar tu identidad',
+    })
+  )
+}
+
+export async function submitVerification({ verification_id, proof }) {
+  return requestWithMock(
+    () => axiosClient.post('/users/me/verify-identity', { verification_id, proof }).then((res) => res.data),
+    () => ({ verified: true, is_verified: true, fromMock: true })
   )
 }
 

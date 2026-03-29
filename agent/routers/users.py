@@ -111,7 +111,7 @@ async def get_profile(current_user=Depends(get_current_user)) -> dict:
     try:
         resp = (
             supabase.table("users")
-            .select("display_name, phone_number, plan, trial_start, language, user_type")
+            .select("display_name, phone_number, plan, trial_start, language, user_type, identity_verified")
             .eq("id", current_user.id)
             .single()
             .execute()
@@ -133,6 +133,7 @@ async def get_profile(current_user=Depends(get_current_user)) -> dict:
             "plan": row.get("plan", "free_trial"),
             "language": row.get("language", "es"),
             "user_type": row.get("user_type", "patient"),
+            "identity_verified": bool(row.get("identity_verified", False)),
             "trial_start": row.get("trial_start"),
             "trial_days_left": trial_days_left,
         }
@@ -327,8 +328,27 @@ class PushSubscriptionBody(BaseModel):
 async def get_verification_request(current_user=Depends(get_current_user)) -> dict:
     """Create a Self Protocol identity verification request for the current user."""
     from integrations.self_protocol import create_verification_request
+    supabase = get_supabase()
+    user_resp = (
+        supabase.table("users")
+        .select("identity_verified")
+        .eq("id", current_user.id)
+        .single()
+        .execute()
+    )
+    user_row = user_resp.data or {}
+    if user_row.get("identity_verified"):
+        return {
+            "is_verified": True,
+            "verification_url": None,
+            "qr_code": None,
+            "verification_id": None,
+            "instructions": "Tu identidad ya está verificada.",
+        }
+
     result = await create_verification_request(str(current_user.id))
     return {
+        "is_verified": False,
         "verification_url": "https://app.ai.self.xyz",
         "qr_code": result.get("qrCode", ""),
         "verification_id": result.get("verificationId", ""),
@@ -353,7 +373,11 @@ async def submit_verification(data: dict, current_user=Depends(get_current_user)
             logger.info({"event": "self_protocol.verified", "user_id": current_user.id})
         except Exception as exc:  # noqa: BLE001
             logger.error({"event": "self_protocol.db_update_failed", "error": str(exc)})
-    return result
+    return {
+        **result,
+        "is_verified": bool(result.get("verified")),
+        "verification_id": data.get("verification_id", ""),
+    }
 
 
 @router.post("/me/push-subscription")

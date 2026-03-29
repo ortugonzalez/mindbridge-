@@ -1,4 +1,4 @@
-"""Alerts router."""
+"""Alerts router - user notification inbox and read state."""
 from __future__ import annotations
 
 import logging
@@ -19,9 +19,36 @@ def _safe_iso(raw_value: str | None) -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def _serialize_alert(row: dict) -> dict:
+    """Normalize notification and alert rows for the frontend inbox."""
+    notification_type = row.get("type") or "alert"
+    title = row.get("title") or "Notificación"
+    body = row.get("body") or row.get("message") or ""
+    created_at = row.get("created_at") or row.get("triggered_at")
+    raw_type = notification_type
+    if row.get("severity_level"):
+        raw_type = f"alert_{row.get('severity_level')}"
+
+    return {
+        "id": row.get("id"),
+        "type": "system" if notification_type.startswith("system") else "alerts",
+        "title": title,
+        "body": body,
+        "message": body,
+        "read": bool(row.get("read", False) or row.get("status") == "resolved"),
+        "created_at": _safe_iso(created_at),
+        "icon": row.get("icon"),
+        "source": row.get("source") or ("alert" if row.get("severity_level") else "user_notification"),
+        "source_id": row.get("source_id"),
+        "raw_type": raw_type,
+        "alert_level": row.get("alert_level") or row.get("severity_level") or notification_type.replace("alert_", ""),
+        "status": row.get("status"),
+    }
+
+
 @router.get("")
 async def list_alerts(current_user=Depends(get_current_user)) -> list[dict]:
-    """Return alert and notification items visible to the authenticated user."""
+    """Return the current user's notifications ordered from newest to oldest."""
     supabase = get_supabase()
     user_id = str(current_user.id)
     items: list[dict] = []
@@ -35,14 +62,13 @@ async def list_alerts(current_user=Depends(get_current_user)) -> list[dict]:
             .execute()
         )
         for row in notifications_res.data or []:
-            raw_type = str(row.get("type") or "system")
             items.append(
                 {
                     "id": f"notification:{row.get('id')}",
                     "source": "user_notification",
                     "source_id": row.get("id"),
-                    "type": "alert" if raw_type.startswith("alert_") else "system",
-                    "raw_type": raw_type,
+                    "type": "alerts" if str(row.get("type") or "").startswith("alert_") else "system",
+                    "raw_type": str(row.get("type") or "system"),
                     "title": row.get("title") or "Notificación",
                     "message": row.get("body") or "",
                     "read": bool(row.get("read")),
@@ -74,7 +100,7 @@ async def list_alerts(current_user=Depends(get_current_user)) -> list[dict]:
                     "id": f"alert:{row.get('id')}",
                     "source": "alert",
                     "source_id": row.get("id"),
-                    "type": "alert",
+                    "type": "alerts",
                     "raw_type": f"alert_{severity}",
                     "title": "Seguimiento de bienestar",
                     "message": message,
@@ -88,11 +114,11 @@ async def list_alerts(current_user=Depends(get_current_user)) -> list[dict]:
         logger.warning({"event": "alerts.rows_fetch_failed", "error": str(exc)})
 
     items.sort(key=lambda item: item.get("created_at") or "", reverse=True)
-    return items
+    return [_serialize_alert(item) for item in items]
 
 
 @router.patch("/read-all")
-async def mark_all_as_read(current_user=Depends(get_current_user)) -> dict:
+async def mark_all_read(current_user=Depends(get_current_user)) -> dict:
     """Mark all in-app notifications for the current user as read."""
     supabase = get_supabase()
     user_id = str(current_user.id)
@@ -107,7 +133,7 @@ async def mark_all_as_read(current_user=Depends(get_current_user)) -> dict:
 
 
 @router.patch("/{notification_id}/read")
-async def mark_one_as_read(notification_id: str, current_user=Depends(get_current_user)) -> dict:
+async def mark_one_read(notification_id: str, current_user=Depends(get_current_user)) -> dict:
     """Mark a single notification row as read."""
     supabase = get_supabase()
     user_id = str(current_user.id)
