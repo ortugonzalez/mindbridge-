@@ -413,13 +413,6 @@ export async function getSupportNetwork() {
   )
 }
 
-export async function getMyPatients() {
-  return requestWithMock(
-    () => axiosClient.get('/relationships/my-patients').then((res) => res.data),
-    () => []
-  )
-}
-
 export async function getDashboard() {
   return requestWithMock(
     () => axiosClient.get('/dashboard').then((res) => normalizeDashboard(res.data)),
@@ -555,52 +548,11 @@ export async function getVapidPublicKey() {
   )
 }
 
-export async function getAlerts() {
-  return requestWithMock(
-    () => axiosClient.get('/alerts').then((res) => res.data),
-    () => []
-  )
-}
-
-export async function markAllAlertsRead() {
-  return requestWithMock(
-    () => axiosClient.patch('/alerts/read-all').then((res) => res.data),
-    () => ({ ok: true, fromMock: true })
-  )
-}
-
-export async function markAlertRead(notificationId) {
-  return requestWithMock(
-    () => axiosClient.patch(`/alerts/${notificationId}/read`).then((res) => res.data),
-    () => ({ ok: true, fromMock: true })
-  )
-}
-
-export async function getIdentityVerificationRequest() {
-  return requestWithMock(
-    () => axiosClient.get('/users/me/verify-identity').then((res) => res.data),
-    () => ({
-      verification_url: 'https://app.ai.self.xyz',
-      qr_code: 'https://app.ai.self.xyz/verify?app=brenso',
-      verification_id: 'demo-verification',
-      instructions: 'Escaneá el QR con la app Self Protocol para verificar tu identidad',
-      fromMock: true,
-    })
-  )
-}
-
-export async function submitIdentityVerification({ verification_id, proof }) {
-  return requestWithMock(
-    () => axiosClient.post('/users/me/verify-identity', { verification_id, proof }).then((res) => res.data),
-    () => ({ verified: false, fromMock: true })
-  )
-}
+export const getIdentityVerificationRequest = getVerificationRequest
+export const submitIdentityVerification = submitVerification
 
 export async function getCurrentUserAccount() {
-  return requestWithMock(
-    () => axiosClient.get('/users/me').then((res) => res.data),
-    () => ({ identity_verified: false, fromMock: true })
-  )
+  return getUserProfile()
 }
 
 export async function setupProfile({ user_type, display_name, phone_number, invite_token }) {
