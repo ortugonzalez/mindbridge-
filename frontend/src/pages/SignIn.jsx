@@ -77,6 +77,7 @@ export default function SignIn() {
 
   const translateError = (err) => {
     const msg = err?.message?.toLowerCase() || ''
+    const raw = err?.message || err?.error_description || err?.error || ''
     if (msg.includes('email not confirmed') || msg.includes('confirm')) {
       return isSpanish() ? 'Confirmá tu correo antes de iniciar sesión.' : 'Confirm your email before signing in.'
     }
@@ -84,6 +85,7 @@ export default function SignIn() {
       return isSpanish() ? 'Email o contraseña incorrectos.' : 'Invalid email or password.'
     }
     if (msg.includes('email')) return t('signin.error_email_empty')
+    if (raw) return raw
     return t('errors.generic')
   }
 
@@ -103,6 +105,7 @@ export default function SignIn() {
       if (token) { try { localStorage.setItem('breso_token', token) } catch {} }
       afterLogin(data.user)
     } catch (err) {
+      console.error('[SignIn] password login failed', err)
       setError(translateError(err))
     } finally {
       setLoading(false)
@@ -131,6 +134,7 @@ export default function SignIn() {
     })
 
     if (error) {
+      console.error('[SignIn] register failed', error)
       setError(error.message)
       setLoading(false)
       return
@@ -166,6 +170,7 @@ export default function SignIn() {
       setMagicSent(true)
       startCountdown()
     } catch (err) {
+      console.error('[SignIn] magic link failed', err)
       setError(translateError(err))
     } finally {
       setLoading(false)
@@ -187,6 +192,7 @@ export default function SignIn() {
       if (err) throw err
       startCountdown()
     } catch (err) {
+      console.error('[SignIn] resend magic link failed', err)
       setError(translateError(err))
     } finally {
       setLoading(false)
