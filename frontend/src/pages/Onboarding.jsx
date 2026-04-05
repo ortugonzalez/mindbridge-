@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { addContact, registerUser, saveProfile } from '../services/api'
+import { addContact, setupProfile } from '../services/api'
 
 const USER_NAME_KEY = 'breso_user_name'
 const USER_PHONE_KEY = 'breso_user_phone'
@@ -10,10 +10,6 @@ const CONTACT_PHONE_KEY = 'breso_trust_contact_phone'
 
 function safeSet(key, value) {
   try { localStorage.setItem(key, value) } catch {}
-}
-
-function slugifyName(s) {
-  return String(s || '').trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
 }
 
 export default function Onboarding() {
@@ -43,14 +39,10 @@ export default function Onboarding() {
         if (contactPhone.trim()) safeSet(CONTACT_PHONE_KEY, contactPhone.trim())
       }
 
-      const demoEmail = `${slugifyName(userName)}@breso.dev`
-      await registerUser({ name: userName.trim(), email: demoEmail, password: 'breso-demo' })
-      
-      await saveProfile({
+      await setupProfile({
+        user_type: 'patient',
         display_name: userName.trim(),
         phone_number: userPhone.trim() ? phoneCountry + userPhone.trim() : undefined,
-        plan: 'free_trial',
-        user_type: 'patient',
       }).catch(() => {})
 
       if (!skipContact && contactName.trim()) {

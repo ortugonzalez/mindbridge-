@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { inviteContact, getSupportNetwork } from '../services/api'
+import { addContact, getContacts } from '../services/api'
 
 const STORAGE_KEY = 'breso_trusted_contacts'
 
@@ -27,17 +27,17 @@ export default function Contacts() {
     let mounted = true
       ; (async () => {
         try {
-          const res = await getSupportNetwork()
+          const res = await getContacts()
           if (!mounted) return
           const items = Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : [])
           if (items.length > 0) {
             setContacts(items.map((c, i) => ({
-              id: c.id || i,
+              id: c.id || c.contact_id || i,
               name: c.name || c.contact_name || '',
-              relationship: c.relationship || c.relation || '',
-              email: c.email || '',
+              relationship: c.relationship || c.relationship_label || c.relation || '',
+              email: c.email || c.contact_email || '',
               phone: c.phone || '',
-              status: c.status || 'active',
+              status: c.status || 'pending',
             })))
             return
           }
@@ -63,7 +63,7 @@ export default function Contacts() {
     try { localStorage.setItem('breso_trusted_contacts', JSON.stringify(updated)) } catch { }
 
     try {
-      await inviteContact({ email: form.email, name: form.name, relationship: form.relationship })
+      await addContact({ email: form.email, name: form.name, relation: form.relationship || 'otro' })
       alert(t('contacts.inviteSent', { email: form.email }))
     } catch { }
     setSaving(false)
@@ -123,8 +123,8 @@ export default function Contacts() {
                   <p className="text-sm text-textdark/60 dark:text-dm-muted capitalize">{contact.relationship}</p>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-green-500 inline-block" />
-                  <span className="text-xs font-semibold text-sage">{t('contacts.status_active')}</span>
+                  <span className={`h-2 w-2 rounded-full inline-block ${contact.status === 'active' ? 'bg-green-500' : 'bg-yellow-500'}`} />
+                  <span className="text-xs font-semibold text-sage">{contact.status === 'active' ? t('contacts.status_active') : t('contacts.status_pending', 'Pendiente')}</span>
                 </div>
               </div>
 

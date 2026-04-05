@@ -69,9 +69,7 @@ export default function InviteConnect() {
       setSuccessMsg(t('invite.success'))
       setTimeout(() => navigate('/family-dashboard'), 2000)
     } catch {
-      // Demo fallback
-      setSuccessMsg(t('invite.success'))
-      setTimeout(() => navigate('/family-dashboard'), 2000)
+      setErrorMsg(t('invite.error', 'No pudimos validar ese enlace o token.'))
     } finally {
       setLoading(false)
     }

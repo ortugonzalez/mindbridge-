@@ -6,7 +6,10 @@ import en from './en.json'
 const STORAGE_KEY = 'breso_lang'
 
 function getInitialLanguage() {
-  const saved = localStorage.getItem(STORAGE_KEY)
+  let saved = null
+  try {
+    saved = localStorage.getItem(STORAGE_KEY)
+  } catch {}
   if (saved === 'es' || saved === 'en') return saved
 
   const browser = typeof navigator !== 'undefined' ? navigator.language : ''
@@ -23,6 +26,7 @@ i18n.use(initReactI18next).init({
   resources,
   fallbackLng: 'en',
   lng: getInitialLanguage(),
+  showSupportNotice: false,
   interpolation: {
     escapeValue: false,
   },

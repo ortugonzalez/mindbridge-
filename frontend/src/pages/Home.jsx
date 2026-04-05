@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
-import { getVapidPublicKey, savePushSubscription, getDashboard } from '../services/api';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { getVapidPublicKey, savePushSubscription, getDashboard } from '../services/api'
 
 
 const DISMISS_KEY = 'breso_push_dismissed_until';
@@ -51,33 +51,32 @@ export default function Home() {
     }
   }
 
-  const microcopy = t('home.microcopy', { returnObjects: true });
-  const getDailyMicrocopy = () => Array.isArray(microcopy) ? microcopy[getDayOfYear() % 7] : '';
-  const navigate = useNavigate();
-  const [userName, setUserName] = useState('');
-  const [streak, setStreak] = useState(0);
-  const [showPushBanner, setShowPushBanner] = useState(false);
+  const microcopy = t('home.microcopy', { returnObjects: true })
+  const getDailyMicrocopy = () => Array.isArray(microcopy) ? microcopy[getDayOfYear() % 7] : ''
+  const navigate = useNavigate()
+  const [userName] = useState(() => {
+    try {
+      return localStorage.getItem('breso_user_name') || 'Usuario'
+    } catch {
+      return 'Usuario'
+    }
+  })
+  const [streak, setStreak] = useState(0)
+  const [showPushBanner, setShowPushBanner] = useState(false)
   const [pushState, setPushState] = useState('idle'); // idle | loading | success | error
 
   useEffect(() => {
-    try {
-      const name = localStorage.getItem('breso_user_name') || 'Usuario';
-      setUserName(name);
-    } catch {
-      setUserName('Usuario');
-    }
-
-    let active = true;
-    (async () => {
+    let active = true
+    ;(async () => {
       try {
-        const dash = await getDashboard();
+        const dash = await getDashboard()
         if (active && dash.data) {
-          setStreak(Number(dash.data.streakDaysConsecutive) || 0);
+          setStreak(Number(dash.data.streakDaysConsecutive) || 0)
         }
       } catch {}
-    })();
-    return () => { active = false };
-  }, []);
+    })()
+    return () => { active = false }
+  }, [])
 
   const renderStreakText = () => {
     if (streak === 0) return t('home.start_streak');
@@ -96,14 +95,14 @@ export default function Home() {
     } catch { /* ignore */ }
 
     setShowPushBanner(true);
-  }, []);
+  }, [])
 
   const handleDismiss = () => {
     try {
       localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 24 * 60 * 60 * 1000));
     } catch { /* ignore */ }
     setShowPushBanner(false);
-  };
+  }
 
   const handleEnablePush = async () => {
     setPushState('loading');
@@ -134,7 +133,7 @@ export default function Home() {
     }
   };
 
-  const greeting = getGreeting();
+  const greeting = getGreeting()
 
   return (
     <div className={`animate-fade-in-page space-y-8 pb-32 min-h-screen transition-colors duration-700 ${getTimeTint()}`}>
@@ -271,5 +270,5 @@ export default function Home() {
         </a>
       </div>
     </div>
-  );
+  )
 }

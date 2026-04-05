@@ -30,9 +30,9 @@ async def list_contacts(current_user=Depends(get_current_user)) -> list:
     supabase = get_supabase()
     try:
         resp = (
-            supabase.table("user_relationships")
-            .select("id, related_user_id, relationship_type, status, invite_token, created_at")
-            .eq("patient_id", current_user.id)
+            supabase.table("trusted_contacts")
+            .select("id, contact_email, relationship_label, active, created_at")
+            .eq("user_id", current_user.id)
             .execute()
         )
         rows = resp.data or []
@@ -40,32 +40,17 @@ async def list_contacts(current_user=Depends(get_current_user)) -> list:
         logger.error({"event": "contacts.list.error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to fetch contacts") from exc
 
-    # Enrich with contact display names
-    result = []
-    for row in rows:
-        contact_info: dict = {}
-        if row.get("related_user_id"):
-            try:
-                user_resp = (
-                    supabase.table("users")
-                    .select("display_name, email")
-                    .eq("id", row["related_user_id"])
-                    .single()
-                    .execute()
-                )
-                contact_info = user_resp.data or {}
-            except Exception:  # noqa: BLE001
-                pass
-        result.append({
+    return [
+        {
             "id": row["id"],
-            "contact_name": contact_info.get("display_name"),
-            "contact_email": contact_info.get("email"),
-            "relationship": row.get("relationship_type", "otro"),
-            "status": row.get("status"),
+            "contact_name": row.get("contact_email", "").split("@")[0] or row.get("contact_email"),
+            "contact_email": row.get("contact_email"),
+            "relationship": row.get("relationship_label", "otro"),
+            "status": "active" if row.get("active") else "pending",
             "created_at": row.get("created_at"),
-        })
-
-    return result
+        }
+        for row in rows
+    ]
 
 
 @router.post("/invite")
@@ -92,19 +77,20 @@ async def invite_contact(
     except Exception:  # noqa: BLE001
         patient_name = "tu ser querido"
 
-    invite_token = str(uuid.uuid4())
-    invite_url = f"{FRONTEND_BASE_URL}/accept-invite/{invite_token}"
-
     try:
-        supabase.table("user_relationships").insert({
-            "patient_id": current_user.id,
-            "relationship_type": body.relationship,
-            "status": "pending_contact",
-            "invite_token": invite_token,
+        insert_resp = supabase.table("trusted_contacts").insert({
+            "user_id": current_user.id,
+            "contact_email": body.contact_email,
+            "relationship_label": body.relationship,
+            "alert_threshold": "moderate",
+            "active": False,
         }).execute()
+        contact = insert_resp.data[0] if insert_resp.data else {}
     except Exception as exc:  # noqa: BLE001
         logger.error({"event": "contacts.invite.insert_error", "error": str(exc)})
         raise HTTPException(status_code=500, detail="Failed to create invite") from exc
+
+    invite_url = f"{FRONTEND_BASE_URL}/signin?type=family&email={body.contact_email}"
 
     # Send invite email to the contact immediately
     email_result = send_contact_invite_email(
@@ -123,7 +109,7 @@ async def invite_contact(
 
     return {
         "success": True,
-        "invite_token": invite_token,
+        "contact_id": contact.get("id"),
         "invite_url": invite_url,
         "email_sent": email_result.get("success", False),
     }
